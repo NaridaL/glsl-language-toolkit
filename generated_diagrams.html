@@ -27,7 +27,7 @@
     "definition": [
       {
         "type": "Alternation",
-        "idx": 2,
+        "idx": 0,
         "definition": [
           {
             "type": "Alternative",
@@ -37,7 +37,7 @@
                 "name": "LEFT_PAREN",
                 "label": "'('",
                 "idx": 0,
-                "pattern": "\\("
+                "pattern": "("
               },
               {
                 "type": "NonTerminal",
@@ -49,7 +49,7 @@
                 "name": "RIGHT_PAREN",
                 "label": "')'",
                 "idx": 0,
-                "pattern": "\\)"
+                "pattern": ")"
               }
             ]
           },
@@ -68,7 +68,7 @@
                         "name": "IDENTIFIER",
                         "label": "IDENTIFIER",
                         "idx": 0,
-                        "pattern": "[A-zA-Z][A-zA-Z0-9]*"
+                        "pattern": "\\w[\\w\\d]*"
                       }
                     ]
                   },
@@ -135,7 +135,7 @@
     "definition": [
       {
         "type": "Alternation",
-        "idx": 3,
+        "idx": 1,
         "definition": [
           {
             "type": "Alternative",
@@ -143,7 +143,7 @@
               {
                 "type": "NonTerminal",
                 "name": "functionCall",
-                "idx": 0
+                "idx": 1
               }
             ]
           },
@@ -154,69 +154,75 @@
                 "type": "NonTerminal",
                 "name": "primaryExpression",
                 "idx": 0
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "type": "Repetition",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Alternation",
-            "idx": 2,
-            "definition": [
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "LEFT_BRACKET",
-                    "label": "'['",
-                    "idx": 0,
-                    "pattern": "\\["
-                  },
-                  {
-                    "type": "NonTerminal",
-                    "name": "expression",
-                    "idx": 0
-                  },
-                  {
-                    "type": "Terminal",
-                    "name": "RIGHT_BRACKET",
-                    "label": "']'",
-                    "idx": 0,
-                    "pattern": "]"
-                  }
-                ]
               },
               {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "DOT",
-                    "label": "'.'",
-                    "idx": 0,
-                    "pattern": "\\."
-                  },
-                  {
-                    "type": "Terminal",
-                    "name": "IDENTIFIER",
-                    "label": "IDENTIFIER",
-                    "idx": 0,
-                    "pattern": "[A-zA-Z][A-zA-Z0-9]*"
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
+                "type": "Repetition",
+                "idx": 0,
                 "definition": [
                   {
                     "type": "Alternation",
-                    "idx": 9,
+                    "idx": 2,
                     "definition": [
+                      {
+                        "type": "Alternative",
+                        "definition": [
+                          {
+                            "type": "Terminal",
+                            "name": "LEFT_BRACKET",
+                            "label": "'['",
+                            "idx": 0,
+                            "pattern": "["
+                          },
+                          {
+                            "type": "NonTerminal",
+                            "name": "expression",
+                            "idx": 0
+                          },
+                          {
+                            "type": "Terminal",
+                            "name": "RIGHT_BRACKET",
+                            "label": "']'",
+                            "idx": 0,
+                            "pattern": "]"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "Alternative",
+                        "definition": [
+                          {
+                            "type": "Terminal",
+                            "name": "DOT",
+                            "label": "'.'",
+                            "idx": 1,
+                            "pattern": "."
+                          },
+                          {
+                            "type": "NonTerminal",
+                            "name": "functionCall",
+                            "idx": 2
+                          }
+                        ]
+                      },
+                      {
+                        "type": "Alternative",
+                        "definition": [
+                          {
+                            "type": "Terminal",
+                            "name": "DOT",
+                            "label": "'.'",
+                            "idx": 2,
+                            "pattern": "."
+                          },
+                          {
+                            "type": "Terminal",
+                            "name": "IDENTIFIER",
+                            "label": "IDENTIFIER",
+                            "idx": 0,
+                            "pattern": "\\w[\\w\\d]*"
+                          }
+                        ]
+                      },
                       {
                         "type": "Alternative",
                         "definition": [
@@ -225,7 +231,7 @@
                             "name": "INC_OP",
                             "label": "'++'",
                             "idx": 0,
-                            "pattern": "\\+\\+"
+                            "pattern": "++"
                           }
                         ]
                       },
@@ -257,41 +263,16 @@
     "orgText": "",
     "definition": [
       {
-        "type": "Alternation",
-        "idx": 1,
-        "definition": [
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "TYPE",
-                "label": "TYPE",
-                "idx": 0,
-                "pattern": "int|float|mat2|mat3|mat4|mat2x2|mat2x3|mat2x4|mat3x2|mat3x3|mat3x4|mat4x2|mat4x3|mat4x4|vec2|vec3|vec4|ivec2|ivec3|ivec4|bvec2|bvec3|bvec4|uint|uvec2|uvec3|uvec4|sampler2D|sampler3D|samplerCube|sampler2DShadow|samplerCubeShadow|sampler2DArray|sampler2DArrayShadow|isampler2D|isampler3D|isamplerCube|isampler2DArray|usampler2D   |usampler3D|usamplerCube|usampler2DArray"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "IDENTIFIER",
-                "label": "IDENTIFIER",
-                "idx": 0,
-                "pattern": "[A-zA-Z][A-zA-Z0-9]*"
-              }
-            ]
-          }
-        ]
+        "type": "NonTerminal",
+        "name": "typeSpecifierNoPrec",
+        "idx": 0
       },
       {
         "type": "Terminal",
         "name": "LEFT_PAREN",
         "label": "'('",
         "idx": 0,
-        "pattern": "\\("
+        "pattern": "("
       },
       {
         "type": "RepetitionWithSeparator",
@@ -316,7 +297,26 @@
         "name": "RIGHT_PAREN",
         "label": "')'",
         "idx": 0,
-        "pattern": "\\)"
+        "pattern": ")"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "functionCallHeader",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "typeSpecifierNoPrec",
+        "idx": 0
+      },
+      {
+        "type": "Terminal",
+        "name": "LEFT_PAREN",
+        "label": "'('",
+        "idx": 0,
+        "pattern": "("
       }
     ]
   },
@@ -343,82 +343,11 @@
             "type": "Alternative",
             "definition": [
               {
-                "type": "Alternation",
-                "idx": 9,
-                "definition": [
-                  {
-                    "type": "Alternative",
-                    "definition": [
-                      {
-                        "type": "Terminal",
-                        "name": "INC_OP",
-                        "label": "'++'",
-                        "idx": 0,
-                        "pattern": "\\+\\+"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "Alternative",
-                    "definition": [
-                      {
-                        "type": "Terminal",
-                        "name": "DEC_OP",
-                        "label": "'--'",
-                        "idx": 0,
-                        "pattern": "--"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "Alternative",
-                    "definition": [
-                      {
-                        "type": "Terminal",
-                        "name": "PLUS",
-                        "label": "'+'",
-                        "idx": 0,
-                        "pattern": "\\+"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "Alternative",
-                    "definition": [
-                      {
-                        "type": "Terminal",
-                        "name": "DASH",
-                        "label": "'-'",
-                        "idx": 0,
-                        "pattern": "-"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "Alternative",
-                    "definition": [
-                      {
-                        "type": "Terminal",
-                        "name": "BANG",
-                        "label": "'!'",
-                        "idx": 0,
-                        "pattern": "!"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "Alternative",
-                    "definition": [
-                      {
-                        "type": "Terminal",
-                        "name": "TILDE",
-                        "label": "'~'",
-                        "idx": 0,
-                        "pattern": "~"
-                      }
-                    ]
-                  }
-                ]
+                "type": "Terminal",
+                "name": "PREFIX_OP",
+                "label": "PREFIX_OP",
+                "idx": 0,
+                "pattern": "NOT_APPLICABLE"
               },
               {
                 "type": "NonTerminal",
@@ -457,7 +386,7 @@
                     "name": "STAR",
                     "label": "'*'",
                     "idx": 0,
-                    "pattern": "\\*"
+                    "pattern": "*"
                   }
                 ]
               },
@@ -469,7 +398,7 @@
                     "name": "SLASH",
                     "label": "'/'",
                     "idx": 0,
-                    "pattern": "\\/"
+                    "pattern": "/"
                   }
                 ]
               },
@@ -522,7 +451,7 @@
                     "name": "PLUS",
                     "label": "'+'",
                     "idx": 0,
-                    "pattern": "\\+"
+                    "pattern": "+"
                   }
                 ]
               },
@@ -572,7 +501,7 @@
                 "definition": [
                   {
                     "type": "Terminal",
-                    "name": "LEFTOP",
+                    "name": "LEFT_OP",
                     "label": "'<<'",
                     "idx": 0,
                     "pattern": "<<"
@@ -584,7 +513,7 @@
                 "definition": [
                   {
                     "type": "Terminal",
-                    "name": "RIGHTOP",
+                    "name": "RIGHT_OP",
                     "label": "'>>'",
                     "idx": 0,
                     "pattern": ">>"
@@ -625,7 +554,7 @@
                 "definition": [
                   {
                     "type": "Terminal",
-                    "name": "LEFTANGLE",
+                    "name": "LEFT_ANGLE",
                     "label": "'<'",
                     "idx": 0,
                     "pattern": "<"
@@ -637,7 +566,7 @@
                 "definition": [
                   {
                     "type": "Terminal",
-                    "name": "RIGHTANGLE",
+                    "name": "RIGHT_ANGLE",
                     "label": "'>'",
                     "idx": 0,
                     "pattern": ">"
@@ -649,7 +578,7 @@
                 "definition": [
                   {
                     "type": "Terminal",
-                    "name": "LEOP",
+                    "name": "LE_OP",
                     "label": "'<='",
                     "idx": 0,
                     "pattern": "<="
@@ -661,7 +590,7 @@
                 "definition": [
                   {
                     "type": "Terminal",
-                    "name": "GEOP",
+                    "name": "GE_OP",
                     "label": "'>='",
                     "idx": 0,
                     "pattern": ">="
@@ -702,7 +631,7 @@
                 "definition": [
                   {
                     "type": "Terminal",
-                    "name": "EQOP",
+                    "name": "EQ_OP",
                     "label": "'=='",
                     "idx": 0,
                     "pattern": "=="
@@ -714,7 +643,7 @@
                 "definition": [
                   {
                     "type": "Terminal",
-                    "name": "NEOP",
+                    "name": "NE_OP",
                     "label": "'!='",
                     "idx": 0,
                     "pattern": "!="
@@ -799,7 +728,7 @@
                     "name": "CARET",
                     "label": "'^'",
                     "idx": 0,
-                    "pattern": "\\^"
+                    "pattern": "^"
                   }
                 ]
               }
@@ -840,7 +769,7 @@
                     "name": "PIPE",
                     "label": "'|'",
                     "idx": 0,
-                    "pattern": "\\|"
+                    "pattern": "|"
                   }
                 ]
               }
@@ -898,7 +827,7 @@
   },
   {
     "type": "Rule",
-    "name": "logicalOrExpression",
+    "name": "logicalXorExpression",
     "orgText": "",
     "definition": [
       {
@@ -919,10 +848,10 @@
                 "definition": [
                   {
                     "type": "Terminal",
-                    "name": "OR_OP",
-                    "label": "'||'",
+                    "name": "XOR_OP",
+                    "label": "'^^'",
                     "idx": 0,
-                    "pattern": "\\|\\|"
+                    "pattern": "^^"
                   }
                 ]
               }
@@ -931,6 +860,47 @@
           {
             "type": "NonTerminal",
             "name": "logicalAndExpression",
+            "idx": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "logicalOrExpression",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "logicalXorExpression",
+        "idx": 1
+      },
+      {
+        "type": "Repetition",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternation",
+            "idx": 9,
+            "definition": [
+              {
+                "type": "Alternative",
+                "definition": [
+                  {
+                    "type": "Terminal",
+                    "name": "OR_OP",
+                    "label": "'||'",
+                    "idx": 0,
+                    "pattern": "||"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "NonTerminal",
+            "name": "logicalXorExpression",
             "idx": 2
           }
         ]
@@ -956,7 +926,7 @@
             "name": "QUESTION",
             "label": "'?'",
             "idx": 0,
-            "pattern": "\\?"
+            "pattern": "?"
           },
           {
             "type": "NonTerminal",
@@ -994,142 +964,11 @@
         "idx": 0,
         "definition": [
           {
-            "type": "Alternation",
-            "idx": 9,
-            "definition": [
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "EQUAL",
-                    "label": "'='",
-                    "idx": 0,
-                    "pattern": "="
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "MULASSIGN",
-                    "label": "'*='",
-                    "idx": 0,
-                    "pattern": "\\*="
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "DIVASSIGN",
-                    "label": "'/='",
-                    "idx": 0,
-                    "pattern": "\\/="
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "MODASSIGN",
-                    "label": "'%='",
-                    "idx": 0,
-                    "pattern": "%="
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "ADDASSIGN",
-                    "label": "'+='",
-                    "idx": 0,
-                    "pattern": "\\+="
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "SUBASSIGN",
-                    "label": "'-='",
-                    "idx": 0,
-                    "pattern": "-="
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "LEFTASSIGN",
-                    "label": "'<<='",
-                    "idx": 0,
-                    "pattern": "<<="
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "RIGHTASSIGN",
-                    "label": "'>>='",
-                    "idx": 0,
-                    "pattern": ">>="
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "ANDASSIGN",
-                    "label": "'&='",
-                    "idx": 0,
-                    "pattern": "&="
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "XORASSIGN",
-                    "label": "'^='",
-                    "idx": 0,
-                    "pattern": "\\^="
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "ORASSIGN",
-                    "label": "'|='",
-                    "idx": 0,
-                    "pattern": "\\|="
-                  }
-                ]
-              }
-            ]
+            "type": "Terminal",
+            "name": "ASSIGN_OP",
+            "label": "ASSIGN_OP",
+            "idx": 0,
+            "pattern": "NOT_APPLICABLE"
           },
           {
             "type": "NonTerminal",
@@ -1179,135 +1018,6 @@
   },
   {
     "type": "Rule",
-    "name": "declarationNoFunctionPrototypeNoInitDeclaratorList",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Alternation",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "PRECISION",
-                "label": "'precision'",
-                "idx": 0,
-                "pattern": "precision"
-              },
-              {
-                "type": "NonTerminal",
-                "name": "precisionQualifier",
-                "idx": 1
-              },
-              {
-                "type": "NonTerminal",
-                "name": "typeSpecifierNoPrec",
-                "idx": 2
-              },
-              {
-                "type": "Terminal",
-                "name": "SEMICOLON",
-                "label": "';'",
-                "idx": 1,
-                "pattern": ";"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "typeQualifier",
-                "idx": 1
-              },
-              {
-                "type": "Option",
-                "idx": 1,
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "IDENTIFIER",
-                    "label": "IDENTIFIER",
-                    "idx": 1,
-                    "pattern": "[A-zA-Z][A-zA-Z0-9]*"
-                  },
-                  {
-                    "type": "Terminal",
-                    "name": "LEFT_BRACE",
-                    "label": "'{'",
-                    "idx": 0,
-                    "pattern": "{"
-                  },
-                  {
-                    "type": "NonTerminal",
-                    "name": "structDeclarationList",
-                    "idx": 0
-                  },
-                  {
-                    "type": "Terminal",
-                    "name": "RIGHT_BRACE",
-                    "label": "'}'",
-                    "idx": 0,
-                    "pattern": "}"
-                  },
-                  {
-                    "type": "Option",
-                    "idx": 2,
-                    "definition": [
-                      {
-                        "type": "Terminal",
-                        "name": "IDENTIFIER",
-                        "label": "IDENTIFIER",
-                        "idx": 2,
-                        "pattern": "[A-zA-Z][A-zA-Z0-9]*"
-                      },
-                      {
-                        "type": "Option",
-                        "idx": 3,
-                        "definition": [
-                          {
-                            "type": "Terminal",
-                            "name": "LEFT_BRACKET",
-                            "label": "'['",
-                            "idx": 0,
-                            "pattern": "\\["
-                          },
-                          {
-                            "type": "NonTerminal",
-                            "name": "constantExpression",
-                            "idx": 0
-                          },
-                          {
-                            "type": "Terminal",
-                            "name": "RIGHT_BRACKET",
-                            "label": "']'",
-                            "idx": 0,
-                            "pattern": "]"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "type": "Terminal",
-                "name": "SEMICOLON",
-                "label": "';'",
-                "idx": 2,
-                "pattern": ";"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "Rule",
     "name": "externalDeclaration",
     "orgText": "",
     "definition": [
@@ -1335,14 +1045,14 @@
                         "name": "IDENTIFIER",
                         "label": "IDENTIFIER",
                         "idx": 1,
-                        "pattern": "[A-zA-Z][A-zA-Z0-9]*"
+                        "pattern": "\\w[\\w\\d]*"
                       },
                       {
                         "type": "Terminal",
                         "name": "LEFT_PAREN",
                         "label": "'('",
                         "idx": 0,
-                        "pattern": "\\("
+                        "pattern": "("
                       },
                       {
                         "type": "RepetitionWithSeparator",
@@ -1356,117 +1066,9 @@
                         },
                         "definition": [
                           {
-                            "type": "Option",
-                            "idx": 1,
-                            "definition": [
-                              {
-                                "type": "Terminal",
-                                "name": "CONST",
-                                "label": "'const'",
-                                "idx": 0,
-                                "pattern": "const"
-                              }
-                            ]
-                          },
-                          {
-                            "type": "Option",
-                            "idx": 2,
-                            "definition": [
-                              {
-                                "type": "Alternation",
-                                "idx": 4,
-                                "definition": [
-                                  {
-                                    "type": "Alternative",
-                                    "definition": [
-                                      {
-                                        "type": "Terminal",
-                                        "name": "IN",
-                                        "label": "'in'",
-                                        "idx": 0,
-                                        "pattern": "in"
-                                      }
-                                    ]
-                                  },
-                                  {
-                                    "type": "Alternative",
-                                    "definition": [
-                                      {
-                                        "type": "Terminal",
-                                        "name": "OUT",
-                                        "label": "'out'",
-                                        "idx": 0,
-                                        "pattern": "out"
-                                      }
-                                    ]
-                                  },
-                                  {
-                                    "type": "Alternative",
-                                    "definition": [
-                                      {
-                                        "type": "Terminal",
-                                        "name": "INOUT",
-                                        "label": "'inout'",
-                                        "idx": 0,
-                                        "pattern": "inout"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "type": "Option",
-                            "idx": 3,
-                            "definition": [
-                              {
-                                "type": "NonTerminal",
-                                "name": "precisionQualifier",
-                                "idx": 2
-                              }
-                            ]
-                          },
-                          {
-                            "type": "Terminal",
-                            "name": "TYPE",
-                            "label": "TYPE",
-                            "idx": 2,
-                            "pattern": "int|float|mat2|mat3|mat4|mat2x2|mat2x3|mat2x4|mat3x2|mat3x3|mat3x4|mat4x2|mat4x3|mat4x4|vec2|vec3|vec4|ivec2|ivec3|ivec4|bvec2|bvec3|bvec4|uint|uvec2|uvec3|uvec4|sampler2D|sampler3D|samplerCube|sampler2DShadow|samplerCubeShadow|sampler2DArray|sampler2DArrayShadow|isampler2D|isampler3D|isamplerCube|isampler2DArray|usampler2D   |usampler3D|usamplerCube|usampler2DArray"
-                          },
-                          {
-                            "type": "Terminal",
-                            "name": "IDENTIFIER",
-                            "label": "IDENTIFIER",
-                            "idx": 2,
-                            "pattern": "[A-zA-Z][A-zA-Z0-9]*"
-                          },
-                          {
-                            "type": "Option",
-                            "idx": 4,
-                            "definition": [
-                              {
-                                "type": "Terminal",
-                                "name": "LEFT_BRACKET",
-                                "label": "'['",
-                                "idx": 4,
-                                "pattern": "\\["
-                              },
-                              {
-                                "type": "Terminal",
-                                "name": "INTCONSTANT",
-                                "label": "INTCONSTANT",
-                                "idx": 0,
-                                "pattern": "[0-9]+"
-                              },
-                              {
-                                "type": "Terminal",
-                                "name": "RIGHT_BRACKET",
-                                "label": "']'",
-                                "idx": 4,
-                                "pattern": "]"
-                              }
-                            ]
+                            "type": "NonTerminal",
+                            "name": "parameterDeclaration",
+                            "idx": 0
                           }
                         ]
                       },
@@ -1475,7 +1077,7 @@
                         "name": "RIGHT_PAREN",
                         "label": "')'",
                         "idx": 0,
-                        "pattern": "\\)"
+                        "pattern": ")"
                       },
                       {
                         "type": "Alternation",
@@ -1526,7 +1128,7 @@
                             "name": "IDENTIFIER",
                             "label": "IDENTIFIER",
                             "idx": 3,
-                            "pattern": "[A-zA-Z][A-zA-Z0-9]*"
+                            "pattern": "\\w[\\w\\d]*"
                           },
                           {
                             "type": "Option",
@@ -1537,7 +1139,7 @@
                                 "name": "LEFT_BRACKET",
                                 "label": "'['",
                                 "idx": 0,
-                                "pattern": "\\["
+                                "pattern": "["
                               },
                               {
                                 "type": "Option",
@@ -1610,53 +1212,66 @@
   },
   {
     "type": "Rule",
-    "name": "declarationNoFunctionPrototype",
+    "name": "parameterDeclaration",
     "orgText": "",
     "definition": [
       {
-        "type": "Alternation",
-        "idx": 0,
+        "type": "Option",
+        "idx": 1,
         "definition": [
           {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "initDeclaratorList",
-                "idx": 1
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "PRECISION",
-                "label": "'precision'",
-                "idx": 1,
-                "pattern": "precision"
-              },
-              {
-                "type": "NonTerminal",
-                "name": "precisionQualifier",
-                "idx": 1
-              },
-              {
-                "type": "NonTerminal",
-                "name": "initDeclaratorList",
-                "idx": 2
-              }
-            ]
+            "type": "Terminal",
+            "name": "CONST",
+            "label": "'const'",
+            "idx": 0,
+            "pattern": "const"
           }
         ]
       },
       {
-        "type": "Terminal",
-        "name": "SEMICOLON",
-        "label": "';'",
+        "type": "NonTerminal",
+        "name": "typeSpecifier",
+        "idx": 0
+      },
+      {
+        "type": "Option",
         "idx": 0,
-        "pattern": ";"
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "IDENTIFIER",
+            "label": "IDENTIFIER",
+            "idx": 2,
+            "pattern": "\\w[\\w\\d]*"
+          },
+          {
+            "type": "Option",
+            "idx": 4,
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "LEFT_BRACKET",
+                "label": "'['",
+                "idx": 4,
+                "pattern": "["
+              },
+              {
+                "type": "Terminal",
+                "name": "INTCONSTANT",
+                "label": "INTCONSTANT",
+                "idx": 0,
+                "pattern": "[0-9]+"
+              },
+              {
+                "type": "Terminal",
+                "name": "RIGHT_BRACKET",
+                "label": "']'",
+                "idx": 4,
+                "pattern": "]"
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -1698,7 +1313,7 @@
                     "name": "IDENTIFIER",
                     "label": "IDENTIFIER",
                     "idx": 1,
-                    "pattern": "[A-zA-Z][A-zA-Z0-9]*"
+                    "pattern": "\\w[\\w\\d]*"
                   },
                   {
                     "type": "Option",
@@ -1709,7 +1324,7 @@
                         "name": "LEFT_BRACKET",
                         "label": "'['",
                         "idx": 0,
-                        "pattern": "\\["
+                        "pattern": "["
                       },
                       {
                         "type": "Option",
@@ -1768,7 +1383,7 @@
                 "name": "IDENTIFIER",
                 "label": "IDENTIFIER",
                 "idx": 2,
-                "pattern": "[A-zA-Z][A-zA-Z0-9]*"
+                "pattern": "\\w[\\w\\d]*"
               }
             ]
           }
@@ -1853,7 +1468,7 @@
         "name": "LEFT_PAREN",
         "label": "'('",
         "idx": 0,
-        "pattern": "\\("
+        "pattern": "("
       },
       {
         "type": "RepetitionMandatoryWithSeparator",
@@ -1871,7 +1486,7 @@
             "name": "IDENTIFIER",
             "label": "IDENTIFIER",
             "idx": 0,
-            "pattern": "[A-zA-Z][A-zA-Z0-9]*"
+            "pattern": "\\w[\\w\\d]*"
           },
           {
             "type": "Option",
@@ -2020,7 +1635,7 @@
     "definition": [
       {
         "type": "Alternation",
-        "idx": 1,
+        "idx": 0,
         "definition": [
           {
             "type": "Alternative",
@@ -2140,7 +1755,7 @@
             "name": "LEFT_BRACKET",
             "label": "'['",
             "idx": 0,
-            "pattern": "\\["
+            "pattern": "["
           },
           {
             "type": "Option",
@@ -2178,10 +1793,10 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "TYPE",
-                "label": "TYPE",
+                "name": "BASIC_TYPE",
+                "label": "BASIC_TYPE",
                 "idx": 0,
-                "pattern": "int|float|mat2|mat3|mat4|mat2x2|mat2x3|mat2x4|mat3x2|mat3x3|mat3x4|mat4x2|mat4x3|mat4x4|vec2|vec3|vec4|ivec2|ivec3|ivec4|bvec2|bvec3|bvec4|uint|uvec2|uvec3|uvec4|sampler2D|sampler3D|samplerCube|sampler2DShadow|samplerCubeShadow|sampler2DArray|sampler2DArrayShadow|isampler2D|isampler3D|isamplerCube|isampler2DArray|usampler2D   |usampler3D|usamplerCube|usampler2DArray"
+                "pattern": "NOT_APPLICABLE"
               }
             ]
           },
@@ -2215,7 +1830,7 @@
                 "name": "IDENTIFIER",
                 "label": "IDENTIFIER",
                 "idx": 0,
-                "pattern": "[A-zA-Z][A-zA-Z0-9]*"
+                "pattern": "\\w[\\w\\d]*"
               }
             ]
           }
@@ -2229,46 +1844,11 @@
     "orgText": "",
     "definition": [
       {
-        "type": "Alternation",
+        "type": "Terminal",
+        "name": "PRECISION_QUALIFIER",
+        "label": "PRECISION_QUALIFIER",
         "idx": 0,
-        "definition": [
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "HIGHP",
-                "label": "'highp'",
-                "idx": 0,
-                "pattern": "highp"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "MEDIUMP",
-                "label": "'mediump'",
-                "idx": 0,
-                "pattern": "mediump"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "LOWP",
-                "label": "'lowp'",
-                "idx": 0,
-                "pattern": "lowp"
-              }
-            ]
-          }
-        ]
+        "pattern": "NOT_APPLICABLE"
       }
     ]
   },
@@ -2293,7 +1873,7 @@
             "name": "IDENTIFIER",
             "label": "IDENTIFIER",
             "idx": 0,
-            "pattern": "[A-zA-Z][A-zA-Z0-9]*"
+            "pattern": "\\w[\\w\\d]*"
           }
         ]
       },
@@ -2359,7 +1939,7 @@
                 "name": "IDENTIFIER",
                 "label": "IDENTIFIER",
                 "idx": 0,
-                "pattern": "[A-zA-Z][A-zA-Z0-9]*"
+                "pattern": "\\w[\\w\\d]*"
               },
               {
                 "type": "Option",
@@ -2370,7 +1950,7 @@
                     "name": "LEFT_BRACKET",
                     "label": "'['",
                     "idx": 0,
-                    "pattern": "\\["
+                    "pattern": "["
                   },
                   {
                     "type": "Option",
@@ -2572,7 +2152,7 @@
         "name": "LEFT_PAREN",
         "label": "'('",
         "idx": 0,
-        "pattern": "\\("
+        "pattern": "("
       },
       {
         "type": "NonTerminal",
@@ -2584,7 +2164,7 @@
         "name": "RIGHT_PAREN",
         "label": "')'",
         "idx": 0,
-        "pattern": "\\)"
+        "pattern": ")"
       },
       {
         "type": "NonTerminal",
@@ -2633,7 +2213,7 @@
                 "name": "IDENTIFIER",
                 "label": "IDENTIFIER",
                 "idx": 0,
-                "pattern": "[A-zA-Z][A-zA-Z0-9]*"
+                "pattern": "\\w[\\w\\d]*"
               },
               {
                 "type": "Terminal",
@@ -2680,7 +2260,7 @@
         "name": "LEFT_PAREN",
         "label": "'('",
         "idx": 0,
-        "pattern": "\\("
+        "pattern": "("
       },
       {
         "type": "NonTerminal",
@@ -2692,7 +2272,7 @@
         "name": "RIGHT_PAREN",
         "label": "')'",
         "idx": 0,
-        "pattern": "\\)"
+        "pattern": ")"
       },
       {
         "type": "Terminal",
@@ -2801,7 +2381,7 @@
                 "name": "LEFT_PAREN",
                 "label": "'('",
                 "idx": 0,
-                "pattern": "\\("
+                "pattern": "("
               },
               {
                 "type": "NonTerminal",
@@ -2813,7 +2393,7 @@
                 "name": "RIGHT_PAREN",
                 "label": "')'",
                 "idx": 0,
-                "pattern": "\\)"
+                "pattern": ")"
               },
               {
                 "type": "NonTerminal",
@@ -2849,7 +2429,7 @@
                 "name": "LEFT_PAREN",
                 "label": "'('",
                 "idx": 2,
-                "pattern": "\\("
+                "pattern": "("
               },
               {
                 "type": "NonTerminal",
@@ -2861,7 +2441,7 @@
                 "name": "RIGHT_PAREN",
                 "label": "')'",
                 "idx": 2,
-                "pattern": "\\)"
+                "pattern": ")"
               },
               {
                 "type": "Terminal",
@@ -2887,7 +2467,7 @@
                 "name": "LEFT_PAREN",
                 "label": "'('",
                 "idx": 3,
-                "pattern": "\\("
+                "pattern": "("
               },
               {
                 "type": "Alternation",
@@ -2968,7 +2548,7 @@
                 "name": "RIGHT_PAREN",
                 "label": "')'",
                 "idx": 3,
-                "pattern": "\\)"
+                "pattern": ")"
               },
               {
                 "type": "NonTerminal",

@@ -1,12 +1,12 @@
 
-float ambientOcclusion(vec3 pWC, vec3 n1WC) {
-    float k = 1.0;
+float ambientOcclusion(highp vec3 pWC, vec3 n1WC, vec4) {
+    float k = 1.0, j[] = float[2](1,2);
     float distance = sdff(pWC + n1WC * k);
     return clamp(distance / k, 0.0, 1.0);
 }
 
-
-
+//
+//
 struct RMResult {
     float distance;
     vec3 pos;
@@ -15,7 +15,8 @@ struct RMResult {
 RMResult raymarching2(vec3 start, vec3 dir1) {
     vec3 pos = start;
     RMHit hit;
-    for (int i = 0; i < 300; i++) {
+    pos++--;
+    for (int i = 0, j2=2; i < 300; i++) {
         hit = sdf(pos);
         if (hit.distance < 0.001 * hit.distance) break;
         pos = pos + dir1 * hit.distance*.4;
@@ -31,6 +32,8 @@ void main() {
     //    scaledCoord += highResTimeStamp * normalize(vec2(1000., 1.)) * .0005;
     //    scaledCoord *= .3;
     //    scaledCoord += .1;
+
+    foo = float[(zhui+c,2.)](1.);
 
     // UNIT GRID
     vec2 unitGridDistances = scaledCoord - round(scaledCoord);

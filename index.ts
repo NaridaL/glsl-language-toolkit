@@ -1,10 +1,10 @@
 import {
   createSyntaxDiagramsCode,
   createToken,
-  CstNode,
-  CstParser,
+  EmbeddedActionsParser,
   ILexingResult,
   IRecognitionException,
+  IRuleConfig,
   IToken,
   Lexer,
   TokenType,
@@ -12,11 +12,35 @@ import {
 import "colors"
 import { pull } from "lodash"
 import * as fs from "fs"
+import * as prettierPlugin from "./prettier-plugin"
 import { writeFileSync } from "fs"
 import path from "path"
+import prettier from "prettier"
+import {
+  CaseLabel,
+  CompoundStatement,
+  Declaration,
+  Declarator,
+  Expression,
+  ForStatement,
+  FunctionCall,
+  IterationStatement,
+  JumpStatement,
+  Node,
+  ParameterDeclaration,
+  SelectionStatement,
+  Statement,
+  StorageQualifier,
+  SwitchStatement,
+  Token,
+  TypeQualifier,
+  TypeSpecifier,
+} from "./nodes"
+import UNIFORM = TOKEN.UNIFORM
 
 const DEV = process.env.NODE_ENV !== "production"
 
+// noinspection JSUnusedGlobalSymbols
 namespace TOKEN {
   export const WHITESPACE = createToken({
     name: "WHITESPACE",
@@ -40,235 +64,268 @@ namespace TOKEN {
   })
 
   // OPERATORS
+  export const ASSIGN_OP = createToken({ name: "ASSIGN_OP", pattern: Lexer.NA })
+  export const PREFIX_OP = createToken({ name: "PREFIX_OP", pattern: Lexer.NA })
+  export const PRECISION_QUALIFIER = createToken({
+    name: "PRECISION_QUALIFIER",
+    pattern: Lexer.NA,
+  })
+  export const INTERPOLATION_QUALIFIER = createToken({
+    name: "INTERPOLATION_QUALIFIER",
+    pattern: Lexer.NA,
+  })
   export const MULASSIGN = createToken({
     name: "MULASSIGN",
-    pattern: /\*=/,
+    pattern: "*=",
     label: "'*='",
+    categories: [ASSIGN_OP],
   })
   export const DIVASSIGN = createToken({
     name: "DIVASSIGN",
-    pattern: /\/=/,
+    pattern: "/=",
     label: "'/='",
+    categories: [ASSIGN_OP],
   })
   export const MODASSIGN = createToken({
     name: "MODASSIGN",
-    pattern: /%=/,
+    pattern: "%=",
     label: "'%='",
+    categories: [ASSIGN_OP],
   })
   export const ADDASSIGN = createToken({
     name: "ADDASSIGN",
-    pattern: /\+=/,
+    pattern: "+=",
     label: "'+='",
+    categories: [ASSIGN_OP],
   })
   export const SUBASSIGN = createToken({
     name: "SUBASSIGN",
-    pattern: /-=/,
+    pattern: "-=",
     label: "'-='",
+    categories: [ASSIGN_OP],
   })
   export const LEFTASSIGN = createToken({
     name: "LEFTASSIGN",
-    pattern: /<<=/,
+    pattern: "<<=",
     label: "'<<='",
+    categories: [ASSIGN_OP],
   })
   export const RIGHTASSIGN = createToken({
     name: "RIGHTASSIGN",
-    pattern: />>=/,
+    pattern: ">>=",
     label: "'>>='",
+    categories: [ASSIGN_OP],
   })
   export const ANDASSIGN = createToken({
     name: "ANDASSIGN",
-    pattern: /&=/,
+    pattern: "&=",
     label: "'&='",
+    categories: [ASSIGN_OP],
   })
   export const XORASSIGN = createToken({
     name: "XORASSIGN",
-    pattern: /\^=/,
+    pattern: "^=",
     label: "'^='",
+    categories: [ASSIGN_OP],
   })
   export const ORASSIGN = createToken({
     name: "ORASSIGN",
-    pattern: /\|=/,
+    pattern: "|=",
     label: "'|='",
+    categories: [ASSIGN_OP],
   })
 
   export const INC_OP = createToken({
     name: "INC_OP",
-    pattern: /\+\+/,
+    pattern: "++",
     label: "'++'",
+    categories: [PREFIX_OP],
   })
   export const QUESTION = createToken({
     name: "QUESTION",
-    pattern: /\?/,
+    pattern: "?",
     label: "'?'",
   })
   export const COLON = createToken({
     name: "COLON",
-    pattern: /:/,
+    pattern: ":",
     label: "':'",
   })
   export const DEC_OP = createToken({
     name: "DEC_OP",
-    pattern: /--/,
+    pattern: "--",
     label: "'--'",
+    categories: [PREFIX_OP],
   })
   export const AND_OP = createToken({
     name: "AND_OP",
-    pattern: /&&/,
+    pattern: "&&",
     label: "'&&'",
+  })
+  export const XOR_OP = createToken({
+    name: "XOR_OP",
+    pattern: "^^",
+    label: "'^^'",
   })
   export const OR_OP = createToken({
     name: "OR_OP",
-    pattern: /\|\|/,
+    pattern: "||",
     label: "'||'",
   })
-  export const LEFTOP = createToken({
-    name: "LEFTOP",
-    pattern: /<</,
+  export const LEFT_OP = createToken({
+    name: "LEFT_OP",
+    pattern: "<<",
     label: "'<<'",
   })
-  export const RIGHTOP = createToken({
-    name: "RIGHTOP",
-    pattern: />>/,
+  export const RIGHT_OP = createToken({
+    name: "RIGHT_OP",
+    pattern: ">>",
     label: "'>>'",
   })
-  export const EQOP = createToken({
-    name: "EQOP",
-    pattern: /==/,
+  export const EQ_OP = createToken({
+    name: "EQ_OP",
+    pattern: "==",
     label: "'=='",
   })
-  export const NEOP = createToken({
-    name: "NEOP",
-    pattern: /!=/,
+  export const NE_OP = createToken({
+    name: "NE_OP",
+    pattern: "!=",
     label: "'!='",
   })
-  export const LEOP = createToken({
-    name: "LEOP",
-    pattern: /<=/,
+  export const LE_OP = createToken({
+    name: "LE_OP",
+    pattern: "<=",
     label: "'<='",
   })
-  export const GEOP = createToken({
-    name: "GEOP",
-    pattern: />=/,
+  export const GE_OP = createToken({
+    name: "GE_OP",
+    pattern: ">=",
     label: "'>='",
   })
-  export const LEFTANGLE = createToken({
-    name: "LEFTANGLE",
-    pattern: /</,
+  export const LEFT_ANGLE = createToken({
+    name: "LEFT_ANGLE",
+    pattern: "<",
     label: "'<'",
   })
-  export const RIGHTANGLE = createToken({
-    name: "RIGHTANGLE",
-    pattern: />/,
+  export const RIGHT_ANGLE = createToken({
+    name: "RIGHT_ANGLE",
+    pattern: ">",
     label: "'>'",
   })
   export const PLUS = createToken({
     name: "PLUS",
-    pattern: /\+/,
+    pattern: "+",
     label: "'+'",
+    categories: [PREFIX_OP],
   })
   export const TILDE = createToken({
     name: "TILDE",
-    pattern: /~/,
+    pattern: "~",
     label: "'~'",
+    categories: [PREFIX_OP],
   })
   export const BANG = createToken({
     name: "BANG",
-    pattern: /!/,
+    pattern: "!",
     label: "'!'",
+    categories: [PREFIX_OP],
   })
   export const CARET = createToken({
     name: "CARET",
-    pattern: /\^/,
+    pattern: "^",
     label: "'^'",
   })
   export const AMPERSAND = createToken({
     name: "AND",
-    pattern: /&/,
+    pattern: "&",
     label: "'&'",
   })
   export const VERTICALBAR = createToken({
     name: "PIPE",
-    pattern: /\|/,
+    pattern: "|",
     label: "'|'",
   })
   export const SLASH = createToken({
     name: "SLASH",
-    pattern: /\//,
+    pattern: "/",
     label: "'/'",
   })
   export const PERCENT = createToken({
     name: "PERCENT",
-    pattern: /%/,
+    pattern: "%",
     label: "'%'",
   })
   export const STAR = createToken({
     name: "STAR",
-    pattern: /\*/,
+    pattern: "*",
     label: "'*'",
   })
   export const DASH = createToken({
     name: "DASH",
-    pattern: /-/,
+    pattern: "-",
     label: "'-'",
+    categories: [PREFIX_OP],
   })
   export const COMMA = createToken({
     name: "COMMA",
-    pattern: /,/,
+    pattern: ",",
     label: "','",
   })
   export const EQUAL = createToken({
     name: "EQUAL",
-    pattern: /=/,
+    pattern: "=",
     label: "'='",
+    categories: [ASSIGN_OP],
   })
 
   export const LEFT_PAREN = createToken({
     name: "LEFT_PAREN",
-    pattern: /\(/,
+    pattern: "(",
     label: "'('",
   })
   export const RIGHT_PAREN = createToken({
     name: "RIGHT_PAREN",
-    pattern: /\)/,
+    pattern: ")",
     label: "')'",
   })
   export const LEFT_BRACKET = createToken({
     name: "LEFT_BRACKET",
-    pattern: /\[/,
+    pattern: "[",
     label: "'['",
   })
   export const RIGHT_BRACKET = createToken({
     name: "RIGHT_BRACKET",
-    pattern: /]/,
+    pattern: "]",
     label: "']'",
   })
   export const LEFT_BRACE = createToken({
     name: "LEFT_BRACE",
-    pattern: /{/,
+    pattern: "{",
     label: "'{'",
   })
   export const RIGHT_BRACE = createToken({
     name: "RIGHT_BRACE",
-    pattern: /}/,
+    pattern: "}",
     label: "'}'",
   })
   export const SEMICOLON = createToken({
     name: "SEMICOLON",
-    pattern: /;/,
+    pattern: ";",
     label: "';'",
   })
 
   export const IDENTIFIER = createToken({
     name: "IDENTIFIER",
-    pattern: /[A-zA-Z][A-zA-Z0-9]*/,
+    pattern: /\w[\w\d]*/i,
   })
 
-  function KEYWORD(const1: string) {
+  function KEYWORD(const1: string, ...categories: TokenType[]) {
     return createToken({
       name: const1,
       pattern: RegExp(const1.toLowerCase()),
       label: "'" + const1.toLowerCase() + "'",
       longer_alt: IDENTIFIER,
+      categories,
     })
   }
 
@@ -276,8 +333,8 @@ namespace TOKEN {
   export const UNIFORM = KEYWORD("UNIFORM")
   export const LAYOUT = KEYWORD("LAYOUT")
   export const CENTROID = KEYWORD("CENTROID")
-  export const FLAT = KEYWORD("FLAT")
-  export const SMOOTH = KEYWORD("SMOOTH")
+  export const FLAT = KEYWORD("FLAT", INTERPOLATION_QUALIFIER)
+  export const SMOOTH = KEYWORD("SMOOTH", INTERPOLATION_QUALIFIER)
   export const BREAK = KEYWORD("BREAK")
   export const CONTINUE = KEYWORD("CONTINUE")
   export const DO = KEYWORD("DO")
@@ -292,66 +349,71 @@ namespace TOKEN {
   export const ELSE = KEYWORD("ELSE")
   export const INVARIANT = KEYWORD("INVARIANT")
   export const INOUT = KEYWORD("INOUT")
-  export const IN = KEYWORD("IN")
   export const OUT = KEYWORD("OUT")
   export const VOID = KEYWORD("VOID")
   export const STRUCT = KEYWORD("STRUCT")
-  export const BOOL = KEYWORD("BOOL")
   export const DISCARD = KEYWORD("DISCARD")
   export const RETURN = KEYWORD("RETURN")
-  export const LOWP = KEYWORD("LOWP")
-  export const MEDIUMP = KEYWORD("MEDIUMP")
-  export const HIGHP = KEYWORD("HIGHP")
-  export const TYPE = createToken({
-    name: "TYPE",
-    pattern: new RegExp(
-      [
-        "int",
-        "float",
-        "mat2",
-        "mat3",
-        "mat4",
-        "mat2x2",
-        "mat2x3",
-        "mat2x4",
-        "mat3x2",
-        "mat3x3",
-        "mat3x4",
-        "mat4x2",
-        "mat4x3",
-        "mat4x4",
-        "vec2",
-        "vec3",
-        "vec4",
-        "ivec2",
-        "ivec3",
-        "ivec4",
-        "bvec2",
-        "bvec3",
-        "bvec4",
-        "uint",
-        "uvec2",
-        "uvec3",
-        "uvec4",
-        "sampler2D",
-        "sampler3D",
-        "samplerCube",
-        "sampler2DShadow",
-        "samplerCubeShadow",
-        "sampler2DArray",
-        "sampler2DArrayShadow",
-        "isampler2D",
-        "isampler3D",
-        "isamplerCube",
-        "isampler2DArray",
-        "usampler2D   ",
-        "usampler3D",
-        "usamplerCube",
-        "usampler2DArray",
-      ].join("|"),
-    ),
-    longer_alt: IDENTIFIER,
+  export const LOWP = KEYWORD("LOWP", PRECISION_QUALIFIER)
+  export const MEDIUMP = KEYWORD("MEDIUMP", PRECISION_QUALIFIER)
+  export const HIGHP = KEYWORD("HIGHP", PRECISION_QUALIFIER)
+  export const BASIC_TYPE = createToken({
+    name: "BASIC_TYPE",
+    pattern: Lexer.NA,
   })
+  export const BASIC_TYPES = [
+    "bool",
+    "int",
+    "float",
+    "mat2",
+    "mat3",
+    "mat4",
+    "mat2x2",
+    "mat2x3",
+    "mat2x4",
+    "mat3x2",
+    "mat3x3",
+    "mat3x4",
+    "mat4x2",
+    "mat4x3",
+    "mat4x4",
+    "vec2",
+    "vec3",
+    "vec4",
+    "ivec2",
+    "ivec3",
+    "ivec4",
+    "bvec2",
+    "bvec3",
+    "bvec4",
+    "uint",
+    "uvec2",
+    "uvec3",
+    "uvec4",
+    "sampler2D",
+    "sampler3D",
+    "samplerCube",
+    "sampler2DShadow",
+    "samplerCubeShadow",
+    "sampler2DArray",
+    "sampler2DArrayShadow",
+    "isampler2D",
+    "isampler3D",
+    "isamplerCube",
+    "isampler2DArray",
+    "usampler2D   ",
+    "usampler3D",
+    "usamplerCube",
+    "usampler2DArray",
+  ].map((t) =>
+    createToken({
+      name: t.toUpperCase(),
+      pattern: t,
+      longer_alt: IDENTIFIER,
+      categories: [BASIC_TYPE],
+    }),
+  )
+  export const IN = KEYWORD("IN")
   export const BOOLCONSTANT = createToken({
     name: "BOOLCONSTANT",
     pattern: /true|false/,
@@ -363,7 +425,7 @@ namespace TOKEN {
   })
   export const DOT = createToken({
     name: "DOT",
-    pattern: /\./,
+    pattern: ".",
     label: "'.'",
   })
   export const UINTCONSTANT = createToken({
@@ -377,63 +439,109 @@ namespace TOKEN {
 }
 // IDENTIFIER needs to go last, but must be declared first
 // so it can be referenced in longerAlt
-const ALL_TOKENS: TokenType[] = Object.values(TOKEN)
-pull(ALL_TOKENS, TOKEN.IDENTIFIER)
+const ALL_TOKENS = pull(Object.values(TOKEN), TOKEN.IDENTIFIER).flatMap((x) =>
+  Array.isArray(x) ? x : [x],
+)
 ALL_TOKENS.push(TOKEN.IDENTIFIER)
 
 const GLSLLexer = new Lexer(ALL_TOKENS, {
   ensureOptimizations: DEV,
 })
 
-class GLSLParser extends CstParser {
-  precisionQualifier!: (idx: number) => CstNode
+// interface Node {
+//   type: string
+// }
+
+export type CstNode = Node
+type X = GLSLParser & Record<string, (idx: number) => CstNode>
+type Y = keyof X
+type RT<X> = X extends (...any: any) => infer R ? R : never
+type Z = RT<Math["floor"]>
+
+const x: Z = 2
+console.log(x)
+type FFF = {
+  [K in keyof GLSLParser]: GLSLParser[K] extends (...any: any) => infer R
+    ? R
+    : never
+}
+class GLSLParser extends EmbeddedActionsParser {
+  currIdx!: number
+
+  // expressions
+  postfixExpression!: (idx: number) => Expression
+  multiplicativeExpression!: (idx: number) => Expression
+  additiveExpression!: (idx: number) => Expression
+  shiftExpression!: (idx: number) => Expression
+  relationalExpression!: (idx: number) => Expression
+  equalityExpression!: (idx: number) => Expression
+  andExpression!: (idx: number) => Expression
+  exclusiveOrExpression!: (idx: number) => Expression
+  inclusiveOrExpression!: (idx: number) => Expression
+  assignmentExpression!: (idx: number) => Expression
+  logicalOrExpression!: (idx: number) => Expression
+  conditionalExpression!: (idx: number) => Expression
+  primaryExpression!: (idx: number) => Expression
+  logicalAndExpression!: (idx: number) => Expression
+  constantExpression!: (idx: number) => CstNode
+  unaryExpression!: (idx: number) => Expression
+  logicalXorExpression!: (idx: number) => Expression
+  expression!: (idx: number) => Expression
+
+  // statements
+  statement!: (idx: number) => Statement
+  iterationStatement!: (idx: number) => IterationStatement
+  selectionStatement!: (idx: number) => SelectionStatement
+  switchStatement!: (idx: number) => SwitchStatement
+  caseLabel!: (idx: number) => CaseLabel
+  compoundStatement!: (idx: number) => CompoundStatement
+  jumpStatement!: (idx: number) => JumpStatement
+
+  precisionQualifier!: (idx: number) => IToken
   structSpecifier!: (idx: number) => CstNode
-  postfixExpression!: (idx: number) => CstNode
-  multiplicativeExpression!: (idx: number) => CstNode
-  additiveExpression!: (idx: number) => CstNode
-  shiftExpression!: (idx: number) => CstNode
-  relationalExpression!: (idx: number) => CstNode
-  equalityExpression!: (idx: number) => CstNode
-  andExpression!: (idx: number) => CstNode
-  exclusiveOrExpression!: (idx: number) => CstNode
-  inclusiveOrExpression!: (idx: number) => CstNode
-  // logicalXorExpression!: (idx: number) => CstNode
-  assignmentExpression!: (idx: number) => CstNode
-  expression!: (idx: number) => CstNode
-  logicalOrExpression!: (idx: number) => CstNode
-  conditionalExpression!: (idx: number) => CstNode
-  primaryExpression!: (idx: number) => CstNode
-  functionCall!: (idx: number) => CstNode
-  logicalAndExpression!: (idx: number) => CstNode
-  declaration!: (idx: number) => CstNode
+  functionCall!: (idx: number) => FunctionCall
+  declaration!: (idx: number) => Declaration
   statementList!: (idx?: number) => CstNode
   translationUnit!: (idx?: number) => CstNode
-  compoundStatement!: (idx: number) => CstNode
   initDeclaratorList!: (idx: number) => CstNode
   structDeclarationList!: (idx: number) => CstNode
-  typeQualifier!: (idx: number) => CstNode
-  typeSpecifier!: (idx: number) => CstNode
-  constantExpression!: (idx: number) => CstNode
-  unaryExpression!: (idx: number) => CstNode
-  singleDeclaration!: (idx: number) => CstNode
+  typeQualifier!: (idx: number) => TypeQualifier
+  typeSpecifier!: (idx: number) => TypeSpecifier
+  singleDeclaration!: (idx: number) => void
   fullySpecifiedType!: (idx: number) => CstNode
-  initializer!: (idx: number) => CstNode
-  storageQualifier!: (idx: number) => CstNode
+  initializer!: (idx: number) => Expression
+  storageQualifier!: (idx: number) => StorageQualifier
   layoutQualifier!: (idx: number) => CstNode
-  interpolationQualifier!: (idx: number) => CstNode
-  invariantQualifier!: (idx: number) => CstNode
-  typeSpecifierNoPrec!: (idx: number) => CstNode
+  invariantQualifier!: (idx: number) => IToken
+  typeSpecifierNoPrec!: (idx: number) => TypeSpecifier
   typeSpecifierNonArray!: (idx: number) => CstNode
-  declarationNoFunctionPrototype!: (idx: number) => CstNode
   functionDefinitionOrPrototype!: (idx: number) => CstNode
-  statement!: (idx: number) => CstNode
-  externalDeclaration!: (idx: number) => CstNode
-  jumpStatement!: (idx: number) => CstNode
+  externalDeclaration!: (idx: number) => Declaration
   condition!: (idx: number) => CstNode
-  iterationStatement!: (idx: number) => CstNode
-  selectionStatement!: (idx: number) => CstNode
-  switchStatement!: (idx: number) => CstNode
-  caseLabel!: (idx: number) => CstNode
+  functionCallHeader!: (...args: any[]) => void
+  parameterDeclaration!: (idx: number) => ParameterDeclaration
+
+  ANNOTATE<T>(
+    implementation: (...implArgs: any[]) => T,
+  ): (...implArgs: any[]) => T {
+    return (...args) => {
+      const firstToken = this.currIdx
+      const result = implementation(args)
+      if (!this.RECORDING_PHASE && result) {
+        ;(result as any).firstToken = firstToken
+        ;(result as any).lastToken = this.currIdx - 1
+      }
+      return result
+    }
+  }
+
+  protected RULEE<T, S extends keyof GLSLParser>(
+    name: S,
+    implementation: (...implArgs: any[]) => FFF[S],
+    config?: IRuleConfig<T>,
+  ): (idxInCallingRule?: number, ...args: any[]) => FFF[S] {
+    return super.RULE(name, this.ANNOTATE(implementation) as any, config) as any
+  }
 
   constructor() {
     super(ALL_TOKENS, { skipValidations: !DEV })
@@ -444,392 +552,386 @@ class GLSLParser extends CstParser {
       return $.OR9(tokens.map((t) => ({ ALT: () => $.CONSUME(t) })))
     }
 
-    function ORR1<T>(...alts: (() => T)[]) {
-      return $.OR1<T>(alts.map((a) => ({ ALT: a })))
-    }
-
-    function ORR2<T>(...alts: (() => T)[]) {
-      return $.OR2<T>(alts.map((a) => ({ ALT: a })))
-    }
-
-    function ORR3<T>(...alts: (() => T)[]) {
-      return $.OR3<T>(alts.map((a) => ({ ALT: a })))
-    }
-
-    function LEFT_ASSOC(rule: (idx: number) => CstNode, ...tok: TokenType[]) {
+    function LEFT_ASSOC(
+      rule: (idx: number) => Expression,
+      ...tok: TokenType[]
+    ) {
       let result = $.SUBRULE1(rule)
-      $.MANY(() => {
-        const op = CONSUME_OR(...tok)
-        const rhs = $.SUBRULE2(rule)
-      })
+      $.MANY(
+        $.ANNOTATE(() => {
+          const op = CONSUME_OR(...tok)
+          const rhs = $.SUBRULE2(rule)
+          result = { type: "binaryExpression", lhs: result, rhs, op }
+        }),
+      )
       return result
     }
 
-    //
-    // $.RULE("type", () =>
-    //   $.OR([
-    //     { ALT: () => $.CONSUME(TOKEN.TYPE) },
-    //     {
-    //       ALT: () => {},
-    //     },
-    //     { ALT: () => $.CONSUME(TOKEN.IDENTIFIER) },
-    //     { ALT: () => $.SUBRULE($.structSpecifier) },
-    // )
-
-    // variableIdentifier:
-    //     IDENTIFIER
-    // primaryExpression:
-    //     variableIdentifier
-    //     INTCONSTANT
-    //     UINTCONSTANT
-    //     FLOATCONSTANT
-    //     BOOLCONSTANT
-    //     LEFT_PAREN expression RIGHT_PAREN
-    $.RULE("primaryExpression", () =>
-      ORR2(
-        () => {
-          $.CONSUME(TOKEN.LEFT_PAREN)
-          $.SUBRULE($.expression)
-          $.CONSUME(TOKEN.RIGHT_PAREN)
+    //SPEC// variableIdentifier:
+    //SPEC//     IDENTIFIER
+    //SPEC// primaryExpression:
+    //SPEC//     variableIdentifier
+    //SPEC//     INTCONSTANT
+    //SPEC//     UINTCONSTANT
+    //SPEC//     FLOATCONSTANT
+    //SPEC//     BOOLCONSTANT
+    //SPEC//     LEFT_PAREN expression RIGHT_PAREN
+    $.RULEE("primaryExpression", () =>
+      $.OR([
+        {
+          ALT: () => {
+            $.CONSUME(TOKEN.LEFT_PAREN)
+            const result = $.SUBRULE($.expression)
+            $.CONSUME(TOKEN.RIGHT_PAREN)
+            return result
+          },
         },
-        () =>
-          CONSUME_OR(
-            TOKEN.IDENTIFIER,
-            TOKEN.INTCONSTANT,
-            TOKEN.UINTCONSTANT,
-            TOKEN.FLOATCONSTANT,
-            TOKEN.BOOLCONSTANT,
-          ),
-      ),
+        {
+          ALT: () =>
+            CONSUME_OR(
+              TOKEN.IDENTIFIER,
+              TOKEN.INTCONSTANT,
+              TOKEN.UINTCONSTANT,
+              TOKEN.FLOATCONSTANT,
+              TOKEN.BOOLCONSTANT,
+            ),
+        },
+      ]),
     )
-    // postfixExpression:
-    //     primaryExpression
-    //     postfixExpression LEFT_BRACKET integerExpression RIGHT_BRACKET
-    //     functionCall
-    //     postfixExpression DOT FIELD_SELECTION
-    //     postfixExpression INC_OP
-    //     postfixExpression DEC_OP
-    $.RULE("postfixExpression", () => {
-      ORR3(
-        () => $.SUBRULE($.functionCall),
-        () => $.SUBRULE($.primaryExpression),
-      )
-      $.MANY(() =>
-        ORR2(
-          () => {
-            $.CONSUME(TOKEN.LEFT_BRACKET)
-            $.SUBRULE($.expression)
-            $.CONSUME(TOKEN.RIGHT_BRACKET)
+    //SPEC// postfixExpression:
+    //SPEC//     primaryExpression
+    //SPEC//     postfixExpression LEFT_BRACKET integerExpression RIGHT_BRACKET
+    //SPEC//     functionCall
+    //SPEC//     postfixExpression DOT FIELD_SELECTION
+    //SPEC//     postfixExpression INC_OP
+    //SPEC//     postfixExpression DEC_OP
+    // We add postfixExpression DOT functionCall.
+    $.RULEE(
+      "postfixExpression",
+      (): Expression =>
+        $.OR1([
+          {
+            GATE: $.BACKTRACK($.functionCallHeader),
+            ALT: () => $.SUBRULE1($.functionCall),
           },
-          () => {
-            $.CONSUME(TOKEN.DOT)
-            $.CONSUME(TOKEN.IDENTIFIER)
+          {
+            ALT: () => {
+              let result = $.SUBRULE($.primaryExpression)
+              $.MANY(() =>
+                $.OR2([
+                  {
+                    ALT: () => {
+                      $.CONSUME(TOKEN.LEFT_BRACKET)
+                      const index = $.SUBRULE($.expression)
+                      $.CONSUME(TOKEN.RIGHT_BRACKET)
+                      result = { type: "arrayAccess", on: result, index }
+                    },
+                  },
+                  {
+                    ALT: () => {
+                      $.CONSUME1(TOKEN.DOT)
+                      const functionCall = $.SUBRULE2($.functionCall)
+                      result = { type: "methodCall", on: result, functionCall }
+                    },
+                  },
+                  {
+                    ALT: () => {
+                      $.CONSUME2(TOKEN.DOT)
+                      const field = $.CONSUME(TOKEN.IDENTIFIER)
+                      result = { type: "fieldAccess", on: result, field }
+                    },
+                  },
+                  {
+                    ALT: () => {
+                      result = {
+                        type: "postfixExpression",
+                        on: result,
+                        op: $.CONSUME(TOKEN.INC_OP),
+                      }
+                    },
+                  },
+                  {
+                    ALT: () => {
+                      result = {
+                        type: "postfixExpression",
+                        on: result,
+                        op: $.CONSUME(TOKEN.DEC_OP),
+                      }
+                    },
+                  },
+                ]),
+              )
+              return result
+            },
           },
-          () => CONSUME_OR(TOKEN.INC_OP, TOKEN.DEC_OP),
-        ),
-      )
-    })
-    // integerExpression:
-    //     expression
-    // functionCall:
-    //     functionCallOrMethod
-    // functionCallOrMethod:
-    //     functionCallGeneric
-    //     postfixExpression DOT functionCallGeneric
-    // functionCallGeneric:
-    //     functionCallHeaderWithParameters RIGHT_PAREN
-    //     functionCallHeaderNoParameters RIGHT_PAREN
-    // functionCallHeaderNoParameters:
-    //     functionCallHeader VOID
-    //     functionCallHeader
-    // functionCallHeaderWithParameters:
-    //     functionCallHeader assignmentExpression
-    //     functionCallHeaderWithParameters COMMA assignmentExpression
-    // functionCallHeader:
-    //     functionIdentifier LEFT_PAREN
-    //     // GramNote: Constructors look like functions, but lexical analysis recognized most of them as
-    //     // keywords.  They are now recognized through “typeSpecifier”.
-    //     // Methods (.length) and identifiers are recognized through postfixExpression.
-    $.RULE("functionCall", () => {
-      ORR1(
-        () => $.CONSUME(TOKEN.TYPE),
-        () => $.CONSUME(TOKEN.IDENTIFIER),
-      )
+        ]),
+    )
+    //SPEC// integerExpression:
+    //SPEC//     expression
+    //SPEC// functionCall:
+    //SPEC//     functionCallOrMethod
+    //SPEC// functionCallOrMethod:
+    //SPEC//     functionCallGeneric
+    //SPEC//     postfixExpression DOT functionCallGeneric
+    //SPEC// functionCallGeneric:
+    //SPEC//     functionCallHeaderWithParameters RIGHT_PAREN
+    //SPEC//     functionCallHeaderNoParameters RIGHT_PAREN
+    //SPEC// functionCallHeaderNoParameters:
+    //SPEC//     functionCallHeader VOID
+    //SPEC//     functionCallHeader
+    //SPEC// functionCallHeaderWithParameters:
+    //SPEC//     functionCallHeader assignmentExpression
+    //SPEC//     functionCallHeaderWithParameters COMMA assignmentExpression
+    //SPEC// functionCallHeader:
+    //SPEC//     functionIdentifier LEFT_PAREN
+    //SPEC//     // GramNote: Constructors look like functions, but lexical analysis recognized most of them as
+    //SPEC//     // keywords.  They are now recognized through “typeSpecifier”.
+    //SPEC//     // Methods (.length) and identifiers are recognized through postfixExpression.
+    //SPEC// functionIdentifier:
+    //SPEC//     typeSpecifier
+    //SPEC//     IDENTIFIER
+    //SPEC//     FIELD_SELECTION
+    $.RULEE("functionCall", () => {
+      const what = $.SUBRULE($.typeSpecifierNoPrec)
       $.CONSUME(TOKEN.LEFT_PAREN)
+      const args: Expression[] = []
       $.MANY_SEP({
-        DEF: () => $.SUBRULE($.assignmentExpression),
+        DEF: () => args.push($.SUBRULE($.assignmentExpression)),
         SEP: TOKEN.COMMA,
       })
       $.CONSUME(TOKEN.RIGHT_PAREN)
+      return { type: "functionCall", what, args }
     })
-    // functionIdentifier:
-    //     typeSpecifier
-    //     IDENTIFIER
-    //     FIELD_SELECTION
-    // unaryExpression:
-    //     postfixExpression
-    //     INC_OP unaryExpression
-    //     DEC_OP unaryExpression
-    //     unaryOperator unaryExpression
-    //     // GramNote:  No traditional style type casts.
-    // unaryOperator:
-    //     PLUS
-    //     DASH
-    //     BANG
-    //     TILDE
-    //     // GramNote:  No '*' or '&' unary ops.  Pointers are not supported.
-    $.RULE("unaryExpression", () =>
+    // used for lookahead
+    $.RULEE("functionCallHeader", () => {
+      $.SUBRULE($.typeSpecifierNoPrec)
+      $.CONSUME(TOKEN.LEFT_PAREN)
+    })
+    //SPEC// unaryExpression:
+    //SPEC//     postfixExpression
+    //SPEC//     INC_OP unaryExpression
+    //SPEC//     DEC_OP unaryExpression
+    //SPEC//     unaryOperator unaryExpression
+    //SPEC//     // GramNote:  No traditional style type casts.
+    //SPEC// unaryOperator:
+    //SPEC//     PLUS
+    //SPEC//     DASH
+    //SPEC//     BANG
+    //SPEC//     TILDE
+    //SPEC//     // GramNote:  No '*' or '&' unary ops.  Pointers are not supported.
+    $.RULEE("unaryExpression", () =>
       $.OR([
-        { ALT: () => $.SUBRULE1(this.postfixExpression) },
+        { ALT: () => $.SUBRULE1($.postfixExpression) },
         {
           ALT: () => {
-            CONSUME_OR(
-              TOKEN.INC_OP,
-              TOKEN.DEC_OP,
-              TOKEN.PLUS,
-              TOKEN.DASH,
-              TOKEN.BANG,
-              TOKEN.TILDE,
-            )
-            $.SUBRULE2(this.unaryExpression)
+            const op = $.CONSUME(TOKEN.PREFIX_OP)
+            const of = $.SUBRULE2(this.unaryExpression)
+            return { type: "PREFIX_EXPRESSION", op, of }
           },
         },
       ]),
     )
-    // multiplicativeExpression:
-    //     unaryExpression
-    //     multiplicativeExpression STAR unaryExpression
-    //     multiplicativeExpression SLASH unaryExpression
-    //     multiplicativeExpression PERCENT unaryExpression
-    $.RULE("multiplicativeExpression", () =>
-      LEFT_ASSOC(this.unaryExpression, TOKEN.STAR, TOKEN.SLASH, TOKEN.PERCENT),
+    //SPEC// multiplicativeExpression:
+    //SPEC//     unaryExpression
+    //SPEC//     multiplicativeExpression STAR unaryExpression
+    //SPEC//     multiplicativeExpression SLASH unaryExpression
+    //SPEC//     multiplicativeExpression PERCENT unaryExpression
+    $.RULEE("multiplicativeExpression", () =>
+      LEFT_ASSOC($.unaryExpression, TOKEN.STAR, TOKEN.SLASH, TOKEN.PERCENT),
     )
-    // additiveExpression:
-    //     multiplicativeExpression
-    //     additiveExpression PLUS multiplicativeExpression
-    //     additiveExpression DASH multiplicativeExpression
-    $.RULE("additiveExpression", () =>
-      LEFT_ASSOC(this.multiplicativeExpression, TOKEN.PLUS, TOKEN.DASH),
+    //SPEC// additiveExpression:
+    //SPEC//     multiplicativeExpression
+    //SPEC//     additiveExpression PLUS multiplicativeExpression
+    //SPEC//     additiveExpression DASH multiplicativeExpression
+    $.RULEE("additiveExpression", () =>
+      LEFT_ASSOC($.multiplicativeExpression, TOKEN.PLUS, TOKEN.DASH),
     )
-    // shiftExpression:
-    //     additiveExpression
-    //     shiftExpression LEFTOP additiveExpression
-    //     shiftExpression RIGHTOP additiveExpression
-    $.RULE("shiftExpression", () =>
-      LEFT_ASSOC(this.additiveExpression, TOKEN.LEFTOP, TOKEN.RIGHTOP),
+    //SPEC// shiftExpression:
+    //SPEC//     additiveExpression
+    //SPEC//     shiftExpression LEFT_OP additiveExpression
+    //SPEC//     shiftExpression RIGHT_OP additiveExpression
+    $.RULEE("shiftExpression", () =>
+      LEFT_ASSOC($.additiveExpression, TOKEN.LEFT_OP, TOKEN.RIGHT_OP),
     )
-    // relationalExpression:
-    //     shiftExpression
-    //     relationalExpression LEFTANGLE shiftExpression
-    //     relationalExpression RIGHTANGLE shiftExpression
-    //     relationalExpression LEOP shiftExpression
-    //     relationalExpression GEOP shiftExpression
-    $.RULE("relationalExpression", () =>
+    //SPEC// relationalExpression:
+    //SPEC//     shiftExpression
+    //SPEC//     relationalExpression LEFT_ANGLE shiftExpression
+    //SPEC//     relationalExpression RIGHT_ANGLE shiftExpression
+    //SPEC//     relationalExpression LE_OP shiftExpression
+    //SPEC//     relationalExpression GE_OP shiftExpression
+    $.RULEE("relationalExpression", () =>
       LEFT_ASSOC(
         this.shiftExpression,
-        TOKEN.LEFTANGLE,
-        TOKEN.RIGHTANGLE,
-        TOKEN.LEOP,
-        TOKEN.GEOP,
+        TOKEN.LEFT_ANGLE,
+        TOKEN.RIGHT_ANGLE,
+        TOKEN.LE_OP,
+        TOKEN.GE_OP,
       ),
     )
-    // equalityExpression:
-    //     relationalExpression
-    //     equalityExpression EQOP relationalExpression
-    //     equalityExpression NEOP relationalExpression
-    $.RULE("equalityExpression", () =>
-      LEFT_ASSOC(this.relationalExpression, TOKEN.EQOP, TOKEN.NEOP),
+    //SPEC// equalityExpression:
+    //SPEC//     relationalExpression
+    //SPEC//     equalityExpression EQ_OP relationalExpression
+    //SPEC//     equalityExpression NE_OP relationalExpression
+    $.RULEE("equalityExpression", () =>
+      LEFT_ASSOC($.relationalExpression, TOKEN.EQ_OP, TOKEN.NE_OP),
     )
-    // andExpression:
-    //     equalityExpression
-    //     andExpression AMPERSAND equalityExpression
-    $.RULE("andExpression", () =>
-      LEFT_ASSOC(this.equalityExpression, TOKEN.AMPERSAND),
+    //SPEC// andExpression:
+    //SPEC//     equalityExpression
+    //SPEC//     andExpression AMPERSAND equalityExpression
+    $.RULEE("andExpression", () =>
+      LEFT_ASSOC($.equalityExpression, TOKEN.AMPERSAND),
     )
-    // exclusiveOrExpression:
-    //     andExpression
-    //     exclusiveOrExpression CARET andExpression
-    $.RULE("exclusiveOrExpression", () =>
-      LEFT_ASSOC(this.andExpression, TOKEN.CARET),
+    //SPEC// exclusiveOrExpression:
+    //SPEC//     andExpression
+    //SPEC//     exclusiveOrExpression CARET andExpression
+    $.RULEE("exclusiveOrExpression", () =>
+      LEFT_ASSOC($.andExpression, TOKEN.CARET),
     )
-    // inclusiveOrExpression:
-    //     exclusiveOrExpression
-    //     inclusiveOrExpression VERTICALBAR exclusiveOrExpression
-    $.RULE("inclusiveOrExpression", () =>
-      LEFT_ASSOC(this.exclusiveOrExpression, TOKEN.VERTICALBAR),
+    //SPEC// inclusiveOrExpression:
+    //SPEC//     exclusiveOrExpression
+    //SPEC//     inclusiveOrExpression VERTICALBAR exclusiveOrExpression
+    $.RULEE("inclusiveOrExpression", () =>
+      LEFT_ASSOC($.exclusiveOrExpression, TOKEN.VERTICALBAR),
     )
-    // logicalAndExpression:
-    //     inclusiveOrExpression
-    //     logicalAndExpression AND_OP inclusiveOrExpression
-    $.RULE("logicalAndExpression", () =>
-      LEFT_ASSOC(this.inclusiveOrExpression, TOKEN.AND_OP),
+    //SPEC// logicalAndExpression:
+    //SPEC//     inclusiveOrExpression
+    //SPEC//     logicalAndExpression AND_OP inclusiveOrExpression
+    $.RULEE("logicalAndExpression", () =>
+      LEFT_ASSOC($.inclusiveOrExpression, TOKEN.AND_OP),
     )
-    // logicalXorExpression:
-    //     logicalAndExpression
-    //     logicalXorExpression XOR_OP logicalAndExpression
-    // $.RULE("logicalXorExpression", () =>
-    //   LEFT_ASSOC(this.logicalAndExpression, TOKEN.XOR_OP),
-    // )
-    // logicalOrExpression:
-    //     logicalXorExpression
-    //     logicalOrExpression OR_OP logicalXorExpression
-    $.RULE("logicalOrExpression", () =>
-      LEFT_ASSOC(this.logicalAndExpression, TOKEN.OR_OP),
+    //SPEC// logicalXorExpression:
+    //SPEC//     logicalAndExpression
+    //SPEC//     logicalXorExpression XOR_OP logicalAndExpression
+    $.RULEE("logicalXorExpression", () =>
+      LEFT_ASSOC($.logicalAndExpression, TOKEN.XOR_OP),
     )
-    // conditionalExpression:
-    //     logicalOrExpression
-    //     logicalOrExpression QUESTION expression COLON assignmentExpression
-    $.RULE("conditionalExpression", () => {
-      $.SUBRULE1(this.logicalOrExpression)
+    //SPEC// logicalOrExpression:
+    //SPEC//     logicalXorExpression
+    //SPEC//     logicalOrExpression OR_OP logicalXorExpression
+    $.RULEE("logicalOrExpression", () =>
+      LEFT_ASSOC($.logicalXorExpression, TOKEN.OR_OP),
+    )
+    //SPEC// conditionalExpression:
+    //SPEC//     logicalOrExpression
+    //SPEC//     logicalOrExpression QUESTION expression COLON assignmentExpression
+    $.RULEE("conditionalExpression", () => {
+      const lhs = $.SUBRULE1($.logicalOrExpression)
 
-      $.OPTION(() => {
-        $.CONSUME(TOKEN.QUESTION)
-        $.SUBRULE2(this.expression)
-        $.CONSUME(TOKEN.COLON)
-        $.SUBRULE3(this.assignmentExpression)
-      })
+      return (
+        $.OPTION(() => ({
+          type: "conditionalExpression",
+          condition: lhs,
+          QUESTION: $.CONSUME(TOKEN.QUESTION),
+          yes: $.SUBRULE2($.expression),
+          COLON: $.CONSUME(TOKEN.COLON),
+          no: $.SUBRULE3($.assignmentExpression),
+        })) || lhs
+      )
     })
-    // assignmentExpression:
-    //     conditionalExpression
-    //     unaryExpression assignmentOperator assignmentExpression
-    // assignmentOperator:
-    //     EQUAL
-    //     MULASSIGN
-    //     DIVASSIGN
-    //     MODASSIGN
-    //     ADDASSIGN
-    //     SUBASSIGN
-    //     LEFTASSIGN
-    //     RIGHTASSIGN
-    //     ANDASSIGN
-    //     XORASSIGN
-    //     ORASSIGN
+    //SPEC// assignmentExpression:
+    //SPEC//     conditionalExpression
+    //SPEC//     unaryExpression assignmentOperator assignmentExpression
+    //SPEC// assignmentOperator:
+    //SPEC//     EQUAL
+    //SPEC//     MULASSIGN
+    //SPEC//     DIVASSIGN
+    //SPEC//     MODASSIGN
+    //SPEC//     ADDASSIGN
+    //SPEC//     SUBASSIGN
+    //SPEC//     LEFTASSIGN
+    //SPEC//     RIGHTASSIGN
+    //SPEC//     ANDASSIGN
+    //SPEC//     XORASSIGN
+    //SPEC//     ORASSIGN
     // conditionalExpression starts with unaryExpression, so rewrite to
     // assignmentExpression: conditionalExpression (assignmentOperator conditionalExpression)*
     // and do semantic check later.
-    $.RULE("assignmentExpression", () => {
-      $.SUBRULE($.conditionalExpression)
-      $.MANY(() => {
-        CONSUME_OR(
-          TOKEN.EQUAL,
-          TOKEN.MULASSIGN,
-          TOKEN.DIVASSIGN,
-          TOKEN.MODASSIGN,
-          TOKEN.ADDASSIGN,
-          TOKEN.SUBASSIGN,
-          TOKEN.LEFTASSIGN,
-          TOKEN.RIGHTASSIGN,
-          TOKEN.ANDASSIGN,
-          TOKEN.XORASSIGN,
-          TOKEN.ORASSIGN,
-        )
-        $.SUBRULE1(this.conditionalExpression)
-      })
-    })
-    // expression:
-    //     assignmentExpression
-    //     expression COMMA assignmentExpression
-    $.RULE(
-      "expression",
-      // () => $.SUBRULE($.assignmentExpression),
-      () =>
-        $.AT_LEAST_ONE_SEP({
-          DEF: () => $.SUBRULE($.assignmentExpression),
-          SEP: TOKEN.COMMA,
+    $.RULEE("assignmentExpression", () => {
+      let result = $.SUBRULE($.conditionalExpression)
+      $.MANY(
+        $.ANNOTATE(() => {
+          const op = $.CONSUME(TOKEN.ASSIGN_OP)
+          const rhs = $.SUBRULE1($.conditionalExpression)
+          return (result = {
+            type: "assignmentExpression",
+            lhs: result,
+            op,
+            rhs,
+          })
         }),
-    )
-    // constantExpression:
-    //     conditionalExpression
-    $.RULE("constantExpression", () => $.SUBRULE($.conditionalExpression))
-    // declaration:
-    //     functionPrototype SEMICOLON
-    //     initDeclaratorList SEMICOLON
-    //     PRECISION precisionQualifier typeSpecifierNoPrec SEMICOLON
-    //     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE SEMICOLON
-    //     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE IDENTIFIER SEMICOLON
-    //     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE IDENTIFIER LEFT_BRACKET
-    //                                                      constantExpression RIGHT_BRACKET SEMICOLON
-    //     typeQualifier SEMICOLON
-    $.RULE("declarationNoFunctionPrototypeNoInitDeclaratorList", () =>
-      $.OR({
-        MAX_LOOKAHEAD: 4,
-        DEF: [
-          {
-            ALT: () => {
-              $.CONSUME(TOKEN.PRECISION)
-              $.SUBRULE1($.precisionQualifier)
-              $.SUBRULE2($.typeSpecifierNoPrec)
-              $.CONSUME1(TOKEN.SEMICOLON)
-            },
-          },
-          {
-            ALT: () => {
-              $.SUBRULE1($.typeQualifier)
-              $.OPTION1(() => {
-                $.CONSUME1(TOKEN.IDENTIFIER)
-                $.CONSUME(TOKEN.LEFT_BRACE)
-                $.SUBRULE($.structDeclarationList)
-                $.CONSUME(TOKEN.RIGHT_BRACE)
-                $.OPTION2(() => {
-                  $.CONSUME2(TOKEN.IDENTIFIER)
-                  $.OPTION3(() => {
-                    $.CONSUME(TOKEN.LEFT_BRACKET)
-                    $.SUBRULE($.constantExpression)
-                    $.CONSUME(TOKEN.RIGHT_BRACKET)
-                  })
-                })
-              })
-              $.CONSUME2(TOKEN.SEMICOLON)
-            },
-          },
-        ],
-      }),
-    )
-
-    $.RULE("externalDeclaration", (noFunctionDefinition) =>
+      )
+      return result
+    })
+    //SPEC// expression:
+    //SPEC//     assignmentExpression
+    //SPEC//     expression COMMA assignmentExpression
+    $.RULEE("expression", () => {
+      let result!: Expression
+      $.AT_LEAST_ONE_SEP({
+        SEP: TOKEN.COMMA,
+        DEF: () => {
+          const rhs = $.SUBRULE($.assignmentExpression)
+          return (result = !result
+            ? rhs
+            : { type: "commaExpression", lhs: result, rhs })
+        },
+      })
+      return result
+    })
+    //SPEC// constantExpression:
+    //SPEC//     conditionalExpression
+    $.RULEE("constantExpression", () => $.SUBRULE($.conditionalExpression))
+    //SPEC// declaration:
+    //SPEC//     functionPrototype SEMICOLON
+    //SPEC//     initDeclaratorList SEMICOLON
+    //SPEC//     PRECISION precisionQualifier typeSpecifierNoPrec SEMICOLON
+    //SPEC//     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE SEMICOLON
+    //SPEC//     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE IDENTIFIER SEMICOLON
+    //SPEC//     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE IDENTIFIER LEFT_BRACKET
+    //SPEC//                                                      constantExpression RIGHT_BRACKET SEMICOLON
+    //SPEC//     typeQualifier SEMICOLON
+    $.RULEE("externalDeclaration", (noFunctionDefinition) =>
       $.OR([
         {
           ALT: () => {
             // initDeclaratorList, functionPrototype or functionDefinition
-            $.SUBRULE($.fullySpecifiedType)
-            $.OR2([
+            const type = $.SUBRULE($.fullySpecifiedType)
+            return $.OR2([
               // functionPrototype
               {
                 ALT: () => {
-                  $.CONSUME1(TOKEN.IDENTIFIER)
+                  const name = $.CONSUME1(TOKEN.IDENTIFIER)
                   $.CONSUME(TOKEN.LEFT_PAREN)
+                  const params: ParameterDeclaration[] = []
                   $.MANY_SEP({
-                    DEF: () => {
-                      //     constQualifier
-                      $.OPTION1(() => $.CONSUME(TOKEN.CONST))
-                      //     parameterQualifier
-                      $.OPTION2(() =>
-                        $.OR4([
-                          { ALT: () => $.CONSUME(TOKEN.IN) },
-                          { ALT: () => $.CONSUME(TOKEN.OUT) },
-                          { ALT: () => $.CONSUME(TOKEN.INOUT) },
-                        ]),
-                      )
-                      //     precisionQualifier
-                      $.OPTION3(() => $.SUBRULE2($.precisionQualifier))
-                      $.CONSUME2(TOKEN.TYPE)
-                      $.CONSUME2(TOKEN.IDENTIFIER)
-                      //arraySpecifier
-                      $.OPTION4(() => {
-                        $.CONSUME4(TOKEN.LEFT_BRACKET)
-                        $.CONSUME(TOKEN.INTCONSTANT)
-                        $.CONSUME4(TOKEN.RIGHT_BRACKET)
-                      })
-                      // $.CONSUME()
-                    },
                     SEP: TOKEN.COMMA,
+                    DEF: () => params.push($.SUBRULE($.parameterDeclaration)),
                   })
                   $.CONSUME(TOKEN.RIGHT_PAREN)
-                  $.OR3([
-                    { ALT: () => $.CONSUME(TOKEN.SEMICOLON) },
+                  return $.OR3([
+                    {
+                      ALT: () => {
+                        $.CONSUME(TOKEN.SEMICOLON)
+                        return {
+                          type: "FUNCTION_PROTOTYPE",
+                          name,
+                          returnType: type,
+                          params,
+                        }
+                      },
+                    },
                     {
                       // GATE: () => !noFunctionDefinition,
-                      ALT: () => $.SUBRULE($.compoundStatement),
+                      ALT: () => {
+                        const body = $.SUBRULE($.compoundStatement)
+                        return {
+                          type: "FUNCTION_DECLARATION",
+                          name,
+                          returnType: type,
+                          params,
+                          body,
+                        }
+                      },
                       IGNORE_AMBIGUITIES: false,
                     },
                   ])
@@ -838,22 +940,28 @@ class GLSLParser extends CstParser {
               // initDeclaratorList
               {
                 ALT: () => {
+                  const decls: Declarator[] = []
                   $.MANY_SEP2({
                     SEP: TOKEN.COMMA,
                     DEF: () => {
-                      $.CONSUME3(TOKEN.IDENTIFIER)
-                      $.OPTION5(() => {
+                      const name = $.CONSUME3(TOKEN.IDENTIFIER)
+                      const arrayInit = $.OPTION5(() => {
                         $.CONSUME(TOKEN.LEFT_BRACKET)
-                        $.OPTION6(() => $.SUBRULE($.constantExpression))
+                        const expr = $.OPTION6(() =>
+                          $.SUBRULE($.constantExpression),
+                        )
                         $.CONSUME(TOKEN.RIGHT_BRACKET)
+                        return { type: "arrayInit", expr }
                       })
-                      $.OPTION7(() => {
+                      const init = $.OPTION7(() => {
                         $.CONSUME(TOKEN.EQUAL)
-                        $.SUBRULE($.initializer)
+                        return $.SUBRULE($.initializer)
                       })
+                      decls.push({ type: "declarator", name, arrayInit, init })
                     },
                   })
                   $.CONSUME2(TOKEN.SEMICOLON)
+                  return { type: "initDeclaratorList", fsType: type, decls }
                 },
               },
             ])
@@ -861,73 +969,86 @@ class GLSLParser extends CstParser {
         },
       ]),
     )
-    $.RULE("declaration", () =>
+    $.RULEE("declaration", () =>
       $.SUBRULE($.externalDeclaration, { ARGS: [true] }),
     )
-    $.RULE("declarationNoFunctionPrototype", () => {
-      $.OR({
-        MAX_LOOKAHEAD: 4,
-        DEF: [
-          {
-            ALT: () => $.SUBRULE1($.initDeclaratorList),
-          },
-          {
-            ALT: () => {
-              $.CONSUME1(TOKEN.PRECISION)
-              $.SUBRULE1($.precisionQualifier)
-              $.SUBRULE2($.initDeclaratorList)
-            },
-          },
-        ],
-      })
-      $.CONSUME(TOKEN.SEMICOLON)
-    })
-    // functionPrototype:
-    //     functionDeclarator RIGHT_PAREN
-    // functionDeclarator:
-    //     functionHeader
-    //     functionHeaderWithParameters
-    // functionHeaderWithParameters:
-    //     functionHeader parameterDeclaration
-    //     functionHeaderWithParameters COMMA parameterDeclaration
-    // functionHeader:
-    //     fullySpecifiedType IDENTIFIER LEFT_PAREN
-    // parameterDeclarator:
-    //     typeSpecifier IDENTIFIER
-    //     typeSpecifier IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
-    // parameterDeclaration:
-    //     parameterTypeQualifier parameterQualifier parameterDeclarator
-    //     parameterQualifier parameterDeclarator
-    //     parameterTypeQualifier parameterQualifier parameterTypeSpecifier
-    //     parameterQualifier parameterTypeSpecifier
-    // parameterQualifier:
-    //     /* empty */
-    //     IN
-    //     OUT
-    //     INOUT
-    // parameterTypeSpecifier:
-    //     typeSpecifier
+    //SPEC// functionPrototype:
+    //SPEC//     functionDeclarator RIGHT_PAREN
+    //SPEC// functionDeclarator:
+    //SPEC//     functionHeader
+    //SPEC//     functionHeaderWithParameters
+    //SPEC// functionHeaderWithParameters:
+    //SPEC//     functionHeader parameterDeclaration
+    //SPEC//     functionHeaderWithParameters COMMA parameterDeclaration
+    //SPEC// functionHeader:
+    //SPEC//     fullySpecifiedType IDENTIFIER LEFT_PAREN
+    //SPEC// parameterDeclarator:
+    //SPEC//     typeSpecifier IDENTIFIER
+    //SPEC//     typeSpecifier IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
+    //SPEC// parameterDeclaration:
+    //SPEC//     parameterTypeQualifier parameterQualifier parameterDeclarator
+    //SPEC//     parameterQualifier parameterDeclarator
+    //SPEC//     parameterTypeQualifier parameterQualifier parameterTypeSpecifier
+    //SPEC//     parameterQualifier parameterTypeSpecifier
+    //SPEC// parameterQualifier:
+    //SPEC//     /* empty */
+    //SPEC//     IN
+    //SPEC//     OUT
+    //SPEC//     INOUT
+    //SPEC// parameterTypeSpecifier:
+    //SPEC//     typeSpecifier
+    $.RULEE("parameterDeclaration", (): ParameterDeclaration => {
+      //     constQualifier
+      const parameterTypeQualifier = $.OPTION1(() => $.CONSUME(TOKEN.CONST))
+      //     parameterQualifier
+      const parameterQualifier = $.OR4([
+        { ALT: () => $.CONSUME(TOKEN.IN) },
+        { ALT: () => $.CONSUME(TOKEN.OUT) },
+        { ALT: () => $.CONSUME(TOKEN.INOUT) },
+        { ALT: () => undefined },
+      ])
 
-    // initDeclaratorList:
-    //     singleDeclaration
-    //     initDeclaratorList COMMA IDENTIFIER
-    //     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
-    //     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET RIGHT_BRACKET EQUAL initializer
-    //     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET EQUAL initializer
-    //     initDeclaratorList COMMA IDENTIFIER EQUAL initializer
-    $.RULE("initDeclaratorList", () => {
+      const typeSpecifier = $.SUBRULE($.typeSpecifier)
+      let pName, arrayInit
+      $.OPTION(() => {
+        pName = $.CONSUME2(TOKEN.IDENTIFIER)
+        //arraySpecifier
+        $.OPTION4(() => {
+          $.CONSUME4(TOKEN.LEFT_BRACKET)
+          arrayInit = $.CONSUME(TOKEN.INTCONSTANT)
+          $.CONSUME4(TOKEN.RIGHT_BRACKET)
+        })
+      })
+      return {
+        type: "parameterDeclaration",
+        parameterTypeQualifier,
+        pName,
+        arrayInit,
+        parameterQualifier,
+        typeSpecifier,
+      }
+    })
+
+    //SPEC// initDeclaratorList:
+    //SPEC//     singleDeclaration
+    //SPEC//     initDeclaratorList COMMA IDENTIFIER
+    //SPEC//     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
+    //SPEC//     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET RIGHT_BRACKET EQUAL initializer
+    //SPEC//     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET EQUAL initializer
+    //SPEC//     initDeclaratorList COMMA IDENTIFIER EQUAL initializer
+    $.RULEE("initDeclaratorList", () => {
       $.SUBRULE($.singleDeclaration)
     })
-    // singleDeclaration:
-    //     fullySpecifiedType
-    //     fullySpecifiedType IDENTIFIER
-    //     fullySpecifiedType IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
-    //     fullySpecifiedType IDENTIFIER LEFT_BRACKET RIGHT_BRACKET EQUAL initializer
-    //     fullySpecifiedType IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET EQUAL initializer
-    //     fullySpecifiedType IDENTIFIER EQUAL initializer
-    //     INVARIANT IDENTIFIER
-    //     // GramNote:  No 'enum', or 'typedef'.
-    $.RULE("singleDeclaration", () =>
+    //SPEC// singleDeclaration:
+    //SPEC//     fullySpecifiedType
+    //SPEC//     fullySpecifiedType IDENTIFIER
+    //SPEC//     fullySpecifiedType IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
+    //SPEC//     fullySpecifiedType IDENTIFIER LEFT_BRACKET RIGHT_BRACKET EQUAL initializer
+    //SPEC//     fullySpecifiedType IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET EQUAL initializer
+    //SPEC//     fullySpecifiedType IDENTIFIER EQUAL initializer
+    //SPEC//     INVARIANT IDENTIFIER
+    //SPEC//     // GramNote:  No 'enum', or 'typedef'.
+    $.RULEE("singleDeclaration", () =>
       $.OR([
         {
           ALT: () => {
@@ -947,36 +1068,37 @@ class GLSLParser extends CstParser {
           },
         },
         {
-          ALT: () => {
-            $.CONSUME(TOKEN.INVARIANT)
-            $.CONSUME2(TOKEN.IDENTIFIER)
-          },
+          ALT: () => ({
+            type: "invariantDeclaration",
+            INVARIANT: $.CONSUME(TOKEN.INVARIANT),
+            IDENTIFIER: $.CONSUME2(TOKEN.IDENTIFIER),
+          }),
         },
       ]),
     )
-    // fullySpecifiedType:
-    //     typeSpecifier
-    //     typeQualifier typeSpecifier
-    $.RULE("fullySpecifiedType", () => {
-      $.OPTION(() => $.SUBRULE($.typeQualifier))
-      $.SUBRULE($.typeSpecifier)
+    //SPEC// fullySpecifiedType:
+    //SPEC//     typeSpecifier
+    //SPEC//     typeQualifier typeSpecifier
+    $.RULEE("fullySpecifiedType", () => {
+      const typeQualifier = $.OPTION(() => $.SUBRULE($.typeQualifier))
+      const typeSpecifier = $.SUBRULE($.typeSpecifier)
+      return { type: "fullySpecifiedType", typeQualifier, typeSpecifier }
     })
-    // invariantQualifier:
-    //     INVARIANT
-    // interpolationQualifier:
-    //     SMOOTH
-    //     FLAT
-    $.RULE("interpolationQualifier", () => CONSUME_OR(TOKEN.SMOOTH, TOKEN.FLAT))
-    // layoutQualifier:
-    //     LAYOUT LEFT_PAREN layoutQualifierIdList RIGHT_PAREN
-    // layoutQualifierIdList:
-    //     layoutQualifierId
-    //     layoutQualifierIdList COMMA layoutQualifierId
-    // layoutQualifierId:
-    //     IDENTIFIER
-    //     IDENTIFIER EQUAL INTCONSTANT
-    //     IDENTIFIER EQUAL UINTCONSTANT
-    $.RULE("layoutQualifier", () => {
+    //SPEC// invariantQualifier:
+    //SPEC//     INVARIANT
+    //SPEC// interpolationQualifier:
+    //SPEC//     SMOOTH
+    //SPEC//     FLAT
+    //SPEC// layoutQualifier:
+    //SPEC//     LAYOUT LEFT_PAREN layoutQualifierIdList RIGHT_PAREN
+    //SPEC// layoutQualifierIdList:
+    //SPEC//     layoutQualifierId
+    //SPEC//     layoutQualifierIdList COMMA layoutQualifierId
+    //SPEC// layoutQualifierId:
+    //SPEC//     IDENTIFIER
+    //SPEC//     IDENTIFIER EQUAL INTCONSTANT
+    //SPEC//     IDENTIFIER EQUAL UINTCONSTANT
+    $.RULEE("layoutQualifier", () => {
       $.CONSUME(TOKEN.LAYOUT)
       $.CONSUME(TOKEN.LEFT_PAREN)
       $.AT_LEAST_ONE_SEP({
@@ -990,173 +1112,188 @@ class GLSLParser extends CstParser {
         },
       })
     })
-    // parameterTypeQualifier:
-    //     CONST
-    // typeQualifier:
-    //     storageQualifier
-    //     layoutQualifier
-    //     layoutQualifier storageQualifier
-    //     interpolationQualifier
-    //     interpolationQualifier storageQualifier
-    //     invariantQualifier storageQualifier
-    //     invariantQualifier interpolationQualifier storageQualifier
-    $.RULE("typeQualifier", () =>
+    //SPEC// parameterTypeQualifier:
+    //SPEC//     CONST
+    //SPEC// typeQualifier:
+    //SPEC//     storageQualifier
+    //SPEC//     layoutQualifier
+    //SPEC//     layoutQualifier storageQualifier
+    //SPEC//     interpolationQualifier
+    //SPEC//     interpolationQualifier storageQualifier
+    //SPEC//     invariantQualifier storageQualifier
+    //SPEC//     invariantQualifier interpolationQualifier storageQualifier
+    $.RULEE("typeQualifier", () => {
+      let storageQualifier,
+        layoutQualifier,
+        interpolationQualifier,
+        invariantQualifier
       $.OR([
         {
           ALT: () => {
-            $.SUBRULE1($.storageQualifier)
+            storageQualifier = $.SUBRULE1($.storageQualifier)
           },
         },
         {
           ALT: () => {
-            $.SUBRULE2($.layoutQualifier)
-            $.OPTION1(() => $.SUBRULE3($.storageQualifier))
+            layoutQualifier = $.SUBRULE2($.layoutQualifier)
+            storageQualifier = $.OPTION1(() => $.SUBRULE3($.storageQualifier))
           },
         },
         {
           ALT: () => {
-            $.SUBRULE4($.interpolationQualifier)
-            $.OPTION2(() => $.SUBRULE5($.storageQualifier))
+            interpolationQualifier = $.CONSUME(TOKEN.INTERPOLATION_QUALIFIER)
+            storageQualifier = $.OPTION2(() => $.SUBRULE5($.storageQualifier))
           },
         },
         {
           ALT: () => {
             // $.SUBRULE($.invariantQualifier)
-            $.CONSUME(TOKEN.INVARIANT)
-            $.OPTION3(() => $.SUBRULE6($.interpolationQualifier))
-            $.SUBRULE7($.storageQualifier)
+            invariantQualifier = $.CONSUME(TOKEN.INVARIANT)
+            interpolationQualifier = $.OPTION3(() =>
+              $.CONSUME(TOKEN.INTERPOLATION_QUALIFIER),
+            )
+            storageQualifier = $.SUBRULE7($.storageQualifier)
           },
         },
-      ]),
-    )
-    // storageQualifier:
-    //     CONST
-    //     IN
-    //     OUT
-    //     CENTROID IN
-    //     CENTROID OUT
-    //     UNIFORM
-    $.RULE("storageQualifier", () =>
-      ORR1<void>(
-        () => $.CONSUME(TOKEN.CONST),
-        () => {
-          $.OPTION(() => $.CONSUME(TOKEN.CENTROID))
-          CONSUME_OR(TOKEN.IN, TOKEN.OUT)
-        },
-        () => $.CONSUME(TOKEN.UNIFORM),
-      ),
-    )
-    // typeSpecifier:
-    //     typeSpecifierNoPrec
-    //     precisionQualifier typeSpecifierNoPrec
-    $.RULE("typeSpecifier", () => {
-      $.OPTION(() => $.SUBRULE($.precisionQualifier))
-      $.SUBRULE($.typeSpecifierNoPrec)
+      ])
+      return {
+        type: "typeQualifier",
+        storageQualifier,
+        layoutQualifier,
+        interpolationQualifier,
+        invariantQualifier,
+      }
     })
-    // typeSpecifierNoPrec:
-    //     typeSpecifierNonarray
-    //     typeSpecifierNonarray LEFT_BRACKET RIGHT_BRACKET
-    //     typeSpecifierNonarray LEFT_BRACKET constantExpression RIGHT_BRACKET
-    $.RULE("typeSpecifierNoPrec", () => {
-      $.SUBRULE($.typeSpecifierNonArray)
-      $.OPTION1(() => {
-        $.CONSUME(TOKEN.LEFT_BRACKET)
-        $.OPTION2(() => $.SUBRULE($.constantExpression))
-        $.CONSUME(TOKEN.RIGHT_BRACKET)
-      })
-    })
-    // typeSpecifierNonarray:
-    //     VOID
-    //     FLOAT
-    //     INT
-    //     UINT
-    //     BOOL
-    //     VEC2
-    //     VEC3
-    //     VEC4
-    //     BVEC2
-    //     BVEC3
-    //     BVEC4
-    //     IVEC2
-    //     IVEC3
-    //     IVEC4
-    //     UVEC2
-    //     UVEC3
-    //     UVEC4
-    //     MAT2
-    //     MAT3
-    //     MAT4
-    //     MAT2X2
-    //     MAT2X3
-    //     MAT2X4
-    //     MAT3X2
-    //     MAT3X3
-    //     MAT3X4
-    //     MAT4X2
-    //     MAT4X3
-    //     MAT4X4
-    //     SAMPLER2D
-    //     SAMPLER3D
-    //     SAMPLERCUBE
-    //     SAMPLER2DSHADOW
-    //     SAMPLERCUBESHADOW
-    //     SAMPLER2DARRAY
-    //     SAMPLER2DARRAYSHADOW
-    //     ISAMPLER2D
-    //     ISAMPLER3D
-    //     ISAMPLERCUBE
-    //     ISAMPLER2DARRAY
-    //     USAMPLER2D
-    //     USAMPLER3D
-    //     USAMPLERCUBE
-    //     USAMPLER2DARRAY
-    //     structSpecifier
-    //     TYPE_NAME
-    $.RULE("typeSpecifierNonArray", () =>
+    //SPEC// storageQualifier:
+    //SPEC//     CONST
+    //SPEC//     IN
+    //SPEC//     OUT
+    //SPEC//     CENTROID IN
+    //SPEC//     CENTROID OUT
+    //SPEC//     UNIFORM
+    $.RULEE("storageQualifier", () => {
+      let CONST, CENTROID, IN, OUT, UNIFORM
       $.OR([
-        { ALT: () => $.CONSUME(TOKEN.TYPE) },
+        { ALT: () => $.CONSUME(TOKEN.CONST) },
+        {
+          ALT: () => {
+            $.OPTION(() => $.CONSUME(TOKEN.CENTROID))
+            CONSUME_OR(TOKEN.IN, TOKEN.OUT)
+          },
+        },
+        { ALT: () => $.CONSUME(TOKEN.UNIFORM) },
+      ])
+      return { type: "storageQualifier", CONST, CENTROID, IN, OUT, UNIFORM }
+    })
+    //SPEC// typeSpecifier:
+    //SPEC//     typeSpecifierNoPrec
+    //SPEC//     precisionQualifier typeSpecifierNoPrec
+    $.RULEE("typeSpecifier", () => {
+      const precisionQualifier = $.OPTION(() => $.SUBRULE($.precisionQualifier))
+      const typeSpecifierNoPrec = $.SUBRULE($.typeSpecifierNoPrec)
+      return Object.assign({}, typeSpecifierNoPrec, { precisionQualifier })
+    })
+    //SPEC// typeSpecifierNoPrec:
+    //SPEC//     typeSpecifierNonarray
+    //SPEC//     typeSpecifierNonarray LEFT_BRACKET RIGHT_BRACKET
+    //SPEC//     typeSpecifierNonarray LEFT_BRACKET constantExpression RIGHT_BRACKET
+    $.RULEE("typeSpecifierNoPrec", () => {
+      const typeSpecifierNonArray = $.SUBRULE($.typeSpecifierNonArray)
+      const arraySpecifier = $.OPTION1(() => {
+        $.CONSUME(TOKEN.LEFT_BRACKET)
+        const size = $.OPTION2(() => $.SUBRULE($.constantExpression))
+        $.CONSUME(TOKEN.RIGHT_BRACKET)
+        return { type: "ARRAY_TYPE", size }
+      })
+      return { type: "typeSpecifier", arraySpecifier, typeSpecifierNonArray }
+    })
+    //SPEC// typeSpecifierNonarray:
+    //SPEC//     VOID
+    //SPEC//     FLOAT
+    //SPEC//     INT
+    //SPEC//     UINT
+    //SPEC//     BOOL
+    //SPEC//     VEC2
+    //SPEC//     VEC3
+    //SPEC//     VEC4
+    //SPEC//     BVEC2
+    //SPEC//     BVEC3
+    //SPEC//     BVEC4
+    //SPEC//     IVEC2
+    //SPEC//     IVEC3
+    //SPEC//     IVEC4
+    //SPEC//     UVEC2
+    //SPEC//     UVEC3
+    //SPEC//     UVEC4
+    //SPEC//     MAT2
+    //SPEC//     MAT3
+    //SPEC//     MAT4
+    //SPEC//     MAT2X2
+    //SPEC//     MAT2X3
+    //SPEC//     MAT2X4
+    //SPEC//     MAT3X2
+    //SPEC//     MAT3X3
+    //SPEC//     MAT3X4
+    //SPEC//     MAT4X2
+    //SPEC//     MAT4X3
+    //SPEC//     MAT4X4
+    //SPEC//     SAMPLER2D
+    //SPEC//     SAMPLER3D
+    //SPEC//     SAMPLERCUBE
+    //SPEC//     SAMPLER2DSHADOW
+    //SPEC//     SAMPLERCUBESHADOW
+    //SPEC//     SAMPLER2DARRAY
+    //SPEC//     SAMPLER2DARRAYSHADOW
+    //SPEC//     ISAMPLER2D
+    //SPEC//     ISAMPLER3D
+    //SPEC//     ISAMPLERCUBE
+    //SPEC//     ISAMPLER2DARRAY
+    //SPEC//     USAMPLER2D
+    //SPEC//     USAMPLER3D
+    //SPEC//     USAMPLERCUBE
+    //SPEC//     USAMPLER2DARRAY
+    //SPEC//     structSpecifier
+    //SPEC//     TYPE_NAME
+    $.RULEE("typeSpecifierNonArray", () =>
+      $.OR([
+        { ALT: () => $.CONSUME(TOKEN.BASIC_TYPE) },
         { ALT: () => $.CONSUME(TOKEN.VOID) },
         { ALT: () => $.SUBRULE($.structSpecifier) },
         { ALT: () => $.CONSUME(TOKEN.IDENTIFIER) },
       ]),
     )
-    // precisionQualifier:
-    //         HIGH_PRECISION
-    //         MEDIUM_PRECISION
-    //         LOW_PRECISION
-    $.RULE("precisionQualifier", () =>
-      $.OR([
-        { ALT: () => $.CONSUME(TOKEN.HIGHP) },
-        { ALT: () => $.CONSUME(TOKEN.MEDIUMP) },
-        { ALT: () => $.CONSUME(TOKEN.LOWP) },
-      ]),
-    )
+    //SPEC// precisionQualifier:
+    //SPEC//         HIGH_PRECISION
+    //SPEC//         MEDIUM_PRECISION
+    //SPEC//         LOW_PRECISION
+    $.RULEE("precisionQualifier", () => $.CONSUME(TOKEN.PRECISION_QUALIFIER))
 
-    // structSpecifier:
-    //         STRUCT IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE
-    //         STRUCT LEFT_BRACE structDeclarationList RIGHT_BRACE
+    //SPEC// structSpecifier:
+    //SPEC//         STRUCT IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE
+    //SPEC//         STRUCT LEFT_BRACE structDeclarationList RIGHT_BRACE
 
-    $.RULE("structSpecifier", () => {
+    $.RULEE("structSpecifier", () => {
       $.CONSUME(TOKEN.STRUCT)
-      $.OPTION2(() => $.CONSUME(TOKEN.IDENTIFIER))
+      const name = $.OPTION2(() => $.CONSUME(TOKEN.IDENTIFIER))
       $.CONSUME(TOKEN.LEFT_BRACE)
-      $.SUBRULE($.structDeclarationList)
+      const declarations = $.SUBRULE($.structDeclarationList)
       $.CONSUME(TOKEN.RIGHT_BRACE)
+      return { type: "structSpecifier", name, declarations }
     })
-    // structDeclarationList:
-    //         structDeclaration
-    //         structDeclarationList structDeclaration
-    // structDeclaration:
-    //         typeSpecifier structDeclaratorList SEMICOLON
-    //         typeQualifier typeSpecifier structDeclaratorList SEMICOLON
-    // structDeclaratorList:
-    //         structDeclarator
-    //         structDeclaratorList COMMA structDeclarator
-    // structDeclarator:
-    //         IDENTIFIER
-    //         IDENTIFIER LEFT_BRACKET RIGHT_BRACKET
-    //         IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
-    $.RULE("structDeclarationList", () =>
+    //SPEC// structDeclarationList:
+    //SPEC//         structDeclaration
+    //SPEC//         structDeclarationList structDeclaration
+    //SPEC// structDeclaration:
+    //SPEC//         typeSpecifier structDeclaratorList SEMICOLON
+    //SPEC//         typeQualifier typeSpecifier structDeclaratorList SEMICOLON
+    //SPEC// structDeclaratorList:
+    //SPEC//         structDeclarator
+    //SPEC//         structDeclaratorList COMMA structDeclarator
+    //SPEC// structDeclarator:
+    //SPEC//         IDENTIFIER
+    //SPEC//         IDENTIFIER LEFT_BRACKET RIGHT_BRACKET
+    //SPEC//         IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
+    $.RULEE("structDeclarationList", () =>
       $.MANY(() => {
         $.OPTION1(() => $.SUBRULE($.typeQualifier))
         $.SUBRULE($.typeSpecifier)
@@ -1174,30 +1311,30 @@ class GLSLParser extends CstParser {
         $.CONSUME(TOKEN.SEMICOLON)
       }),
     )
-    // initializer:
-    //         assignmentExpression
-    $.RULE("initializer", () => $.SUBRULE($.assignmentExpression))
-    // declarationStatement:
-    //         declaration
-    // statement:
-    //         compoundStatementWithScope
-    //         simpleStatement
-    // statementNoNewScope:
-    //         compoundStatementNoNewScope
-    //         simpleStatement
-    // statementWithScope:
-    //         compoundStatementNoNewScope
-    //         simpleStatement
-    // // Grammar Note:  labeled statements for SWITCH only; 'goto' is not supported.
-    // simpleStatement:
-    //         declarationStatement
-    //         expressionStatement
-    //         selectionStatement
-    //         switchStatement
-    //         caseLabel
-    //         iterationStatement
-    //         jumpStatement
-    $.RULE("statement", () =>
+    //SPEC// initializer:
+    //SPEC//         assignmentExpression
+    $.RULEE("initializer", () => $.SUBRULE($.assignmentExpression))
+    //SPEC// declarationStatement:
+    //SPEC//         declaration
+    //SPEC// statement:
+    //SPEC//         compoundStatementWithScope
+    //SPEC//         simpleStatement
+    //SPEC// statementNoNewScope:
+    //SPEC//         compoundStatementNoNewScope
+    //SPEC//         simpleStatement
+    //SPEC// statementWithScope:
+    //SPEC//         compoundStatementNoNewScope
+    //SPEC//         simpleStatement
+    //SPEC// // Grammar Note:  labeled statements for SWITCH only; 'goto' is not supported.
+    //SPEC// simpleStatement:
+    //SPEC//         declarationStatement
+    //SPEC//         expressionStatement
+    //SPEC//         selectionStatement
+    //SPEC//         switchStatement
+    //SPEC//         caseLabel
+    //SPEC//         iterationStatement
+    //SPEC//         jumpStatement
+    $.RULEE("statement", () =>
       $.OR([
         // declarationStatement
         {
@@ -1206,10 +1343,11 @@ class GLSLParser extends CstParser {
         },
         // expressionStatement
         {
-          ALT: () => {
-            $.OPTION(() => $.SUBRULE($.expression))
-            $.CONSUME(TOKEN.SEMICOLON)
-          },
+          ALT: () => ({
+            type: "expressionStatement",
+            expression: $.OPTION(() => $.SUBRULE($.expression)),
+            SEMICOLON: $.CONSUME(TOKEN.SEMICOLON),
+          }),
         },
         { ALT: () => $.SUBRULE($.selectionStatement) },
         { ALT: () => $.SUBRULE($.switchStatement) },
@@ -1219,43 +1357,56 @@ class GLSLParser extends CstParser {
         { ALT: () => $.SUBRULE($.compoundStatement) },
       ]),
     )
-    // compoundStatementWithScope:
-    //         LEFT_BRACE RIGHT_BRACE
-    //         LEFT_BRACE statementList RIGHT_BRACE
-    // compoundStatementNoNewScope:
-    //         LEFT_BRACE RIGHT_BRACE
-    //         LEFT_BRACE statementList RIGHT_BRACE
-    // statementList:
-    //         statement
-    //         statementList statement
-    $.RULE("compoundStatement", () => {
+    //SPEC// compoundStatementWithScope:
+    //SPEC//         LEFT_BRACE RIGHT_BRACE
+    //SPEC//         LEFT_BRACE statementList RIGHT_BRACE
+    //SPEC// compoundStatementNoNewScope:
+    //SPEC//         LEFT_BRACE RIGHT_BRACE
+    //SPEC//         LEFT_BRACE statementList RIGHT_BRACE
+    //SPEC// statementList:
+    //SPEC//         statement
+    //SPEC//         statementList statement
+    $.RULEE("compoundStatement", () => {
       $.CONSUME(TOKEN.LEFT_BRACE)
-      $.MANY(() => $.SUBRULE($.statement))
+      const statements: Statement[] = []
+      $.MANY(() => statements.push($.SUBRULE($.statement)))
       $.CONSUME(TOKEN.RIGHT_BRACE)
+      return { type: "COMPOUND_STATEMENT", statements }
     })
-    // expressionStatement:
-    //         SEMICOLON
-    //         expression SEMICOLON
-    // selectionStatement:
-    //         IF LEFT_PAREN expression RIGHT_PAREN selectionRestStatement
-    // selectionRestStatement:
-    //         statementWithScope ELSE statementWithScope
-    //         statementWithScope
-    $.RULE("selectionStatement", () => {
-      $.CONSUME(TOKEN.IF)
-      $.CONSUME(TOKEN.LEFT_PAREN)
-      $.SUBRULE($.expression)
-      $.CONSUME(TOKEN.RIGHT_PAREN)
-      $.SUBRULE2($.statement)
+    //SPEC// expressionStatement:
+    //SPEC//         SEMICOLON
+    //SPEC//         expression SEMICOLON
+    //SPEC// selectionStatement:
+    //SPEC//         IF LEFT_PAREN expression RIGHT_PAREN selectionRestStatement
+    //SPEC// selectionRestStatement:
+    //SPEC//         statementWithScope ELSE statementWithScope
+    //SPEC//         statementWithScope
+    $.RULEE("selectionStatement", () => {
+      const IF = $.CONSUME(TOKEN.IF)
+      const LEFT_PAREN = $.CONSUME(TOKEN.LEFT_PAREN)
+      const condition = $.SUBRULE($.expression)
+      const RIGHT_PAREN = $.CONSUME(TOKEN.RIGHT_PAREN)
+      const yes = $.SUBRULE2($.statement)
+      let ELSE, no
       $.OPTION(() => {
-        $.CONSUME(TOKEN.ELSE)
+        ELSE = $.CONSUME(TOKEN.ELSE)
         $.SUBRULE3($.statement)
       })
+      return {
+        type: "selectionStatement",
+        IF,
+        LEFT_PAREN,
+        condition,
+        RIGHT_PAREN,
+        yes,
+        ELSE,
+        no,
+      }
     })
-    // condition:
-    //         expression
-    //         fullySpecifiedType IDENTIFIER EQUAL initializer
-    $.RULE("condition", () =>
+    //SPEC// condition:
+    //SPEC//         expression
+    //SPEC//         fullySpecifiedType IDENTIFIER EQUAL initializer
+    $.RULEE("condition", () =>
       $.OR({
         MAX_LOOKAHEAD: 4,
         DEF: [
@@ -1274,80 +1425,85 @@ class GLSLParser extends CstParser {
         ],
       }),
     )
-    // switchStatement:
-    //         SWITCH LEFT_PAREN expression RIGHT_PAREN LEFT_BRACE switchStatementList RIGHT_BRACE
-    // switchStatementList:
-    //         /* nothing */
-    //         statementList
-    $.RULE("switchStatement", () => {
-      $.CONSUME(TOKEN.SWITCH)
-      $.CONSUME(TOKEN.LEFT_PAREN)
-      $.SUBRULE($.expression)
-      $.CONSUME(TOKEN.RIGHT_PAREN)
-      $.CONSUME(TOKEN.LEFT_BRACE)
-      $.MANY(() => $.SUBRULE($.statement))
-      $.CONSUME(TOKEN.RIGHT_BRACE)
-    })
-    // caseLabel:
-    //         CASE expression COLON
-    //         DEFAULT COLON
-    $.RULE("caseLabel", () =>
-      $.OR([
-        {
-          ALT: () => {
-            $.CONSUME(TOKEN.CASE)
-            $.SUBRULE($.expression)
-            $.CONSUME(TOKEN.COLON)
+    //SPEC// switchStatement:
+    //SPEC//         SWITCH LEFT_PAREN expression RIGHT_PAREN LEFT_BRACE switchStatementList RIGHT_BRACE
+    //SPEC// switchStatementList:
+    //SPEC//         /* nothing */
+    //SPEC//         statementList
+    $.RULEE("switchStatement", () => ({
+      type: "switchStatement",
+      SWITCH: $.CONSUME(TOKEN.SWITCH),
+      LEFT_PAREN: $.CONSUME(TOKEN.LEFT_PAREN),
+      expression: $.SUBRULE($.expression),
+      RIGHT_PAREN: $.CONSUME(TOKEN.RIGHT_PAREN),
+      body: $.SUBRULE($.compoundStatement),
+    }))
+    //SPEC// caseLabel:
+    //SPEC//         CASE expression COLON
+    //SPEC//         DEFAULT COLON
+    $.RULEE(
+      "caseLabel",
+      (): CaseLabel =>
+        $.OR([
+          {
+            ALT: () => {
+              $.CONSUME(TOKEN.CASE)
+              const _case = $.SUBRULE($.expression)
+              $.CONSUME(TOKEN.COLON)
+              return { type: "caseLabel", _case }
+            },
           },
-        },
-        {
-          ALT: () => {
-            $.CONSUME2(TOKEN.DEFAULT)
-            $.CONSUME2(TOKEN.COLON)
+          {
+            ALT: () => {
+              $.CONSUME2(TOKEN.COLON)
+              return { type: "caseLabel", _case: undefined }
+            },
           },
-        },
-      ]),
+        ]),
     )
-    // iterationStatement:
-    //         WHILE LEFT_PAREN condition RIGHT_PAREN statementNoNewScope
-    //         DO statementWithScope WHILE LEFT_PAREN expression RIGHT_PAREN SEMICOLON
-    //         FOR LEFT_PAREN forInitStatement forRestStatement RIGHT_PAREN
-    // statementNoNewScope
-    // forInitStatement:
-    //         expressionStatement
-    //         declarationStatement
-    // conditionopt:
-    //         condition
-    //         /* empty */
-    // forRestStatement:
-    //         conditionopt SEMICOLON
-    //         conditionopt SEMICOLON expression
-    $.RULE("iterationStatement", () =>
+    //SPEC// iterationStatement:
+    //SPEC//         WHILE LEFT_PAREN condition RIGHT_PAREN statementNoNewScope
+    //SPEC//         DO statementWithScope WHILE LEFT_PAREN expression RIGHT_PAREN SEMICOLON
+    //SPEC//         FOR LEFT_PAREN forInitStatement forRestStatement RIGHT_PAREN
+    //SPEC// statementNoNewScope
+    //SPEC// forInitStatement:
+    //SPEC//         expressionStatement
+    //SPEC//         declarationStatement
+    //SPEC// conditionopt:
+    //SPEC//         condition
+    //SPEC//         /* empty */
+    //SPEC// forRestStatement:
+    //SPEC//         conditionopt SEMICOLON
+    //SPEC//         conditionopt SEMICOLON expression
+    $.RULEE("iterationStatement", () =>
       $.OR([
         {
-          ALT: () => {
-            $.CONSUME(TOKEN.WHILE)
-            $.CONSUME(TOKEN.LEFT_PAREN)
-            $.SUBRULE($.condition)
-            $.CONSUME(TOKEN.RIGHT_PAREN)
-            $.SUBRULE($.statement)
-          },
+          ALT: () => ({
+            type: "whileStatement",
+            WHILE: $.CONSUME(TOKEN.WHILE),
+            LEFT_PAREN: $.CONSUME(TOKEN.LEFT_PAREN),
+            condition: $.SUBRULE($.condition),
+            RIGHT_PAREN: $.CONSUME(TOKEN.RIGHT_PAREN),
+            statement: $.SUBRULE($.statement),
+          }),
         },
         {
-          ALT: () => {
-            $.CONSUME2(TOKEN.DO)
-            $.SUBRULE2($.statement)
-            $.CONSUME2(TOKEN.WHILE)
-            $.CONSUME2(TOKEN.LEFT_PAREN)
-            $.SUBRULE2($.expression)
-            $.CONSUME2(TOKEN.RIGHT_PAREN)
-            $.CONSUME2(TOKEN.SEMICOLON)
-          },
+          ALT: () => ({
+            type: "doWhileStatement",
+            DO: $.CONSUME2(TOKEN.DO),
+            statement: $.SUBRULE2($.statement),
+            WHILE: $.CONSUME2(TOKEN.WHILE),
+            LEFT_PAREN: $.CONSUME2(TOKEN.LEFT_PAREN),
+            expression: $.SUBRULE2($.expression),
+            RIGHT_PAREN: $.CONSUME2(TOKEN.RIGHT_PAREN),
+            SEMICOLON: $.CONSUME2(TOKEN.SEMICOLON),
+          }),
         },
         {
-          ALT: () => {
-            $.CONSUME3(TOKEN.FOR)
-            $.CONSUME3(TOKEN.LEFT_PAREN)
+          ALT: (): ForStatement => {
+            const FOR = $.CONSUME3(TOKEN.FOR)
+            const LEFT_PAREN = $.CONSUME3(TOKEN.LEFT_PAREN)
+            let init, SEMICOLON1
             $.OR3([
               {
                 GATE: $.BACKTRACK($.singleDeclaration),
@@ -1357,59 +1513,88 @@ class GLSLParser extends CstParser {
               {
                 ALT: () => {
                   $.SUBRULE3($.expression)
-                  $.CONSUME3(TOKEN.SEMICOLON)
+                  SEMICOLON1 = $.CONSUME3(TOKEN.SEMICOLON)
                 },
               },
             ])
-            $.OPTION3(() => $.SUBRULE3($.condition))
-            $.CONSUME4(TOKEN.SEMICOLON)
-            $.OPTION4(() => $.SUBRULE4($.expression))
-            $.CONSUME3(TOKEN.RIGHT_PAREN)
+            const condition = $.OPTION3(() => $.SUBRULE3($.condition))
+            const SEMICOLON2 = $.CONSUME4(TOKEN.SEMICOLON)
+            const iteration = $.OPTION4(() => $.SUBRULE4($.expression))
+            const RIGHT_PAREN = $.CONSUME3(TOKEN.RIGHT_PAREN)
             $.SUBRULE3($.statement)
+            return {
+              type: "forStatement",
+              FOR,
+              LEFT_PAREN,
+              RIGHT_PAREN,
+              condition,
+              SEMICOLON1,
+              iteration,
+              SEMICOLON2,
+            }
           },
         },
       ]),
     )
-    // jumpStatement:
-    //         CONTINUE SEMICOLON
-    //         BREAK SEMICOLON
-    //         RETURN SEMICOLON
-    //         RETURN expression SEMICOLON
-    //         DISCARD SEMICOLON   // Fragment shader only.
-    // // Grammar Note:  No 'goto'.  Gotos are not supported.
-    $.RULE("jumpStatement", () => {
-      $.OR([
-        { ALT: () => $.CONSUME(TOKEN.CONTINUE) },
-        { ALT: () => $.CONSUME(TOKEN.BREAK) },
-        { ALT: () => $.CONSUME(TOKEN.DISCARD) },
+    //SPEC// jumpStatement:
+    //SPEC//         CONTINUE SEMICOLON
+    //SPEC//         BREAK SEMICOLON
+    //SPEC//         RETURN SEMICOLON
+    //SPEC//         RETURN expression SEMICOLON
+    //SPEC//         DISCARD SEMICOLON   // Fragment shader only.
+    //SPEC// // Grammar Note:  No 'goto'.  Gotos are not supported.
+    $.RULEE("jumpStatement", () => {
+      const result: JumpStatement = $.OR([
+        {
+          ALT: () => {
+            $.CONSUME(TOKEN.CONTINUE)
+            return { type: "continueStatement" }
+          },
+        },
+        {
+          ALT: () => {
+            $.CONSUME(TOKEN.BREAK)
+            return { type: "breakStatement" }
+          },
+        },
+        {
+          ALT: () => {
+            $.CONSUME(TOKEN.DISCARD)
+            return { type: "discardStatement" }
+          },
+        },
         {
           ALT: () => {
             $.CONSUME(TOKEN.RETURN)
-            $.OPTION(() => $.SUBRULE($.expression))
+            const what = $.OPTION(() => $.SUBRULE($.expression))
+            return { type: "returnStatement", what }
           },
         },
       ])
       $.CONSUME(TOKEN.SEMICOLON)
+      return result
     })
-    // translationUnit:
-    //         externalDeclaration
-    //         translationUnit externalDeclaration
-    // externalDeclaration:
-    //         functionDefinition
-    //         declaration
-    $.RULE("translationUnit", () =>
-      $.AT_LEAST_ONE(() => $.SUBRULE($.externalDeclaration)),
-    )
+    //SPEC// translationUnit:
+    //SPEC//         externalDeclaration
+    //SPEC//         translationUnit externalDeclaration
+    //SPEC// externalDeclaration:
+    //SPEC//         functionDefinition
+    //SPEC//         declaration
+    $.RULEE("translationUnit", () => {
+      const declarations: any[] = []
+      $.AT_LEAST_ONE(() => declarations.push($.SUBRULE($.externalDeclaration)))
+      return { type: "translationUnit", declarations }
+    })
 
-    // functionDefinition:
-    //         functionPrototype compoundStatementNoNewScope
+    //SPEC// functionDefinition:
+    //SPEC//         functionPrototype compoundStatementNoNewScope
 
     this.performSelfAnalysis()
   }
 }
 
 // ONLY ONCE
-const glslParser = new GLSLParser()
+export const glslParser = new GLSLParser()
 
 // create the HTML Text
 const htmlText = createSyntaxDiagramsCode(
@@ -1508,6 +1693,7 @@ function checkLexingErrors(input: string, lexingResult: ILexingResult) {
     )
   }
 }
+
 function checkParsingErrors(input: string, errors: IRecognitionException[]) {
   if (errors.length > 0) {
     throw new Error(
@@ -1525,7 +1711,8 @@ function checkParsingErrors(input: string, errors: IRecognitionException[]) {
     )
   }
 }
-function parseInput(text: string) {
+
+export function parseInput(text: string) {
   const lexingResult = GLSLLexer.tokenize(text)
   checkLexingErrors(text, lexingResult)
 
@@ -1541,10 +1728,28 @@ function parseInput(text: string) {
   checkParsingErrors(text, glslParser.errors)
   return result
 }
+
 console.time("parsing")
 const cst = parseInput(shader)
 console.timeEnd("parsing")
-fs.writeFileSync("./cst.json", JSON.stringify(cst, null, "  "), {
-  encoding: "utf8",
-})
+fs.writeFileSync(
+  "./cst.json",
+  JSON.stringify(
+    cst,
+    (key, value) =>
+      value?.image
+        ? `TOKEN: ${value.tokenType.name}(${value.image})`
+        : value || null,
+    "  ",
+  ),
+  {
+    encoding: "utf8",
+  },
+)
 console.log("PARSER SUCCESS!!!".green)
+
+const formatted = prettier.format(shader, {
+  parser: "glsl-parse",
+  plugins: [prettierPlugin],
+})
+fs.writeFileSync("./shader-formatted.glsl", formatted, { encoding: "utf8" })
