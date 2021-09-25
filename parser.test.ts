@@ -1,6 +1,6 @@
 import expect, { MatcherState } from "expect"
 import { printDiffOrStringify } from "jest-matcher-utils"
-import { glslParser, parseInput } from "./src"
+import { GLSL_PARSER, parseInput } from "./src"
 import prettier from "prettier"
 import * as prettierPlugin from "./src/prettier-plugin"
 test("parse multi-dim array", () => {

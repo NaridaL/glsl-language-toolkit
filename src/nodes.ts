@@ -147,6 +147,7 @@ export interface ForStatement {
 export interface ExpressionStatement {
   type: "expressionStatement"
   expression: Expression
+  SEMICOLON: Token
 }
 
 export type Expression =
@@ -191,12 +192,15 @@ export interface StorageQualifier {
 }
 export interface SwitchStatement {
   type: "switchStatement"
+  SWITCH: Token
+  LEFT_PAREN: Token
+  RIGHT_PAREN: Token
   initExpression: Expression
   body: CompoundStatement
 }
 export interface CaseLabel {
   type: "caseLabel"
-  case: Expression | undefined
+  _case: Expression | undefined
 }
 export interface FullySpecifiedType {
   type: "fullySpecifiedType"
