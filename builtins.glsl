@@ -1,3 +1,20 @@
+//7 Built-in Variables
+// Implementation dependent constants.  The example values below
+// are the minimum values allowed for these maximums.
+const mediump int  gl_MaxVertexAttribs = 16;
+const mediump int  gl_MaxVertexUniformVectors = 256;
+const mediump int  gl_MaxVertexOutputVectors = 16;
+const mediump int  gl_MaxFragmentInputVectors = 15;
+const mediump int  gl_MaxVertexTextureImageUnits = 16;
+const mediump int  gl_MaxCombinedTextureImageUnits = 32;
+const mediump int  gl_MaxTextureImageUnits = 16;
+const mediump int  gl_MaxFragmentUniformVectors = 224;
+const mediump int  gl_MaxDrawBuffers = 4;
+const mediump int  gl_MinProgramTexelOffset = -8;
+const mediump int  gl_MaxProgramTexelOffset = 7;
+
+
+
 // TODO FIX COMMENT
 
 //8 Built-in Functions

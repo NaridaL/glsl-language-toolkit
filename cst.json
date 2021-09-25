@@ -2,158 +2,197 @@
   "type": "translationUnit",
   "declarations": [
     {
-      "type": "FUNCTION_DECLARATION",
+      "type": "functionDefinition",
       "name": "TOKEN: IDENTIFIER(ambientOcclusion)",
       "returnType": {
-        "type": "FULLY_SPECIFIED_TYPE",
+        "type": "fullySpecifiedType",
         "typeQualifier": null,
         "typeSpecifier": {
-          "type": "TYPE",
+          "type": "typeSpecifier",
+          "precisionQualifier": null,
           "arraySpecifier": null,
           "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
           "firstToken": -1,
           "lastToken": -1,
-          "precisionQualifier": null
+          "children": []
         },
         "firstToken": -1,
-        "lastToken": -1
+        "lastToken": -1,
+        "children": [
+          "typeSpecifier -1"
+        ]
       },
       "params": [
         {
-          "type": "PARAMETER_DECLARATION",
+          "type": "parameterDeclaration",
           "parameterTypeQualifier": null,
           "pName": "TOKEN: IDENTIFIER(pWC)",
           "arrayInit": null,
+          "parameterQualifier": null,
           "typeSpecifier": {
-            "type": "TYPE",
+            "type": "typeSpecifier",
+            "precisionQualifier": "TOKEN: HIGHP(highp)",
             "arraySpecifier": null,
             "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-            "firstToken": 2,
+            "firstToken": 3,
             "lastToken": 3,
-            "precisionQualifier": "TOKEN: HIGHP(highp)"
+            "children": []
           },
           "firstToken": 2,
-          "lastToken": 4
+          "lastToken": 4,
+          "children": [
+            "typeSpecifier 3"
+          ]
         },
         {
-          "type": "PARAMETER_DECLARATION",
+          "type": "parameterDeclaration",
           "parameterTypeQualifier": null,
           "pName": "TOKEN: IDENTIFIER(n1WC)",
           "arrayInit": null,
+          "parameterQualifier": null,
           "typeSpecifier": {
-            "type": "TYPE",
+            "type": "typeSpecifier",
+            "precisionQualifier": null,
             "arraySpecifier": null,
             "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
             "firstToken": 6,
             "lastToken": 6,
-            "precisionQualifier": null
+            "children": []
           },
           "firstToken": 6,
-          "lastToken": 7
+          "lastToken": 7,
+          "children": [
+            "typeSpecifier 6"
+          ]
         },
         {
-          "type": "PARAMETER_DECLARATION",
+          "type": "parameterDeclaration",
           "parameterTypeQualifier": null,
           "pName": null,
           "arrayInit": null,
+          "parameterQualifier": null,
           "typeSpecifier": {
-            "type": "TYPE",
+            "type": "typeSpecifier",
+            "precisionQualifier": null,
             "arraySpecifier": null,
             "typeSpecifierNonArray": "TOKEN: VEC4(vec4)",
             "firstToken": 9,
             "lastToken": 9,
-            "precisionQualifier": null
+            "children": []
           },
           "firstToken": 9,
-          "lastToken": 9
+          "lastToken": 9,
+          "children": [
+            "typeSpecifier 9"
+          ]
         }
       ],
       "body": {
-        "type": "COMPOUND_STATEMENT",
+        "type": "compoundStatement",
         "statements": [
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
                 "firstToken": 12,
                 "lastToken": 12,
-                "precisionQualifier": null
+                "children": []
               },
               "firstToken": 12,
-              "lastToken": 12
+              "lastToken": 12,
+              "children": [
+                "typeSpecifier 12"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(k)",
                 "arrayInit": null,
                 "init": "TOKEN: FLOATCONSTANT(1.0)"
               },
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(j)",
                 "arrayInit": {
-                  "type": "ARRAY_INIT",
+                  "type": "arrayInit",
                   "expr": null
                 },
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": {
-                      "type": "ARRAY_TYPE",
+                      "type": "arrayInit",
                       "size": "TOKEN: INTCONSTANT(2)"
                     },
                     "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
                     "firstToken": 21,
-                    "lastToken": 24
+                    "lastToken": 24,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: INTCONSTANT(1)",
                     "TOKEN: INTCONSTANT(2)"
                   ],
                   "firstToken": 21,
-                  "lastToken": 29
+                  "lastToken": 29,
+                  "children": [
+                    "typeSpecifier 21"
+                  ]
                 }
               }
             ],
             "firstToken": 12,
-            "lastToken": 30
+            "lastToken": 30,
+            "children": [
+              "fullySpecifiedType 12",
+              "typeSpecifier 21",
+              "functionCall 21"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
                 "firstToken": 31,
                 "lastToken": 31,
-                "precisionQualifier": null
+                "children": []
               },
               "firstToken": 31,
-              "lastToken": 31
+              "lastToken": 31,
+              "children": [
+                "typeSpecifier 31"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(distance)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(sdff)",
                     "firstToken": 34,
-                    "lastToken": 34
+                    "lastToken": 34,
+                    "children": []
                   },
                   "args": [
                     {
@@ -165,31 +204,50 @@
                         "rhs": "TOKEN: IDENTIFIER(k)",
                         "op": "TOKEN: STAR(*)",
                         "firstToken": 38,
-                        "lastToken": 40
+                        "lastToken": 40,
+                        "children": [
+                          "typeSpecifier 38",
+                          "typeSpecifier 40"
+                        ]
                       },
                       "op": "TOKEN: PLUS(+)",
                       "firstToken": 36,
-                      "lastToken": 40
+                      "lastToken": 40,
+                      "children": [
+                        "typeSpecifier 36",
+                        "binaryExpression 38"
+                      ]
                     }
                   ],
                   "firstToken": 34,
-                  "lastToken": 41
+                  "lastToken": 41,
+                  "children": [
+                    "typeSpecifier 34",
+                    "binaryExpression 36"
+                  ]
                 }
               }
             ],
             "firstToken": 31,
-            "lastToken": 42
+            "lastToken": 42,
+            "children": [
+              "fullySpecifiedType 31",
+              "typeSpecifier 34",
+              "functionCall 34"
+            ]
           },
           {
-            "type": "RETURN",
+            "type": "returnStatement",
             "what": {
-              "type": "FUNCTION_CALL",
+              "type": "functionCall",
               "what": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: IDENTIFIER(clamp)",
                 "firstToken": 44,
-                "lastToken": 44
+                "lastToken": 44,
+                "children": []
               },
               "args": [
                 {
@@ -198,817 +256,2278 @@
                   "rhs": "TOKEN: IDENTIFIER(k)",
                   "op": "TOKEN: SLASH(/)",
                   "firstToken": 46,
-                  "lastToken": 48
+                  "lastToken": 48,
+                  "children": [
+                    "typeSpecifier 46",
+                    "typeSpecifier 48"
+                  ]
                 },
-                "TOKEN: FLOATCONSTANT(0.0)",
+                "TOKEN: FLOATCONSTANT(0.)",
                 "TOKEN: FLOATCONSTANT(1.0)"
               ],
               "firstToken": 44,
-              "lastToken": 53
+              "lastToken": 53,
+              "children": [
+                "typeSpecifier 44",
+                "binaryExpression 46"
+              ]
             },
             "firstToken": 43,
-            "lastToken": 54
+            "lastToken": 54,
+            "children": [
+              "typeSpecifier 44",
+              "functionCall 44"
+            ]
           }
         ],
         "firstToken": 11,
-        "lastToken": 55
+        "lastToken": 55,
+        "children": [
+          "fullySpecifiedType 12",
+          "initDeclaratorListDeclaration 12",
+          "fullySpecifiedType 31",
+          "typeSpecifier 34",
+          "functionCall 34",
+          "initDeclaratorListDeclaration 31",
+          "returnStatement 43"
+        ]
       },
       "firstToken": -1,
-      "lastToken": 55
+      "lastToken": 55,
+      "children": [
+        "fullySpecifiedType -1",
+        "parameterDeclaration 2",
+        "parameterDeclaration 6",
+        "parameterDeclaration 9",
+        "compoundStatement 11"
+      ]
     },
     {
-      "type": "INIT_DECLARATOR_LIST",
+      "type": "initDeclaratorListDeclaration",
       "fsType": {
-        "type": "FULLY_SPECIFIED_TYPE",
+        "type": "fullySpecifiedType",
         "typeQualifier": null,
         "typeSpecifier": {
-          "type": "TYPE",
+          "type": "typeSpecifier",
+          "precisionQualifier": null,
           "arraySpecifier": null,
           "typeSpecifierNonArray": {
             "type": "structSpecifier",
             "name": "TOKEN: IDENTIFIER(RMResult)",
-            "declarations": null,
+            "declarations": [
+              {
+                "type": "structDeclaration",
+                "fsType": {
+                  "type": "fullySpecifiedType",
+                  "typeQualifier": null,
+                  "typeSpecifier": {
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
+                    "arraySpecifier": null,
+                    "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
+                    "firstToken": 59,
+                    "lastToken": 59,
+                    "children": []
+                  },
+                  "firstToken": 59,
+                  "lastToken": 59,
+                  "children": [
+                    "typeSpecifier 59"
+                  ]
+                },
+                "declarators": []
+              },
+              {
+                "type": "structDeclaration",
+                "fsType": {
+                  "type": "fullySpecifiedType",
+                  "typeQualifier": null,
+                  "typeSpecifier": {
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
+                    "arraySpecifier": null,
+                    "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
+                    "firstToken": 62,
+                    "lastToken": 62,
+                    "children": []
+                  },
+                  "firstToken": 62,
+                  "lastToken": 62,
+                  "children": [
+                    "typeSpecifier 62"
+                  ]
+                },
+                "declarators": []
+              },
+              {
+                "type": "structDeclaration",
+                "fsType": {
+                  "type": "fullySpecifiedType",
+                  "typeQualifier": null,
+                  "typeSpecifier": {
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
+                    "arraySpecifier": null,
+                    "typeSpecifierNonArray": "TOKEN: VEC4(vec4)",
+                    "firstToken": 65,
+                    "lastToken": 65,
+                    "children": []
+                  },
+                  "firstToken": 65,
+                  "lastToken": 65,
+                  "children": [
+                    "typeSpecifier 65"
+                  ]
+                },
+                "declarators": []
+              }
+            ],
             "firstToken": 56,
-            "lastToken": 68
+            "lastToken": 68,
+            "children": [
+              "fullySpecifiedType 59",
+              "fullySpecifiedType 62",
+              "fullySpecifiedType 65"
+            ]
           },
           "firstToken": 56,
           "lastToken": 68,
-          "precisionQualifier": null
+          "children": [
+            "structSpecifier 56"
+          ]
         },
         "firstToken": 56,
-        "lastToken": 68
+        "lastToken": 68,
+        "children": [
+          "typeSpecifier 56"
+        ]
       },
-      "decls": [],
+      "declarators": [],
       "firstToken": 56,
-      "lastToken": 69
+      "lastToken": 69,
+      "children": [
+        "fullySpecifiedType 56"
+      ]
     },
     {
-      "type": "FUNCTION_DECLARATION",
+      "type": "functionDefinition",
       "name": "TOKEN: IDENTIFIER(raymarching2)",
       "returnType": {
-        "type": "FULLY_SPECIFIED_TYPE",
+        "type": "fullySpecifiedType",
         "typeQualifier": null,
         "typeSpecifier": {
-          "type": "TYPE",
+          "type": "typeSpecifier",
+          "precisionQualifier": null,
           "arraySpecifier": null,
           "typeSpecifierNonArray": "TOKEN: IDENTIFIER(RMResult)",
           "firstToken": 70,
           "lastToken": 70,
-          "precisionQualifier": null
+          "children": []
         },
         "firstToken": 70,
-        "lastToken": 70
+        "lastToken": 70,
+        "children": [
+          "typeSpecifier 70"
+        ]
       },
       "params": [
         {
-          "type": "PARAMETER_DECLARATION",
+          "type": "parameterDeclaration",
           "parameterTypeQualifier": null,
           "pName": "TOKEN: IDENTIFIER(start)",
           "arrayInit": null,
+          "parameterQualifier": null,
           "typeSpecifier": {
-            "type": "TYPE",
+            "type": "typeSpecifier",
+            "precisionQualifier": null,
             "arraySpecifier": null,
             "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
             "firstToken": 73,
             "lastToken": 73,
-            "precisionQualifier": null
+            "children": []
           },
           "firstToken": 73,
-          "lastToken": 74
+          "lastToken": 74,
+          "children": [
+            "typeSpecifier 73"
+          ]
         },
         {
-          "type": "PARAMETER_DECLARATION",
+          "type": "parameterDeclaration",
           "parameterTypeQualifier": null,
           "pName": "TOKEN: IDENTIFIER(dir1)",
           "arrayInit": null,
+          "parameterQualifier": null,
           "typeSpecifier": {
-            "type": "TYPE",
+            "type": "typeSpecifier",
+            "precisionQualifier": null,
             "arraySpecifier": null,
             "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
             "firstToken": 76,
             "lastToken": 76,
-            "precisionQualifier": null
+            "children": []
           },
           "firstToken": 76,
-          "lastToken": 77
+          "lastToken": 77,
+          "children": [
+            "typeSpecifier 76"
+          ]
         }
       ],
       "body": {
-        "type": "COMPOUND_STATEMENT",
+        "type": "compoundStatement",
         "statements": [
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
                 "firstToken": 80,
                 "lastToken": 80,
-                "precisionQualifier": null
+                "children": []
               },
               "firstToken": 80,
-              "lastToken": 80
+              "lastToken": 80,
+              "children": [
+                "typeSpecifier 80"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(pos)",
                 "arrayInit": null,
                 "init": "TOKEN: IDENTIFIER(start)"
               }
             ],
             "firstToken": 80,
-            "lastToken": 84
+            "lastToken": 84,
+            "children": [
+              "fullySpecifiedType 80",
+              "typeSpecifier 83"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: IDENTIFIER(RMHit)",
                 "firstToken": 85,
                 "lastToken": 85,
-                "precisionQualifier": null
+                "children": []
               },
               "firstToken": 85,
-              "lastToken": 85
+              "lastToken": 85,
+              "children": [
+                "typeSpecifier 85"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(hit)",
                 "arrayInit": null,
                 "init": null
               }
             ],
             "firstToken": 85,
-            "lastToken": 87
+            "lastToken": 87,
+            "children": [
+              "fullySpecifiedType 85"
+            ]
           },
-          null,
-          null,
           {
-            "type": "RETURN",
+            "type": "expressionStatement",
+            "expression": {
+              "type": "postfixExpression",
+              "on": {
+                "type": "postfixExpression",
+                "on": "TOKEN: IDENTIFIER(pos)",
+                "op": "TOKEN: INC_OP(++)"
+              },
+              "op": "TOKEN: DEC_OP(--)",
+              "firstToken": 88,
+              "lastToken": 90,
+              "children": [
+                "typeSpecifier 88"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 88,
+            "lastToken": 91,
+            "children": [
+              "postfixExpression 88"
+            ]
+          },
+          {
+            "type": "forStatement",
+            "FOR": "TOKEN: FOR(for)",
+            "LEFT_PAREN": "TOKEN: LEFT_PAREN(()",
+            "initExpression": {
+              "type": "initDeclaratorListDeclaration",
+              "fsType": {
+                "type": "fullySpecifiedType",
+                "typeQualifier": null,
+                "typeSpecifier": {
+                  "type": "typeSpecifier",
+                  "precisionQualifier": null,
+                  "arraySpecifier": null,
+                  "typeSpecifierNonArray": "TOKEN: INT(int)",
+                  "firstToken": 94,
+                  "lastToken": 94,
+                  "children": []
+                },
+                "firstToken": 94,
+                "lastToken": 94,
+                "children": [
+                  "typeSpecifier 94"
+                ]
+              },
+              "declarators": [
+                {
+                  "type": "declarator",
+                  "name": "TOKEN: IDENTIFIER(i)",
+                  "arrayInit": null,
+                  "init": "TOKEN: INTCONSTANT(0)"
+                },
+                {
+                  "type": "declarator",
+                  "name": "TOKEN: IDENTIFIER(j2)",
+                  "arrayInit": null,
+                  "init": "TOKEN: INTCONSTANT(2)"
+                }
+              ],
+              "firstToken": 94,
+              "lastToken": 102,
+              "children": [
+                "fullySpecifiedType 94"
+              ]
+            },
+            "SEMICOLON1": null,
+            "conditionExpression": {
+              "type": "binaryExpression",
+              "lhs": "TOKEN: IDENTIFIER(i)",
+              "rhs": "TOKEN: INTCONSTANT(300)",
+              "op": "TOKEN: LEFT_ANGLE(<)",
+              "firstToken": 103,
+              "lastToken": 105,
+              "children": [
+                "typeSpecifier 103"
+              ]
+            },
+            "SEMICOLON2": "TOKEN: SEMICOLON(;)",
+            "loopExpression": {
+              "type": "postfixExpression",
+              "on": "TOKEN: IDENTIFIER(i)",
+              "op": "TOKEN: INC_OP(++)",
+              "firstToken": 107,
+              "lastToken": 108,
+              "children": [
+                "typeSpecifier 107"
+              ]
+            },
+            "RIGHT_PAREN": "TOKEN: RIGHT_PAREN())",
+            "statement": {
+              "type": "compoundStatement",
+              "statements": [
+                {
+                  "type": "expressionStatement",
+                  "expression": {
+                    "type": "assignmentExpression",
+                    "lhs": "TOKEN: IDENTIFIER(hit)",
+                    "op": "TOKEN: EQUAL(=)",
+                    "rhs": {
+                      "type": "functionCall",
+                      "what": {
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
+                        "arraySpecifier": null,
+                        "typeSpecifierNonArray": "TOKEN: IDENTIFIER(sdf)",
+                        "firstToken": 113,
+                        "lastToken": 113,
+                        "children": []
+                      },
+                      "args": [
+                        "TOKEN: IDENTIFIER(pos)"
+                      ],
+                      "firstToken": 113,
+                      "lastToken": 116,
+                      "children": [
+                        "typeSpecifier 113",
+                        "typeSpecifier 115"
+                      ]
+                    },
+                    "firstToken": 112,
+                    "lastToken": 116,
+                    "children": [
+                      "typeSpecifier 113",
+                      "functionCall 113"
+                    ]
+                  },
+                  "SEMICOLON": "TOKEN: SEMICOLON(;)",
+                  "firstToken": 111,
+                  "lastToken": 117,
+                  "children": [
+                    "typeSpecifier 111",
+                    "assignmentExpression 112"
+                  ]
+                },
+                {
+                  "type": "selectionStatement",
+                  "IF": "TOKEN: IF(if)",
+                  "LEFT_PAREN": "TOKEN: LEFT_PAREN(()",
+                  "condition": {
+                    "type": "binaryExpression",
+                    "lhs": {
+                      "type": "fieldAccess",
+                      "on": "TOKEN: IDENTIFIER(hit)",
+                      "field": "TOKEN: IDENTIFIER(distance)",
+                      "firstToken": 120,
+                      "lastToken": 122,
+                      "children": [
+                        "typeSpecifier 120"
+                      ]
+                    },
+                    "rhs": {
+                      "type": "binaryExpression",
+                      "lhs": "TOKEN: FLOATCONSTANT(0.001)",
+                      "rhs": {
+                        "type": "fieldAccess",
+                        "on": "TOKEN: IDENTIFIER(hit)",
+                        "field": "TOKEN: IDENTIFIER(distance)",
+                        "firstToken": 126,
+                        "lastToken": 128,
+                        "children": [
+                          "typeSpecifier 126"
+                        ]
+                      },
+                      "op": "TOKEN: STAR(*)",
+                      "firstToken": 124,
+                      "lastToken": 128,
+                      "children": [
+                        "fieldAccess 126"
+                      ]
+                    },
+                    "op": "TOKEN: LEFT_ANGLE(<)",
+                    "firstToken": 120,
+                    "lastToken": 128,
+                    "children": [
+                      "fieldAccess 120",
+                      "binaryExpression 124"
+                    ]
+                  },
+                  "RIGHT_PAREN": "TOKEN: RIGHT_PAREN())",
+                  "yes": {
+                    "type": "breakStatement",
+                    "firstToken": 130,
+                    "lastToken": 131,
+                    "children": []
+                  },
+                  "ELSE": null,
+                  "no": null,
+                  "firstToken": 118,
+                  "lastToken": 131,
+                  "children": [
+                    "binaryExpression 120",
+                    "breakStatement 130"
+                  ]
+                },
+                {
+                  "type": "expressionStatement",
+                  "expression": {
+                    "type": "assignmentExpression",
+                    "lhs": "TOKEN: IDENTIFIER(pos)",
+                    "op": "TOKEN: EQUAL(=)",
+                    "rhs": {
+                      "type": "binaryExpression",
+                      "lhs": "TOKEN: IDENTIFIER(pos)",
+                      "rhs": {
+                        "type": "binaryExpression",
+                        "lhs": {
+                          "type": "binaryExpression",
+                          "lhs": "TOKEN: IDENTIFIER(dir1)",
+                          "rhs": {
+                            "type": "fieldAccess",
+                            "on": "TOKEN: IDENTIFIER(hit)",
+                            "field": "TOKEN: IDENTIFIER(distance)",
+                            "firstToken": 138,
+                            "lastToken": 140,
+                            "children": [
+                              "typeSpecifier 138"
+                            ]
+                          },
+                          "op": "TOKEN: STAR(*)"
+                        },
+                        "rhs": "TOKEN: FLOATCONSTANT(.4)",
+                        "op": "TOKEN: STAR(*)",
+                        "firstToken": 136,
+                        "lastToken": 142,
+                        "children": [
+                          "typeSpecifier 136",
+                          "fieldAccess 138"
+                        ]
+                      },
+                      "op": "TOKEN: PLUS(+)",
+                      "firstToken": 134,
+                      "lastToken": 142,
+                      "children": [
+                        "typeSpecifier 134",
+                        "binaryExpression 136"
+                      ]
+                    },
+                    "firstToken": 133,
+                    "lastToken": 142,
+                    "children": [
+                      "binaryExpression 134"
+                    ]
+                  },
+                  "SEMICOLON": "TOKEN: SEMICOLON(;)",
+                  "firstToken": 132,
+                  "lastToken": 143,
+                  "children": [
+                    "typeSpecifier 132",
+                    "assignmentExpression 133"
+                  ]
+                }
+              ],
+              "firstToken": 110,
+              "lastToken": 144,
+              "children": [
+                "fullySpecifiedType 111",
+                "expressionStatement 111",
+                "selectionStatement 118",
+                "fullySpecifiedType 132",
+                "expressionStatement 132"
+              ]
+            },
+            "firstToken": 92,
+            "lastToken": 144,
+            "children": [
+              "fullySpecifiedType 94",
+              "initDeclaratorListDeclaration 94",
+              "fullySpecifiedType 103",
+              "binaryExpression 103",
+              "postfixExpression 107",
+              "compoundStatement 110"
+            ]
+          },
+          {
+            "type": "returnStatement",
             "what": {
-              "type": "FUNCTION_CALL",
+              "type": "functionCall",
               "what": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: IDENTIFIER(RMResult)",
-                "firstToken": 142,
-                "lastToken": 142
+                "firstToken": 146,
+                "lastToken": 146,
+                "children": []
               },
               "args": [
                 {
-                  "type": "FIELD_ACCESS",
+                  "type": "fieldAccess",
                   "on": "TOKEN: IDENTIFIER(hit)",
                   "field": "TOKEN: IDENTIFIER(distance)",
-                  "firstToken": 144,
-                  "lastToken": 146
+                  "firstToken": 148,
+                  "lastToken": 150,
+                  "children": [
+                    "typeSpecifier 148"
+                  ]
                 },
                 "TOKEN: IDENTIFIER(pos)",
                 {
-                  "type": "FIELD_ACCESS",
+                  "type": "fieldAccess",
                   "on": "TOKEN: IDENTIFIER(hit)",
                   "field": "TOKEN: IDENTIFIER(color)",
-                  "firstToken": 150,
-                  "lastToken": 152
+                  "firstToken": 154,
+                  "lastToken": 156,
+                  "children": [
+                    "typeSpecifier 154"
+                  ]
                 }
               ],
-              "firstToken": 142,
-              "lastToken": 153
+              "firstToken": 146,
+              "lastToken": 157,
+              "children": [
+                "typeSpecifier 146",
+                "fieldAccess 148",
+                "typeSpecifier 152",
+                "fieldAccess 154"
+              ]
             },
-            "firstToken": 141,
-            "lastToken": 154
+            "firstToken": 145,
+            "lastToken": 158,
+            "children": [
+              "typeSpecifier 146",
+              "functionCall 146"
+            ]
           }
         ],
         "firstToken": 79,
-        "lastToken": 155
+        "lastToken": 159,
+        "children": [
+          "fullySpecifiedType 80",
+          "typeSpecifier 83",
+          "initDeclaratorListDeclaration 80",
+          "fullySpecifiedType 85",
+          "initDeclaratorListDeclaration 85",
+          "fullySpecifiedType 88",
+          "expressionStatement 88",
+          "forStatement 92",
+          "returnStatement 145"
+        ]
       },
       "firstToken": 70,
-      "lastToken": 155
+      "lastToken": 159,
+      "children": [
+        "fullySpecifiedType 70",
+        "parameterDeclaration 73",
+        "parameterDeclaration 76",
+        "compoundStatement 79"
+      ]
     },
     {
-      "type": "FUNCTION_DECLARATION",
+      "type": "functionDefinition",
       "name": "TOKEN: IDENTIFIER(main)",
       "returnType": {
-        "type": "FULLY_SPECIFIED_TYPE",
+        "type": "fullySpecifiedType",
         "typeQualifier": null,
         "typeSpecifier": {
-          "type": "TYPE",
+          "type": "typeSpecifier",
+          "precisionQualifier": null,
           "arraySpecifier": null,
           "typeSpecifierNonArray": "TOKEN: VOID(void)",
-          "firstToken": 156,
-          "lastToken": 156,
-          "precisionQualifier": null
+          "firstToken": 160,
+          "lastToken": 160,
+          "children": []
         },
-        "firstToken": 156,
-        "lastToken": 156
+        "firstToken": 160,
+        "lastToken": 160,
+        "children": [
+          "typeSpecifier 160"
+        ]
       },
       "params": [],
       "body": {
-        "type": "COMPOUND_STATEMENT",
+        "type": "compoundStatement",
         "statements": [
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "whileStatement",
+            "WHILE": "TOKEN: WHILE(while)",
+            "LEFT_PAREN": "TOKEN: LEFT_PAREN(()",
+            "condition": {
+              "type": "initDeclaratorListDeclaration",
+              "fsType": {
+                "type": "fullySpecifiedType",
+                "typeQualifier": null,
+                "typeSpecifier": {
+                  "type": "typeSpecifier",
+                  "precisionQualifier": null,
+                  "arraySpecifier": null,
+                  "typeSpecifierNonArray": "TOKEN: BOOL(bool)",
+                  "firstToken": 167,
+                  "lastToken": 167,
+                  "children": []
+                },
+                "firstToken": 167,
+                "lastToken": 167,
+                "children": [
+                  "typeSpecifier 167"
+                ]
+              },
+              "declarators": [
+                {
+                  "type": "declarator",
+                  "name": "TOKEN: IDENTIFIER(x)",
+                  "init": {
+                    "type": "binaryExpression",
+                    "lhs": {
+                      "type": "binaryExpression",
+                      "lhs": "TOKEN: FLOATCONSTANT(3.)",
+                      "rhs": "TOKEN: FLOATCONSTANT(1.)",
+                      "op": "TOKEN: PLUS(+)",
+                      "firstToken": 170,
+                      "lastToken": 172,
+                      "children": []
+                    },
+                    "rhs": "TOKEN: FLOATCONSTANT(0.)",
+                    "op": "TOKEN: RIGHT_ANGLE(>)",
+                    "firstToken": 170,
+                    "lastToken": 174,
+                    "children": [
+                      "binaryExpression 170"
+                    ]
+                  },
+                  "arrayInit": null
+                }
+              ],
+              "firstToken": 167,
+              "lastToken": 174,
+              "children": [
+                "fullySpecifiedType 167",
+                "binaryExpression 170",
+                "fullySpecifiedType 167",
+                "binaryExpression 170"
+              ]
+            },
+            "RIGHT_PAREN": "TOKEN: RIGHT_PAREN())",
+            "statement": {
+              "type": "compoundStatement",
+              "statements": [],
+              "firstToken": 176,
+              "lastToken": 177,
+              "children": []
+            },
+            "firstToken": 165,
+            "lastToken": 177,
+            "children": [
+              "initDeclaratorListDeclaration 167",
+              "compoundStatement 176"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                "firstToken": 161,
-                "lastToken": 161,
-                "precisionQualifier": null
+                "firstToken": 178,
+                "lastToken": 178,
+                "children": []
               },
-              "firstToken": 161,
-              "lastToken": 161
+              "firstToken": 178,
+              "lastToken": 178,
+              "children": [
+                "typeSpecifier 178"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(scaledCoord)",
                 "arrayInit": null,
                 "init": "TOKEN: IDENTIFIER(coord)"
               }
             ],
-            "firstToken": 161,
-            "lastToken": 165
+            "firstToken": 178,
+            "lastToken": 182,
+            "children": [
+              "fullySpecifiedType 178",
+              "typeSpecifier 181"
+            ]
           },
-          null,
-          null,
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "expressionStatement",
+            "expression": {
+              "type": "assignmentExpression",
+              "lhs": "TOKEN: IDENTIFIER(scaledCoord)",
+              "op": "TOKEN: EQUAL(=)",
+              "rhs": {
+                "type": "functionCall",
+                "what": {
+                  "type": "typeSpecifier",
+                  "precisionQualifier": null,
+                  "arraySpecifier": null,
+                  "typeSpecifierNonArray": "TOKEN: IDENTIFIER(mix)",
+                  "firstToken": 185,
+                  "lastToken": 185,
+                  "children": []
+                },
+                "args": [
+                  {
+                    "type": "functionCall",
+                    "what": {
+                      "type": "typeSpecifier",
+                      "precisionQualifier": null,
+                      "arraySpecifier": null,
+                      "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
+                      "firstToken": 187,
+                      "lastToken": 187,
+                      "children": []
+                    },
+                    "args": [
+                      {
+                        "type": "prefixExpression",
+                        "op": "TOKEN: DASH(-)",
+                        "of": "TOKEN: FLOATCONSTANT(1.)",
+                        "firstToken": 189,
+                        "lastToken": 190,
+                        "children": []
+                      }
+                    ],
+                    "firstToken": 187,
+                    "lastToken": 191,
+                    "children": [
+                      "typeSpecifier 187",
+                      "prefixExpression 189"
+                    ]
+                  },
+                  {
+                    "type": "functionCall",
+                    "what": {
+                      "type": "typeSpecifier",
+                      "precisionQualifier": null,
+                      "arraySpecifier": null,
+                      "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
+                      "firstToken": 193,
+                      "lastToken": 193,
+                      "children": []
+                    },
+                    "args": [
+                      "TOKEN: FLOATCONSTANT(1.)"
+                    ],
+                    "firstToken": 193,
+                    "lastToken": 196,
+                    "children": [
+                      "typeSpecifier 193"
+                    ]
+                  },
+                  "TOKEN: IDENTIFIER(scaledCoord)"
+                ],
+                "firstToken": 185,
+                "lastToken": 199,
+                "children": [
+                  "typeSpecifier 185",
+                  "typeSpecifier 187",
+                  "functionCall 187",
+                  "typeSpecifier 193",
+                  "functionCall 193",
+                  "typeSpecifier 198"
+                ]
+              },
+              "firstToken": 184,
+              "lastToken": 199,
+              "children": [
+                "typeSpecifier 185",
+                "functionCall 185"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 183,
+            "lastToken": 200,
+            "children": [
+              "typeSpecifier 183",
+              "assignmentExpression 184"
+            ]
+          },
+          {
+            "type": "expressionStatement",
+            "expression": {
+              "type": "assignmentExpression",
+              "lhs": "TOKEN: IDENTIFIER(foo)",
+              "op": "TOKEN: EQUAL(=)",
+              "rhs": {
+                "type": "functionCall",
+                "what": {
+                  "type": "typeSpecifier",
+                  "precisionQualifier": null,
+                  "arraySpecifier": {
+                    "type": "arrayInit",
+                    "size": {
+                      "type": "commaExpression",
+                      "lhs": {
+                        "type": "binaryExpression",
+                        "lhs": "TOKEN: IDENTIFIER(zhui)",
+                        "rhs": "TOKEN: IDENTIFIER(c)",
+                        "op": "TOKEN: PLUS(+)",
+                        "firstToken": 206,
+                        "lastToken": 208,
+                        "children": [
+                          "typeSpecifier 206",
+                          "typeSpecifier 208"
+                        ]
+                      },
+                      "rhs": "TOKEN: FLOATCONSTANT(2.)",
+                      "firstToken": 206,
+                      "lastToken": 210,
+                      "children": [
+                        "binaryExpression 206"
+                      ]
+                    }
+                  },
+                  "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
+                  "firstToken": 203,
+                  "lastToken": 212,
+                  "children": [
+                    "commaExpression 206"
+                  ]
+                },
+                "args": [
+                  "TOKEN: FLOATCONSTANT(1.)"
+                ],
+                "firstToken": 203,
+                "lastToken": 215,
+                "children": [
+                  "typeSpecifier 203"
+                ]
+              },
+              "firstToken": 202,
+              "lastToken": 215,
+              "children": [
+                "typeSpecifier 203",
+                "functionCall 203"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 201,
+            "lastToken": 216,
+            "children": [
+              "typeSpecifier 201",
+              "assignmentExpression 202"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                "firstToken": 200,
-                "lastToken": 200,
-                "precisionQualifier": null
+                "firstToken": 217,
+                "lastToken": 217,
+                "children": []
               },
-              "firstToken": 200,
-              "lastToken": 200
+              "firstToken": 217,
+              "lastToken": 217,
+              "children": [
+                "typeSpecifier 217"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(unitGridDistances)",
                 "arrayInit": null,
                 "init": {
                   "type": "binaryExpression",
                   "lhs": "TOKEN: IDENTIFIER(scaledCoord)",
                   "rhs": {
-                    "type": "FUNCTION_CALL",
+                    "type": "functionCall",
                     "what": {
-                      "type": "TYPE",
+                      "type": "typeSpecifier",
+                      "precisionQualifier": null,
                       "arraySpecifier": null,
                       "typeSpecifierNonArray": "TOKEN: IDENTIFIER(round)",
-                      "firstToken": 205,
-                      "lastToken": 205
+                      "firstToken": 222,
+                      "lastToken": 222,
+                      "children": []
                     },
                     "args": [
                       "TOKEN: IDENTIFIER(scaledCoord)"
                     ],
-                    "firstToken": 205,
-                    "lastToken": 208
+                    "firstToken": 222,
+                    "lastToken": 225,
+                    "children": [
+                      "typeSpecifier 222",
+                      "typeSpecifier 224"
+                    ]
                   },
                   "op": "TOKEN: DASH(-)",
-                  "firstToken": 203,
-                  "lastToken": 208
+                  "firstToken": 220,
+                  "lastToken": 225,
+                  "children": [
+                    "typeSpecifier 220",
+                    "typeSpecifier 222",
+                    "functionCall 222"
+                  ]
                 }
               }
             ],
-            "firstToken": 200,
-            "lastToken": 209
+            "firstToken": 217,
+            "lastToken": 226,
+            "children": [
+              "fullySpecifiedType 217",
+              "binaryExpression 220"
+            ]
           },
-          null,
           {
-            "type": "INIT_DECLARATOR_LIST",
-            "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
-              "typeQualifier": null,
-              "typeSpecifier": {
-                "type": "TYPE",
-                "arraySpecifier": {
-                  "type": "ARRAY_TYPE",
-                  "size": "TOKEN: INTCONSTANT(4)"
-                },
-                "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                "firstToken": 243,
-                "lastToken": 246,
-                "precisionQualifier": null
-              },
-              "firstToken": 243,
-              "lastToken": 246
-            },
-            "decls": [
-              {
-                "type": "DECLARATOR",
-                "name": "TOKEN: IDENTIFIER(offsets)",
-                "arrayInit": null,
-                "init": {
-                  "type": "FUNCTION_CALL",
+            "type": "selectionStatement",
+            "IF": "TOKEN: IF(if)",
+            "LEFT_PAREN": "TOKEN: LEFT_PAREN(()",
+            "condition": {
+              "type": "binaryExpression",
+              "lhs": {
+                "type": "binaryExpression",
+                "lhs": {
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
-                    "arraySpecifier": {
-                      "type": "ARRAY_TYPE",
-                      "size": "TOKEN: INTCONSTANT(4)"
-                    },
-                    "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                    "firstToken": 249,
-                    "lastToken": 252
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
+                    "arraySpecifier": null,
+                    "typeSpecifierNonArray": "TOKEN: IDENTIFIER(abs)",
+                    "firstToken": 229,
+                    "lastToken": 229,
+                    "children": []
                   },
                   "args": [
                     {
-                      "type": "FUNCTION_CALL",
+                      "type": "fieldAccess",
+                      "on": "TOKEN: IDENTIFIER(unitGridDistances)",
+                      "field": "TOKEN: IDENTIFIER(x)",
+                      "firstToken": 231,
+                      "lastToken": 233,
+                      "children": [
+                        "typeSpecifier 231"
+                      ]
+                    }
+                  ],
+                  "firstToken": 229,
+                  "lastToken": 234,
+                  "children": [
+                    "typeSpecifier 229",
+                    "fieldAccess 231"
+                  ]
+                },
+                "rhs": "TOKEN: FLOATCONSTANT(.01)",
+                "op": "TOKEN: LEFT_ANGLE(<)",
+                "firstToken": 229,
+                "lastToken": 236,
+                "children": [
+                  "typeSpecifier 229",
+                  "functionCall 229"
+                ]
+              },
+              "rhs": {
+                "type": "binaryExpression",
+                "lhs": {
+                  "type": "functionCall",
+                  "what": {
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
+                    "arraySpecifier": null,
+                    "typeSpecifierNonArray": "TOKEN: IDENTIFIER(abs)",
+                    "firstToken": 238,
+                    "lastToken": 238,
+                    "children": []
+                  },
+                  "args": [
+                    {
+                      "type": "fieldAccess",
+                      "on": "TOKEN: IDENTIFIER(unitGridDistances)",
+                      "field": "TOKEN: IDENTIFIER(y)",
+                      "firstToken": 240,
+                      "lastToken": 242,
+                      "children": [
+                        "typeSpecifier 240"
+                      ]
+                    }
+                  ],
+                  "firstToken": 238,
+                  "lastToken": 243,
+                  "children": [
+                    "typeSpecifier 238",
+                    "fieldAccess 240"
+                  ]
+                },
+                "rhs": "TOKEN: FLOATCONSTANT(.01)",
+                "op": "TOKEN: LEFT_ANGLE(<)",
+                "firstToken": 238,
+                "lastToken": 245,
+                "children": [
+                  "typeSpecifier 238",
+                  "functionCall 238"
+                ]
+              },
+              "op": "TOKEN: OR_OP(||)",
+              "firstToken": 229,
+              "lastToken": 245,
+              "children": [
+                "binaryExpression 229",
+                "binaryExpression 238"
+              ]
+            },
+            "RIGHT_PAREN": "TOKEN: RIGHT_PAREN())",
+            "yes": {
+              "type": "compoundStatement",
+              "statements": [
+                {
+                  "type": "expressionStatement",
+                  "expression": {
+                    "type": "assignmentExpression",
+                    "lhs": "TOKEN: IDENTIFIER(fragColor)",
+                    "op": "TOKEN: EQUAL(=)",
+                    "rhs": {
+                      "type": "functionCall",
                       "what": {
-                        "type": "TYPE",
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
+                        "arraySpecifier": null,
+                        "typeSpecifierNonArray": "TOKEN: VEC4(vec4)",
+                        "firstToken": 250,
+                        "lastToken": 250,
+                        "children": []
+                      },
+                      "args": [
+                        "TOKEN: IDENTIFIER(scaledCoord)",
+                        "TOKEN: FLOATCONSTANT(0.)",
+                        "TOKEN: FLOATCONSTANT(1.)"
+                      ],
+                      "firstToken": 250,
+                      "lastToken": 257,
+                      "children": [
+                        "typeSpecifier 250",
+                        "typeSpecifier 252"
+                      ]
+                    },
+                    "firstToken": 249,
+                    "lastToken": 257,
+                    "children": [
+                      "typeSpecifier 250",
+                      "functionCall 250"
+                    ]
+                  },
+                  "SEMICOLON": "TOKEN: SEMICOLON(;)",
+                  "firstToken": 248,
+                  "lastToken": 258,
+                  "children": [
+                    "typeSpecifier 248",
+                    "assignmentExpression 249"
+                  ]
+                }
+              ],
+              "firstToken": 247,
+              "lastToken": 259,
+              "children": [
+                "fullySpecifiedType 248",
+                "expressionStatement 248"
+              ]
+            },
+            "ELSE": null,
+            "no": null,
+            "firstToken": 227,
+            "lastToken": 259,
+            "children": [
+              "binaryExpression 229",
+              "compoundStatement 247"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
+            "fsType": {
+              "type": "fullySpecifiedType",
+              "typeQualifier": null,
+              "typeSpecifier": {
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
+                "arraySpecifier": {
+                  "type": "arrayInit",
+                  "size": "TOKEN: INTCONSTANT(4)"
+                },
+                "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
+                "firstToken": 260,
+                "lastToken": 263,
+                "children": []
+              },
+              "firstToken": 260,
+              "lastToken": 263,
+              "children": [
+                "typeSpecifier 260"
+              ]
+            },
+            "declarators": [
+              {
+                "type": "declarator",
+                "name": "TOKEN: IDENTIFIER(offsets)",
+                "arrayInit": null,
+                "init": {
+                  "type": "functionCall",
+                  "what": {
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
+                    "arraySpecifier": {
+                      "type": "arrayInit",
+                      "size": "TOKEN: INTCONSTANT(4)"
+                    },
+                    "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
+                    "firstToken": 266,
+                    "lastToken": 269,
+                    "children": []
+                  },
+                  "args": [
+                    {
+                      "type": "functionCall",
+                      "what": {
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
                         "arraySpecifier": null,
                         "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                        "firstToken": 254,
-                        "lastToken": 254
+                        "firstToken": 271,
+                        "lastToken": 271,
+                        "children": []
                       },
                       "args": [
                         "TOKEN: INTCONSTANT(0)"
                       ],
-                      "firstToken": 254,
-                      "lastToken": 257
+                      "firstToken": 271,
+                      "lastToken": 274,
+                      "children": [
+                        "typeSpecifier 271"
+                      ]
                     },
                     {
-                      "type": "FUNCTION_CALL",
+                      "type": "functionCall",
                       "what": {
-                        "type": "TYPE",
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
                         "arraySpecifier": null,
                         "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                        "firstToken": 259,
-                        "lastToken": 259
+                        "firstToken": 276,
+                        "lastToken": 276,
+                        "children": []
                       },
                       "args": [
                         "TOKEN: FLOATCONSTANT(0.)",
                         "TOKEN: FLOATCONSTANT(1.)"
                       ],
-                      "firstToken": 259,
-                      "lastToken": 264
+                      "firstToken": 276,
+                      "lastToken": 281,
+                      "children": [
+                        "typeSpecifier 276"
+                      ]
                     },
                     {
-                      "type": "FUNCTION_CALL",
+                      "type": "functionCall",
                       "what": {
-                        "type": "TYPE",
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
                         "arraySpecifier": null,
                         "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                        "firstToken": 266,
-                        "lastToken": 266
+                        "firstToken": 283,
+                        "lastToken": 283,
+                        "children": []
                       },
                       "args": [
                         "TOKEN: FLOATCONSTANT(1.)",
                         "TOKEN: FLOATCONSTANT(0.)"
                       ],
-                      "firstToken": 266,
-                      "lastToken": 271
+                      "firstToken": 283,
+                      "lastToken": 288,
+                      "children": [
+                        "typeSpecifier 283"
+                      ]
                     },
                     {
-                      "type": "FUNCTION_CALL",
+                      "type": "functionCall",
                       "what": {
-                        "type": "TYPE",
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
                         "arraySpecifier": null,
                         "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                        "firstToken": 273,
-                        "lastToken": 273
+                        "firstToken": 290,
+                        "lastToken": 290,
+                        "children": []
                       },
                       "args": [
                         "TOKEN: FLOATCONSTANT(1.)"
                       ],
-                      "firstToken": 273,
-                      "lastToken": 276
+                      "firstToken": 290,
+                      "lastToken": 293,
+                      "children": [
+                        "typeSpecifier 290"
+                      ]
                     }
                   ],
-                  "firstToken": 249,
-                  "lastToken": 277
+                  "firstToken": 266,
+                  "lastToken": 294,
+                  "children": [
+                    "typeSpecifier 266",
+                    "typeSpecifier 271",
+                    "functionCall 271",
+                    "typeSpecifier 276",
+                    "functionCall 276",
+                    "typeSpecifier 283",
+                    "functionCall 283",
+                    "typeSpecifier 290",
+                    "functionCall 290"
+                  ]
                 }
               }
             ],
-            "firstToken": 243,
-            "lastToken": 278
+            "firstToken": 260,
+            "lastToken": 295,
+            "children": [
+              "fullySpecifiedType 260",
+              "typeSpecifier 266",
+              "functionCall 266"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                "firstToken": 279,
-                "lastToken": 279,
-                "precisionQualifier": null
+                "firstToken": 296,
+                "lastToken": 296,
+                "children": []
               },
-              "firstToken": 279,
-              "lastToken": 279
+              "firstToken": 296,
+              "lastToken": 296,
+              "children": [
+                "typeSpecifier 296"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(cell)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(floor)",
-                    "firstToken": 282,
-                    "lastToken": 282
+                    "firstToken": 299,
+                    "lastToken": 299,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: IDENTIFIER(scaledCoord)"
                   ],
-                  "firstToken": 282,
-                  "lastToken": 285
+                  "firstToken": 299,
+                  "lastToken": 302,
+                  "children": [
+                    "typeSpecifier 299",
+                    "typeSpecifier 301"
+                  ]
                 }
               }
             ],
-            "firstToken": 279,
-            "lastToken": 286
+            "firstToken": 296,
+            "lastToken": 303,
+            "children": [
+              "fullySpecifiedType 296",
+              "typeSpecifier 299",
+              "functionCall 299"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                "firstToken": 287,
-                "lastToken": 287,
-                "precisionQualifier": null
+                "firstToken": 304,
+                "lastToken": 304,
+                "children": []
               },
-              "firstToken": 287,
-              "lastToken": 287
+              "firstToken": 304,
+              "lastToken": 304,
+              "children": [
+                "typeSpecifier 304"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(cellpos)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(fract)",
-                    "firstToken": 290,
-                    "lastToken": 290
+                    "firstToken": 307,
+                    "lastToken": 307,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: IDENTIFIER(cell)"
                   ],
-                  "firstToken": 290,
-                  "lastToken": 293
+                  "firstToken": 307,
+                  "lastToken": 310,
+                  "children": [
+                    "typeSpecifier 307",
+                    "typeSpecifier 309"
+                  ]
                 }
               }
             ],
-            "firstToken": 287,
-            "lastToken": 294
+            "firstToken": 304,
+            "lastToken": 311,
+            "children": [
+              "fullySpecifiedType 304",
+              "typeSpecifier 307",
+              "functionCall 307"
+            ]
           },
-          null,
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "forStatement",
+            "FOR": "TOKEN: FOR(for)",
+            "LEFT_PAREN": "TOKEN: LEFT_PAREN(()",
+            "initExpression": {
+              "type": "initDeclaratorListDeclaration",
+              "fsType": {
+                "type": "fullySpecifiedType",
+                "typeQualifier": null,
+                "typeSpecifier": {
+                  "type": "typeSpecifier",
+                  "precisionQualifier": null,
+                  "arraySpecifier": null,
+                  "typeSpecifierNonArray": "TOKEN: INT(int)",
+                  "firstToken": 314,
+                  "lastToken": 314,
+                  "children": []
+                },
+                "firstToken": 314,
+                "lastToken": 314,
+                "children": [
+                  "typeSpecifier 314"
+                ]
+              },
+              "declarators": [
+                {
+                  "type": "declarator",
+                  "name": "TOKEN: IDENTIFIER(i)",
+                  "arrayInit": null,
+                  "init": "TOKEN: INTCONSTANT(0)"
+                }
+              ],
+              "firstToken": 314,
+              "lastToken": 318,
+              "children": [
+                "fullySpecifiedType 314"
+              ]
+            },
+            "SEMICOLON1": null,
+            "conditionExpression": {
+              "type": "binaryExpression",
+              "lhs": "TOKEN: IDENTIFIER(i)",
+              "rhs": "TOKEN: INTCONSTANT(4)",
+              "op": "TOKEN: LEFT_ANGLE(<)",
+              "firstToken": 319,
+              "lastToken": 321,
+              "children": [
+                "typeSpecifier 319"
+              ]
+            },
+            "SEMICOLON2": "TOKEN: SEMICOLON(;)",
+            "loopExpression": {
+              "type": "postfixExpression",
+              "on": "TOKEN: IDENTIFIER(i)",
+              "op": "TOKEN: INC_OP(++)",
+              "firstToken": 323,
+              "lastToken": 324,
+              "children": [
+                "typeSpecifier 323"
+              ]
+            },
+            "RIGHT_PAREN": "TOKEN: RIGHT_PAREN())",
+            "statement": {
+              "type": "compoundStatement",
+              "statements": [
+                {
+                  "type": "initDeclaratorListDeclaration",
+                  "fsType": {
+                    "type": "fullySpecifiedType",
+                    "typeQualifier": null,
+                    "typeSpecifier": {
+                      "type": "typeSpecifier",
+                      "precisionQualifier": null,
+                      "arraySpecifier": null,
+                      "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
+                      "firstToken": 327,
+                      "lastToken": 327,
+                      "children": []
+                    },
+                    "firstToken": 327,
+                    "lastToken": 327,
+                    "children": [
+                      "typeSpecifier 327"
+                    ]
+                  },
+                  "declarators": [
+                    {
+                      "type": "declarator",
+                      "name": "TOKEN: IDENTIFIER(corner)",
+                      "arrayInit": null,
+                      "init": {
+                        "type": "binaryExpression",
+                        "lhs": "TOKEN: IDENTIFIER(cell)",
+                        "rhs": {
+                          "type": "arrayAccess",
+                          "on": "TOKEN: IDENTIFIER(offsets)",
+                          "index": "TOKEN: IDENTIFIER(i)",
+                          "firstToken": 332,
+                          "lastToken": 335,
+                          "children": [
+                            "typeSpecifier 332",
+                            "typeSpecifier 334"
+                          ]
+                        },
+                        "op": "TOKEN: PLUS(+)",
+                        "firstToken": 330,
+                        "lastToken": 335,
+                        "children": [
+                          "typeSpecifier 330",
+                          "arrayAccess 332"
+                        ]
+                      }
+                    }
+                  ],
+                  "firstToken": 327,
+                  "lastToken": 336,
+                  "children": [
+                    "fullySpecifiedType 327",
+                    "binaryExpression 330"
+                  ]
+                },
+                {
+                  "type": "initDeclaratorListDeclaration",
+                  "fsType": {
+                    "type": "fullySpecifiedType",
+                    "typeQualifier": null,
+                    "typeSpecifier": {
+                      "type": "typeSpecifier",
+                      "precisionQualifier": null,
+                      "arraySpecifier": null,
+                      "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
+                      "firstToken": 337,
+                      "lastToken": 337,
+                      "children": []
+                    },
+                    "firstToken": 337,
+                    "lastToken": 337,
+                    "children": [
+                      "typeSpecifier 337"
+                    ]
+                  },
+                  "declarators": [
+                    {
+                      "type": "declarator",
+                      "name": "TOKEN: IDENTIFIER(gradient)",
+                      "arrayInit": null,
+                      "init": {
+                        "type": "functionCall",
+                        "what": {
+                          "type": "typeSpecifier",
+                          "precisionQualifier": null,
+                          "arraySpecifier": null,
+                          "typeSpecifierNonArray": "TOKEN: IDENTIFIER(gradient)",
+                          "firstToken": 340,
+                          "lastToken": 340,
+                          "children": []
+                        },
+                        "args": [
+                          {
+                            "type": "functionCall",
+                            "what": {
+                              "type": "typeSpecifier",
+                              "precisionQualifier": null,
+                              "arraySpecifier": null,
+                              "typeSpecifierNonArray": "TOKEN: UVEC2(uvec2)",
+                              "firstToken": 342,
+                              "lastToken": 342,
+                              "children": []
+                            },
+                            "args": [
+                              "TOKEN: IDENTIFIER(corner)"
+                            ],
+                            "firstToken": 342,
+                            "lastToken": 345,
+                            "children": [
+                              "typeSpecifier 342",
+                              "typeSpecifier 344"
+                            ]
+                          }
+                        ],
+                        "firstToken": 340,
+                        "lastToken": 346,
+                        "children": [
+                          "typeSpecifier 340",
+                          "typeSpecifier 342",
+                          "functionCall 342"
+                        ]
+                      }
+                    }
+                  ],
+                  "firstToken": 337,
+                  "lastToken": 347,
+                  "children": [
+                    "fullySpecifiedType 337",
+                    "typeSpecifier 340",
+                    "functionCall 340"
+                  ]
+                },
+                {
+                  "type": "initDeclaratorListDeclaration",
+                  "fsType": {
+                    "type": "fullySpecifiedType",
+                    "typeQualifier": null,
+                    "typeSpecifier": {
+                      "type": "typeSpecifier",
+                      "precisionQualifier": null,
+                      "arraySpecifier": null,
+                      "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
+                      "firstToken": 348,
+                      "lastToken": 348,
+                      "children": []
+                    },
+                    "firstToken": 348,
+                    "lastToken": 348,
+                    "children": [
+                      "typeSpecifier 348"
+                    ]
+                  },
+                  "declarators": [
+                    {
+                      "type": "declarator",
+                      "name": "TOKEN: IDENTIFIER(d)",
+                      "arrayInit": null,
+                      "init": {
+                        "type": "functionCall",
+                        "what": {
+                          "type": "typeSpecifier",
+                          "precisionQualifier": null,
+                          "arraySpecifier": null,
+                          "typeSpecifierNonArray": "TOKEN: IDENTIFIER(sdSegment)",
+                          "firstToken": 351,
+                          "lastToken": 351,
+                          "children": []
+                        },
+                        "args": [
+                          "TOKEN: IDENTIFIER(scaledCoord)",
+                          "TOKEN: IDENTIFIER(corner)",
+                          {
+                            "type": "binaryExpression",
+                            "lhs": "TOKEN: IDENTIFIER(corner)",
+                            "rhs": {
+                              "type": "binaryExpression",
+                              "lhs": "TOKEN: IDENTIFIER(gradient)",
+                              "rhs": "TOKEN: FLOATCONSTANT(.3)",
+                              "op": "TOKEN: STAR(*)",
+                              "firstToken": 359,
+                              "lastToken": 361,
+                              "children": [
+                                "typeSpecifier 359"
+                              ]
+                            },
+                            "op": "TOKEN: PLUS(+)",
+                            "firstToken": 357,
+                            "lastToken": 361,
+                            "children": [
+                              "typeSpecifier 357",
+                              "binaryExpression 359"
+                            ]
+                          }
+                        ],
+                        "firstToken": 351,
+                        "lastToken": 362,
+                        "children": [
+                          "typeSpecifier 351",
+                          "typeSpecifier 353",
+                          "typeSpecifier 355",
+                          "binaryExpression 357"
+                        ]
+                      }
+                    }
+                  ],
+                  "firstToken": 348,
+                  "lastToken": 363,
+                  "children": [
+                    "fullySpecifiedType 348",
+                    "typeSpecifier 351",
+                    "functionCall 351"
+                  ]
+                },
+                {
+                  "type": "selectionStatement",
+                  "IF": "TOKEN: IF(if)",
+                  "LEFT_PAREN": "TOKEN: LEFT_PAREN(()",
+                  "condition": {
+                    "type": "binaryExpression",
+                    "lhs": "TOKEN: IDENTIFIER(d)",
+                    "rhs": "TOKEN: FLOATCONSTANT(.003)",
+                    "op": "TOKEN: LEFT_ANGLE(<)",
+                    "firstToken": 366,
+                    "lastToken": 368,
+                    "children": [
+                      "typeSpecifier 366"
+                    ]
+                  },
+                  "RIGHT_PAREN": "TOKEN: RIGHT_PAREN())",
+                  "yes": {
+                    "type": "compoundStatement",
+                    "statements": [
+                      {
+                        "type": "expressionStatement",
+                        "expression": {
+                          "type": "assignmentExpression",
+                          "lhs": "TOKEN: IDENTIFIER(fragColor)",
+                          "op": "TOKEN: EQUAL(=)",
+                          "rhs": "TOKEN: IDENTIFIER(green)",
+                          "firstToken": 372,
+                          "lastToken": 373,
+                          "children": [
+                            "typeSpecifier 373"
+                          ]
+                        },
+                        "SEMICOLON": "TOKEN: SEMICOLON(;)",
+                        "firstToken": 371,
+                        "lastToken": 374,
+                        "children": [
+                          "typeSpecifier 371",
+                          "assignmentExpression 372"
+                        ]
+                      }
+                    ],
+                    "firstToken": 370,
+                    "lastToken": 375,
+                    "children": [
+                      "fullySpecifiedType 371",
+                      "expressionStatement 371"
+                    ]
+                  },
+                  "ELSE": null,
+                  "no": null,
+                  "firstToken": 364,
+                  "lastToken": 375,
+                  "children": [
+                    "binaryExpression 366",
+                    "compoundStatement 370"
+                  ]
+                }
+              ],
+              "firstToken": 326,
+              "lastToken": 376,
+              "children": [
+                "fullySpecifiedType 327",
+                "binaryExpression 330",
+                "initDeclaratorListDeclaration 327",
+                "fullySpecifiedType 337",
+                "typeSpecifier 340",
+                "functionCall 340",
+                "initDeclaratorListDeclaration 337",
+                "fullySpecifiedType 348",
+                "typeSpecifier 351",
+                "functionCall 351",
+                "initDeclaratorListDeclaration 348",
+                "selectionStatement 364"
+              ]
+            },
+            "firstToken": 312,
+            "lastToken": 376,
+            "children": [
+              "fullySpecifiedType 314",
+              "initDeclaratorListDeclaration 314",
+              "fullySpecifiedType 319",
+              "binaryExpression 319",
+              "postfixExpression 323",
+              "compoundStatement 326"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
-                "firstToken": 360,
-                "lastToken": 360,
-                "precisionQualifier": null
+                "firstToken": 377,
+                "lastToken": 377,
+                "children": []
               },
-              "firstToken": 360,
-              "lastToken": 360
+              "firstToken": 377,
+              "lastToken": 377,
+              "children": [
+                "typeSpecifier 377"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(perl)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(perlin01)",
-                    "firstToken": 363,
-                    "lastToken": 363
+                    "firstToken": 380,
+                    "lastToken": 380,
+                    "children": []
                   },
                   "args": [
                     {
-                      "type": "FIELD_ACCESS",
+                      "type": "fieldAccess",
                       "on": "TOKEN: IDENTIFIER(scaledCoord)",
                       "field": "TOKEN: IDENTIFIER(xy)",
-                      "firstToken": 365,
-                      "lastToken": 367
-                    }
-                  ],
-                  "firstToken": 363,
-                  "lastToken": 368
-                }
-              }
-            ],
-            "firstToken": 360,
-            "lastToken": 369
-          },
-          null,
-          {
-            "type": "INIT_DECLARATOR_LIST",
-            "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
-              "typeQualifier": null,
-              "typeSpecifier": {
-                "type": "TYPE",
-                "arraySpecifier": null,
-                "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 377,
-                "lastToken": 377,
-                "precisionQualifier": null
-              },
-              "firstToken": 377,
-              "lastToken": 377
-            },
-            "decls": [
-              {
-                "type": "DECLARATOR",
-                "name": "TOKEN: IDENTIFIER(light)",
-                "arrayInit": null,
-                "init": {
-                  "type": "FUNCTION_CALL",
-                  "what": {
-                    "type": "TYPE",
-                    "arraySpecifier": null,
-                    "typeSpecifierNonArray": "TOKEN: IDENTIFIER(normalize)",
-                    "firstToken": 380,
-                    "lastToken": 380
-                  },
-                  "args": [
-                    {
-                      "type": "FUNCTION_CALL",
-                      "what": {
-                        "type": "TYPE",
-                        "arraySpecifier": null,
-                        "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                        "firstToken": 382,
-                        "lastToken": 382
-                      },
-                      "args": [
-                        {
-                          "type": "PREFIX_EXPRESSION",
-                          "op": "TOKEN: DASH(-)",
-                          "of": "TOKEN: FLOATCONSTANT(1.)",
-                          "firstToken": 384,
-                          "lastToken": 385
-                        },
-                        {
-                          "type": "PREFIX_EXPRESSION",
-                          "op": "TOKEN: DASH(-)",
-                          "of": "TOKEN: FLOATCONSTANT(2.)",
-                          "firstToken": 387,
-                          "lastToken": 388
-                        },
-                        {
-                          "type": "PREFIX_EXPRESSION",
-                          "op": "TOKEN: DASH(-)",
-                          "of": "TOKEN: INTCONSTANT(1)",
-                          "firstToken": 390,
-                          "lastToken": 391
-                        }
-                      ],
                       "firstToken": 382,
-                      "lastToken": 392
+                      "lastToken": 384,
+                      "children": [
+                        "typeSpecifier 382"
+                      ]
                     }
                   ],
                   "firstToken": 380,
-                  "lastToken": 393
+                  "lastToken": 385,
+                  "children": [
+                    "typeSpecifier 380",
+                    "fieldAccess 382"
+                  ]
                 }
               }
             ],
             "firstToken": 377,
-            "lastToken": 394
+            "lastToken": 386,
+            "children": [
+              "fullySpecifiedType 377",
+              "typeSpecifier 380",
+              "functionCall 380"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "expressionStatement",
+            "expression": {
+              "type": "assignmentExpression",
+              "lhs": "TOKEN: IDENTIFIER(fragColor)",
+              "op": "TOKEN: EQUAL(=)",
+              "rhs": {
+                "type": "functionCall",
+                "what": {
+                  "type": "typeSpecifier",
+                  "precisionQualifier": null,
+                  "arraySpecifier": null,
+                  "typeSpecifierNonArray": "TOKEN: IDENTIFIER(visualize)",
+                  "firstToken": 389,
+                  "lastToken": 389,
+                  "children": []
+                },
+                "args": [
+                  "TOKEN: IDENTIFIER(perl)"
+                ],
+                "firstToken": 389,
+                "lastToken": 392,
+                "children": [
+                  "typeSpecifier 389",
+                  "typeSpecifier 391"
+                ]
+              },
+              "firstToken": 388,
+              "lastToken": 392,
+              "children": [
+                "typeSpecifier 389",
+                "functionCall 389"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 387,
+            "lastToken": 393,
+            "children": [
+              "typeSpecifier 387",
+              "assignmentExpression 388"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 395,
-                "lastToken": 395,
-                "precisionQualifier": null
+                "firstToken": 394,
+                "lastToken": 394,
+                "children": []
               },
-              "firstToken": 395,
-              "lastToken": 395
+              "firstToken": 394,
+              "lastToken": 394,
+              "children": [
+                "typeSpecifier 394"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
+                "name": "TOKEN: IDENTIFIER(light)",
+                "arrayInit": null,
+                "init": {
+                  "type": "functionCall",
+                  "what": {
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
+                    "arraySpecifier": null,
+                    "typeSpecifierNonArray": "TOKEN: IDENTIFIER(normalize)",
+                    "firstToken": 397,
+                    "lastToken": 397,
+                    "children": []
+                  },
+                  "args": [
+                    {
+                      "type": "functionCall",
+                      "what": {
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
+                        "arraySpecifier": null,
+                        "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
+                        "firstToken": 399,
+                        "lastToken": 399,
+                        "children": []
+                      },
+                      "args": [
+                        {
+                          "type": "prefixExpression",
+                          "op": "TOKEN: DASH(-)",
+                          "of": "TOKEN: FLOATCONSTANT(1.)",
+                          "firstToken": 401,
+                          "lastToken": 402,
+                          "children": []
+                        },
+                        {
+                          "type": "prefixExpression",
+                          "op": "TOKEN: DASH(-)",
+                          "of": "TOKEN: FLOATCONSTANT(2.)",
+                          "firstToken": 404,
+                          "lastToken": 405,
+                          "children": []
+                        },
+                        {
+                          "type": "prefixExpression",
+                          "op": "TOKEN: DASH(-)",
+                          "of": "TOKEN: INTCONSTANT(1)",
+                          "firstToken": 407,
+                          "lastToken": 408,
+                          "children": []
+                        }
+                      ],
+                      "firstToken": 399,
+                      "lastToken": 409,
+                      "children": [
+                        "typeSpecifier 399",
+                        "prefixExpression 401",
+                        "prefixExpression 404",
+                        "prefixExpression 407"
+                      ]
+                    }
+                  ],
+                  "firstToken": 397,
+                  "lastToken": 410,
+                  "children": [
+                    "typeSpecifier 397",
+                    "typeSpecifier 399",
+                    "functionCall 399"
+                  ]
+                }
+              }
+            ],
+            "firstToken": 394,
+            "lastToken": 411,
+            "children": [
+              "fullySpecifiedType 394",
+              "typeSpecifier 397",
+              "functionCall 397"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
+            "fsType": {
+              "type": "fullySpecifiedType",
+              "typeQualifier": null,
+              "typeSpecifier": {
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
+                "arraySpecifier": null,
+                "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
+                "firstToken": 412,
+                "lastToken": 412,
+                "children": []
+              },
+              "firstToken": 412,
+              "lastToken": 412,
+              "children": [
+                "typeSpecifier 412"
+              ]
+            },
+            "declarators": [
+              {
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(a)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                    "firstToken": 398,
-                    "lastToken": 398
+                    "firstToken": 415,
+                    "lastToken": 415,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: IDENTIFIER(scaledCoord)",
                     {
-                      "type": "PREFIX_EXPRESSION",
+                      "type": "prefixExpression",
                       "op": "TOKEN: DASH(-)",
                       "of": "TOKEN: FLOATCONSTANT(1.)",
-                      "firstToken": 402,
-                      "lastToken": 403
+                      "firstToken": 419,
+                      "lastToken": 420,
+                      "children": []
                     }
                   ],
-                  "firstToken": 398,
-                  "lastToken": 404
+                  "firstToken": 415,
+                  "lastToken": 421,
+                  "children": [
+                    "typeSpecifier 415",
+                    "typeSpecifier 417",
+                    "prefixExpression 419"
+                  ]
                 }
               }
             ],
-            "firstToken": 395,
-            "lastToken": 405
+            "firstToken": 412,
+            "lastToken": 422,
+            "children": [
+              "fullySpecifiedType 412",
+              "typeSpecifier 415",
+              "functionCall 415"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 406,
-                "lastToken": 406,
-                "precisionQualifier": null
+                "firstToken": 423,
+                "lastToken": 423,
+                "children": []
               },
-              "firstToken": 406,
-              "lastToken": 406
+              "firstToken": 423,
+              "lastToken": 423,
+              "children": [
+                "typeSpecifier 423"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(b)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                    "firstToken": 409,
-                    "lastToken": 409
+                    "firstToken": 426,
+                    "lastToken": 426,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: IDENTIFIER(scaledCoord)",
                     "TOKEN: FLOATCONSTANT(1.)"
                   ],
-                  "firstToken": 409,
-                  "lastToken": 414
+                  "firstToken": 426,
+                  "lastToken": 431,
+                  "children": [
+                    "typeSpecifier 426",
+                    "typeSpecifier 428"
+                  ]
                 }
               }
             ],
-            "firstToken": 406,
-            "lastToken": 415
+            "firstToken": 423,
+            "lastToken": 432,
+            "children": [
+              "fullySpecifiedType 423",
+              "typeSpecifier 426",
+              "functionCall 426"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 416,
-                "lastToken": 416,
-                "precisionQualifier": null
+                "firstToken": 433,
+                "lastToken": 433,
+                "children": []
               },
-              "firstToken": 416,
-              "lastToken": 416
+              "firstToken": 433,
+              "lastToken": 433,
+              "children": [
+                "typeSpecifier 433"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(aWC)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(pt)",
-                    "firstToken": 419,
-                    "lastToken": 419
+                    "firstToken": 436,
+                    "lastToken": 436,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: IDENTIFIER(llli)",
                     "TOKEN: IDENTIFIER(a)"
                   ],
-                  "firstToken": 419,
-                  "lastToken": 424
+                  "firstToken": 436,
+                  "lastToken": 441,
+                  "children": [
+                    "typeSpecifier 436",
+                    "typeSpecifier 438",
+                    "typeSpecifier 440"
+                  ]
                 }
               }
             ],
-            "firstToken": 416,
-            "lastToken": 425
+            "firstToken": 433,
+            "lastToken": 442,
+            "children": [
+              "fullySpecifiedType 433",
+              "typeSpecifier 436",
+              "functionCall 436"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 426,
-                "lastToken": 426,
-                "precisionQualifier": null
+                "firstToken": 443,
+                "lastToken": 443,
+                "children": []
               },
-              "firstToken": 426,
-              "lastToken": 426
+              "firstToken": 443,
+              "lastToken": 443,
+              "children": [
+                "typeSpecifier 443"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(bWC)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(pt)",
-                    "firstToken": 429,
-                    "lastToken": 429
+                    "firstToken": 446,
+                    "lastToken": 446,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: IDENTIFIER(llli)",
                     "TOKEN: IDENTIFIER(b)"
                   ],
-                  "firstToken": 429,
-                  "lastToken": 434
+                  "firstToken": 446,
+                  "lastToken": 451,
+                  "children": [
+                    "typeSpecifier 446",
+                    "typeSpecifier 448",
+                    "typeSpecifier 450"
+                  ]
                 }
               }
             ],
-            "firstToken": 426,
-            "lastToken": 435
+            "firstToken": 443,
+            "lastToken": 452,
+            "children": [
+              "fullySpecifiedType 443",
+              "typeSpecifier 446",
+              "functionCall 446"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 436,
-                "lastToken": 436,
-                "precisionQualifier": null
+                "firstToken": 453,
+                "lastToken": 453,
+                "children": []
               },
-              "firstToken": 436,
-              "lastToken": 436
+              "firstToken": 453,
+              "lastToken": 453,
+              "children": [
+                "typeSpecifier 453"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(lookDir1)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(normalize)",
-                    "firstToken": 439,
-                    "lastToken": 439
+                    "firstToken": 456,
+                    "lastToken": 456,
+                    "children": []
                   },
                   "args": [
                     {
@@ -1016,775 +2535,1793 @@
                       "lhs": "TOKEN: IDENTIFIER(bWC)",
                       "rhs": "TOKEN: IDENTIFIER(aWC)",
                       "op": "TOKEN: DASH(-)",
-                      "firstToken": 441,
-                      "lastToken": 443
+                      "firstToken": 458,
+                      "lastToken": 460,
+                      "children": [
+                        "typeSpecifier 458",
+                        "typeSpecifier 460"
+                      ]
                     }
                   ],
-                  "firstToken": 439,
-                  "lastToken": 444
+                  "firstToken": 456,
+                  "lastToken": 461,
+                  "children": [
+                    "typeSpecifier 456",
+                    "binaryExpression 458"
+                  ]
                 }
               }
             ],
-            "firstToken": 436,
-            "lastToken": 445
+            "firstToken": 453,
+            "lastToken": 462,
+            "children": [
+              "fullySpecifiedType 453",
+              "typeSpecifier 456",
+              "functionCall 456"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: IDENTIFIER(RMResult)",
-                "firstToken": 446,
-                "lastToken": 446,
-                "precisionQualifier": null
+                "firstToken": 463,
+                "lastToken": 463,
+                "children": []
               },
-              "firstToken": 446,
-              "lastToken": 446
+              "firstToken": 463,
+              "lastToken": 463,
+              "children": [
+                "typeSpecifier 463"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(hitWC)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(raymarching2)",
-                    "firstToken": 449,
-                    "lastToken": 449
+                    "firstToken": 466,
+                    "lastToken": 466,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: IDENTIFIER(aWC)",
                     "TOKEN: IDENTIFIER(lookDir1)"
                   ],
-                  "firstToken": 449,
-                  "lastToken": 454
+                  "firstToken": 466,
+                  "lastToken": 471,
+                  "children": [
+                    "typeSpecifier 466",
+                    "typeSpecifier 468",
+                    "typeSpecifier 470"
+                  ]
                 }
               }
             ],
-            "firstToken": 446,
-            "lastToken": 455
+            "firstToken": 463,
+            "lastToken": 472,
+            "children": [
+              "fullySpecifiedType 463",
+              "typeSpecifier 466",
+              "functionCall 466"
+            ]
           },
-          null,
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "expressionStatement",
+            "expression": {
+              "type": "assignmentExpression",
+              "lhs": "TOKEN: IDENTIFIER(fragColor)",
+              "op": "TOKEN: EQUAL(=)",
+              "rhs": {
+                "type": "functionCall",
+                "what": {
+                  "type": "typeSpecifier",
+                  "precisionQualifier": null,
+                  "arraySpecifier": null,
+                  "typeSpecifierNonArray": "TOKEN: IDENTIFIER(visualize)",
+                  "firstToken": 475,
+                  "lastToken": 475,
+                  "children": []
+                },
+                "args": [
+                  {
+                    "type": "fieldAccess",
+                    "on": "TOKEN: IDENTIFIER(hitWC)",
+                    "field": "TOKEN: IDENTIFIER(distance)",
+                    "firstToken": 477,
+                    "lastToken": 479,
+                    "children": [
+                      "typeSpecifier 477"
+                    ]
+                  }
+                ],
+                "firstToken": 475,
+                "lastToken": 480,
+                "children": [
+                  "typeSpecifier 475",
+                  "fieldAccess 477"
+                ]
+              },
+              "firstToken": 474,
+              "lastToken": 480,
+              "children": [
+                "typeSpecifier 475",
+                "functionCall 475"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 473,
+            "lastToken": 481,
+            "children": [
+              "typeSpecifier 473",
+              "assignmentExpression 474"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 465,
-                "lastToken": 465,
-                "precisionQualifier": null
+                "firstToken": 482,
+                "lastToken": 482,
+                "children": []
               },
-              "firstToken": 465,
-              "lastToken": 465
+              "firstToken": 482,
+              "lastToken": 482,
+              "children": [
+                "typeSpecifier 482"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(hitn1)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(sdfNormal1)",
-                    "firstToken": 468,
-                    "lastToken": 468
+                    "firstToken": 485,
+                    "lastToken": 485,
+                    "children": []
                   },
                   "args": [
                     {
-                      "type": "FIELD_ACCESS",
+                      "type": "fieldAccess",
                       "on": "TOKEN: IDENTIFIER(hitWC)",
                       "field": "TOKEN: IDENTIFIER(pos)",
-                      "firstToken": 470,
-                      "lastToken": 472
+                      "firstToken": 487,
+                      "lastToken": 489,
+                      "children": [
+                        "typeSpecifier 487"
+                      ]
                     },
                     {
-                      "type": "FIELD_ACCESS",
+                      "type": "fieldAccess",
                       "on": "TOKEN: IDENTIFIER(hitWC)",
                       "field": "TOKEN: IDENTIFIER(distance)",
-                      "firstToken": 474,
-                      "lastToken": 476
+                      "firstToken": 491,
+                      "lastToken": 493,
+                      "children": [
+                        "typeSpecifier 491"
+                      ]
                     }
                   ],
-                  "firstToken": 468,
-                  "lastToken": 477
+                  "firstToken": 485,
+                  "lastToken": 494,
+                  "children": [
+                    "typeSpecifier 485",
+                    "fieldAccess 487",
+                    "fieldAccess 491"
+                  ]
                 }
               }
             ],
-            "firstToken": 465,
-            "lastToken": 478
+            "firstToken": 482,
+            "lastToken": 495,
+            "children": [
+              "fullySpecifiedType 482",
+              "typeSpecifier 485",
+              "functionCall 485"
+            ]
           },
-          null,
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "expressionStatement",
+            "expression": {
+              "type": "assignmentExpression",
+              "lhs": {
+                "type": "fieldAccess",
+                "on": "TOKEN: IDENTIFIER(fragColor)",
+                "field": "TOKEN: IDENTIFIER(xyz)",
+                "firstToken": 496,
+                "lastToken": 498,
+                "children": [
+                  "typeSpecifier 496"
+                ]
+              },
+              "op": "TOKEN: EQUAL(=)",
+              "rhs": {
+                "type": "fieldAccess",
+                "on": "TOKEN: IDENTIFIER(hitn1)",
+                "field": "TOKEN: IDENTIFIER(xyz)",
+                "firstToken": 500,
+                "lastToken": 502,
+                "children": [
+                  "typeSpecifier 500"
+                ]
+              },
+              "firstToken": 499,
+              "lastToken": 502,
+              "children": [
+                "fieldAccess 500"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 496,
+            "lastToken": 503,
+            "children": [
+              "fieldAccess 496",
+              "assignmentExpression 499"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
-                "firstToken": 487,
-                "lastToken": 487,
-                "precisionQualifier": null
+                "firstToken": 504,
+                "lastToken": 504,
+                "children": []
               },
-              "firstToken": 487,
-              "lastToken": 487
+              "firstToken": 504,
+              "lastToken": 504,
+              "children": [
+                "typeSpecifier 504"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(dWC)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(distance)",
-                    "firstToken": 490,
-                    "lastToken": 490
+                    "firstToken": 507,
+                    "lastToken": 507,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: IDENTIFIER(aWC)",
                     {
-                      "type": "FIELD_ACCESS",
+                      "type": "fieldAccess",
                       "on": "TOKEN: IDENTIFIER(hitWC)",
                       "field": "TOKEN: IDENTIFIER(pos)",
-                      "firstToken": 494,
-                      "lastToken": 496
+                      "firstToken": 511,
+                      "lastToken": 513,
+                      "children": [
+                        "typeSpecifier 511"
+                      ]
                     }
                   ],
-                  "firstToken": 490,
-                  "lastToken": 497
+                  "firstToken": 507,
+                  "lastToken": 514,
+                  "children": [
+                    "typeSpecifier 507",
+                    "typeSpecifier 509",
+                    "fieldAccess 511"
+                  ]
                 }
               }
             ],
-            "firstToken": 487,
-            "lastToken": 498
+            "firstToken": 504,
+            "lastToken": 515,
+            "children": [
+              "fullySpecifiedType 504",
+              "typeSpecifier 507",
+              "functionCall 507"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 499,
-                "lastToken": 499,
-                "precisionQualifier": null
+                "firstToken": 516,
+                "lastToken": 516,
+                "children": []
               },
-              "firstToken": 499,
-              "lastToken": 499
+              "firstToken": 516,
+              "lastToken": 516,
+              "children": [
+                "typeSpecifier 516"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(hitNDC)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(pt)",
-                    "firstToken": 502,
-                    "lastToken": 502
+                    "firstToken": 519,
+                    "lastToken": 519,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: IDENTIFIER(lll)",
                     {
-                      "type": "FIELD_ACCESS",
+                      "type": "fieldAccess",
                       "on": "TOKEN: IDENTIFIER(hitWC)",
                       "field": "TOKEN: IDENTIFIER(pos)",
-                      "firstToken": 506,
-                      "lastToken": 508
+                      "firstToken": 523,
+                      "lastToken": 525,
+                      "children": [
+                        "typeSpecifier 523"
+                      ]
                     }
                   ],
-                  "firstToken": 502,
-                  "lastToken": 509
+                  "firstToken": 519,
+                  "lastToken": 526,
+                  "children": [
+                    "typeSpecifier 519",
+                    "typeSpecifier 521",
+                    "fieldAccess 523"
+                  ]
                 }
               }
             ],
-            "firstToken": 499,
-            "lastToken": 510
+            "firstToken": 516,
+            "lastToken": 527,
+            "children": [
+              "fullySpecifiedType 516",
+              "typeSpecifier 519",
+              "functionCall 519"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 511,
-                "lastToken": 511,
-                "precisionQualifier": null
+                "firstToken": 528,
+                "lastToken": 528,
+                "children": []
               },
-              "firstToken": 511,
-              "lastToken": 511
+              "firstToken": 528,
+              "lastToken": 528,
+              "children": [
+                "typeSpecifier 528"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(p)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FIELD_ACCESS",
+                  "type": "fieldAccess",
                   "on": "TOKEN: IDENTIFIER(hitWC)",
                   "field": "TOKEN: IDENTIFIER(pos)",
-                  "firstToken": 514,
-                  "lastToken": 516
+                  "firstToken": 531,
+                  "lastToken": 533,
+                  "children": [
+                    "typeSpecifier 531"
+                  ]
                 }
               }
             ],
-            "firstToken": 511,
-            "lastToken": 517
+            "firstToken": 528,
+            "lastToken": 534,
+            "children": [
+              "fullySpecifiedType 528",
+              "fieldAccess 531"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
-                "firstToken": 518,
-                "lastToken": 518,
-                "precisionQualifier": null
+                "firstToken": 535,
+                "lastToken": 535,
+                "children": []
               },
-              "firstToken": 518,
-              "lastToken": 518
+              "firstToken": 535,
+              "lastToken": 535,
+              "children": [
+                "typeSpecifier 535"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(inSun)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(softshadow)",
-                    "firstToken": 521,
-                    "lastToken": 521
+                    "firstToken": 538,
+                    "lastToken": 538,
+                    "children": []
                   },
                   "args": [
                     {
                       "type": "binaryExpression",
                       "lhs": {
-                        "type": "FIELD_ACCESS",
+                        "type": "fieldAccess",
                         "on": "TOKEN: IDENTIFIER(hitWC)",
                         "field": "TOKEN: IDENTIFIER(pos)",
-                        "firstToken": 523,
-                        "lastToken": 525
+                        "firstToken": 540,
+                        "lastToken": 542,
+                        "children": [
+                          "typeSpecifier 540"
+                        ]
                       },
                       "rhs": {
                         "type": "binaryExpression",
                         "lhs": "TOKEN: IDENTIFIER(hitn1)",
                         "rhs": "TOKEN: FLOATCONSTANT(0.05)",
                         "op": "TOKEN: STAR(*)",
-                        "firstToken": 527,
-                        "lastToken": 529
+                        "firstToken": 544,
+                        "lastToken": 546,
+                        "children": [
+                          "typeSpecifier 544"
+                        ]
                       },
                       "op": "TOKEN: PLUS(+)",
-                      "firstToken": 523,
-                      "lastToken": 529
+                      "firstToken": 540,
+                      "lastToken": 546,
+                      "children": [
+                        "fieldAccess 540",
+                        "binaryExpression 544"
+                      ]
                     },
                     {
-                      "type": "PREFIX_EXPRESSION",
+                      "type": "prefixExpression",
                       "op": "TOKEN: DASH(-)",
                       "of": "TOKEN: IDENTIFIER(light)",
-                      "firstToken": 531,
-                      "lastToken": 532
+                      "firstToken": 548,
+                      "lastToken": 549,
+                      "children": [
+                        "typeSpecifier 549"
+                      ]
                     },
                     "TOKEN: FLOATCONSTANT(0.0001)",
                     "TOKEN: FLOATCONSTANT(300.0)",
                     "TOKEN: FLOATCONSTANT(8.)"
                   ],
-                  "firstToken": 521,
-                  "lastToken": 539
+                  "firstToken": 538,
+                  "lastToken": 556,
+                  "children": [
+                    "typeSpecifier 538",
+                    "binaryExpression 540",
+                    "prefixExpression 548"
+                  ]
                 }
               }
             ],
-            "firstToken": 518,
-            "lastToken": 540
+            "firstToken": 535,
+            "lastToken": 557,
+            "children": [
+              "fullySpecifiedType 535",
+              "typeSpecifier 538",
+              "functionCall 538"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 541,
-                "lastToken": 541,
-                "precisionQualifier": null
+                "firstToken": 558,
+                "lastToken": 558,
+                "children": []
               },
-              "firstToken": 541,
-              "lastToken": 541
+              "firstToken": 558,
+              "lastToken": 558,
+              "children": [
+                "typeSpecifier 558"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(material)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FIELD_ACCESS",
+                  "type": "fieldAccess",
                   "on": {
-                    "type": "FIELD_ACCESS",
+                    "type": "fieldAccess",
                     "on": "TOKEN: IDENTIFIER(hitWC)",
                     "field": "TOKEN: IDENTIFIER(color)"
                   },
                   "field": "TOKEN: IDENTIFIER(xyz)",
-                  "firstToken": 544,
-                  "lastToken": 548
+                  "firstToken": 561,
+                  "lastToken": 565,
+                  "children": [
+                    "typeSpecifier 561"
+                  ]
                 }
               }
             ],
-            "firstToken": 541,
-            "lastToken": 549
+            "firstToken": 558,
+            "lastToken": 566,
+            "children": [
+              "fullySpecifiedType 558",
+              "fieldAccess 561"
+            ]
           },
-          null,
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "selectionStatement",
+            "IF": "TOKEN: IF(if)",
+            "LEFT_PAREN": "TOKEN: LEFT_PAREN(()",
+            "condition": {
+              "type": "binaryExpression",
+              "lhs": "TOKEN: IDENTIFIER(dWC)",
+              "rhs": "TOKEN: FLOATCONSTANT(100.)",
+              "op": "TOKEN: RIGHT_ANGLE(>)",
+              "firstToken": 569,
+              "lastToken": 571,
+              "children": [
+                "typeSpecifier 569"
+              ]
+            },
+            "RIGHT_PAREN": "TOKEN: RIGHT_PAREN())",
+            "yes": {
+              "type": "compoundStatement",
+              "statements": [
+                {
+                  "type": "expressionStatement",
+                  "expression": {
+                    "type": "assignmentExpression",
+                    "lhs": "TOKEN: IDENTIFIER(material)",
+                    "op": "TOKEN: EQUAL(=)",
+                    "rhs": {
+                      "type": "functionCall",
+                      "what": {
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
+                        "arraySpecifier": null,
+                        "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
+                        "firstToken": 576,
+                        "lastToken": 576,
+                        "children": []
+                      },
+                      "args": [
+                        "TOKEN: FLOATCONSTANT(0.0)",
+                        "TOKEN: FLOATCONSTANT(0.0)",
+                        "TOKEN: FLOATCONSTANT(0.0)"
+                      ],
+                      "firstToken": 576,
+                      "lastToken": 583,
+                      "children": [
+                        "typeSpecifier 576"
+                      ]
+                    },
+                    "firstToken": 575,
+                    "lastToken": 583,
+                    "children": [
+                      "typeSpecifier 576",
+                      "functionCall 576"
+                    ]
+                  },
+                  "SEMICOLON": "TOKEN: SEMICOLON(;)",
+                  "firstToken": 574,
+                  "lastToken": 584,
+                  "children": [
+                    "typeSpecifier 574",
+                    "assignmentExpression 575"
+                  ]
+                }
+              ],
+              "firstToken": 573,
+              "lastToken": 585,
+              "children": [
+                "fullySpecifiedType 574",
+                "expressionStatement 574"
+              ]
+            },
+            "ELSE": null,
+            "no": null,
+            "firstToken": 567,
+            "lastToken": 585,
+            "children": [
+              "binaryExpression 569",
+              "compoundStatement 573"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC2(vec2)",
-                "firstToken": 569,
-                "lastToken": 569,
-                "precisionQualifier": null
+                "firstToken": 586,
+                "lastToken": 586,
+                "children": []
               },
-              "firstToken": 569,
-              "lastToken": 569
+              "firstToken": 586,
+              "lastToken": 586,
+              "children": [
+                "typeSpecifier 586"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(unitGridDistances2)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FIELD_ACCESS",
+                  "type": "fieldAccess",
                   "on": {
                     "type": "binaryExpression",
                     "lhs": {
-                      "type": "FIELD_ACCESS",
+                      "type": "fieldAccess",
                       "on": "TOKEN: IDENTIFIER(hitWC)",
                       "field": "TOKEN: IDENTIFIER(pos)",
-                      "firstToken": 573,
-                      "lastToken": 575
+                      "firstToken": 590,
+                      "lastToken": 592,
+                      "children": [
+                        "typeSpecifier 590"
+                      ]
                     },
                     "rhs": {
-                      "type": "FUNCTION_CALL",
+                      "type": "functionCall",
                       "what": {
-                        "type": "TYPE",
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
                         "arraySpecifier": null,
                         "typeSpecifierNonArray": "TOKEN: IDENTIFIER(round)",
-                        "firstToken": 577,
-                        "lastToken": 577
+                        "firstToken": 594,
+                        "lastToken": 594,
+                        "children": []
                       },
                       "args": [
                         {
-                          "type": "FIELD_ACCESS",
+                          "type": "fieldAccess",
                           "on": "TOKEN: IDENTIFIER(hitWC)",
                           "field": "TOKEN: IDENTIFIER(pos)",
-                          "firstToken": 579,
-                          "lastToken": 581
+                          "firstToken": 596,
+                          "lastToken": 598,
+                          "children": [
+                            "typeSpecifier 596"
+                          ]
                         }
                       ],
-                      "firstToken": 577,
-                      "lastToken": 582
+                      "firstToken": 594,
+                      "lastToken": 599,
+                      "children": [
+                        "typeSpecifier 594",
+                        "fieldAccess 596"
+                      ]
                     },
                     "op": "TOKEN: DASH(-)",
-                    "firstToken": 572,
-                    "lastToken": 583
+                    "firstToken": 590,
+                    "lastToken": 599,
+                    "children": [
+                      "fieldAccess 590",
+                      "typeSpecifier 594",
+                      "functionCall 594"
+                    ]
                   },
                   "field": "TOKEN: IDENTIFIER(xy)",
-                  "firstToken": 572,
-                  "lastToken": 585
+                  "firstToken": 589,
+                  "lastToken": 602,
+                  "children": [
+                    "binaryExpression 590"
+                  ]
                 }
               }
             ],
-            "firstToken": 569,
-            "lastToken": 586
+            "firstToken": 586,
+            "lastToken": 603,
+            "children": [
+              "fullySpecifiedType 586",
+              "fieldAccess 589"
+            ]
           },
-          null,
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "selectionStatement",
+            "IF": "TOKEN: IF(if)",
+            "LEFT_PAREN": "TOKEN: LEFT_PAREN(()",
+            "condition": {
+              "type": "binaryExpression",
+              "lhs": {
+                "type": "binaryExpression",
+                "lhs": {
+                  "type": "functionCall",
+                  "what": {
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
+                    "arraySpecifier": null,
+                    "typeSpecifierNonArray": "TOKEN: IDENTIFIER(abs)",
+                    "firstToken": 606,
+                    "lastToken": 606,
+                    "children": []
+                  },
+                  "args": [
+                    {
+                      "type": "fieldAccess",
+                      "on": "TOKEN: IDENTIFIER(unitGridDistances2)",
+                      "field": "TOKEN: IDENTIFIER(x)",
+                      "firstToken": 608,
+                      "lastToken": 610,
+                      "children": [
+                        "typeSpecifier 608"
+                      ]
+                    }
+                  ],
+                  "firstToken": 606,
+                  "lastToken": 611,
+                  "children": [
+                    "typeSpecifier 606",
+                    "fieldAccess 608"
+                  ]
+                },
+                "rhs": "TOKEN: FLOATCONSTANT(.01)",
+                "op": "TOKEN: LEFT_ANGLE(<)",
+                "firstToken": 606,
+                "lastToken": 613,
+                "children": [
+                  "typeSpecifier 606",
+                  "functionCall 606"
+                ]
+              },
+              "rhs": {
+                "type": "binaryExpression",
+                "lhs": {
+                  "type": "functionCall",
+                  "what": {
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
+                    "arraySpecifier": null,
+                    "typeSpecifierNonArray": "TOKEN: IDENTIFIER(abs)",
+                    "firstToken": 615,
+                    "lastToken": 615,
+                    "children": []
+                  },
+                  "args": [
+                    {
+                      "type": "fieldAccess",
+                      "on": "TOKEN: IDENTIFIER(unitGridDistances2)",
+                      "field": "TOKEN: IDENTIFIER(y)",
+                      "firstToken": 617,
+                      "lastToken": 619,
+                      "children": [
+                        "typeSpecifier 617"
+                      ]
+                    }
+                  ],
+                  "firstToken": 615,
+                  "lastToken": 620,
+                  "children": [
+                    "typeSpecifier 615",
+                    "fieldAccess 617"
+                  ]
+                },
+                "rhs": "TOKEN: FLOATCONSTANT(.01)",
+                "op": "TOKEN: LEFT_ANGLE(<)",
+                "firstToken": 615,
+                "lastToken": 622,
+                "children": [
+                  "typeSpecifier 615",
+                  "functionCall 615"
+                ]
+              },
+              "op": "TOKEN: OR_OP(||)",
+              "firstToken": 606,
+              "lastToken": 622,
+              "children": [
+                "binaryExpression 606",
+                "binaryExpression 615"
+              ]
+            },
+            "RIGHT_PAREN": "TOKEN: RIGHT_PAREN())",
+            "yes": {
+              "type": "compoundStatement",
+              "statements": [],
+              "firstToken": 624,
+              "lastToken": 625,
+              "children": []
+            },
+            "ELSE": null,
+            "no": null,
+            "firstToken": 604,
+            "lastToken": 625,
+            "children": [
+              "binaryExpression 606",
+              "compoundStatement 624"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": {
-                "type": "TYPE_QUALIFIER",
-                "storageQualifier": "TOKEN: CONST(const)",
+                "type": "typeQualifier",
+                "storageQualifier": {
+                  "type": "storageQualifier",
+                  "CONST": null,
+                  "CENTROID": null,
+                  "IN": null,
+                  "OUT": null,
+                  "UNIFORM": null,
+                  "firstToken": 626,
+                  "lastToken": 626,
+                  "children": []
+                },
                 "layoutQualifier": null,
                 "interpolationQualifier": null,
                 "invariantQualifier": null,
-                "firstToken": 609,
-                "lastToken": 609
+                "firstToken": 626,
+                "lastToken": 626,
+                "children": [
+                  "storageQualifier 626"
+                ]
               },
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 610,
-                "lastToken": 610,
-                "precisionQualifier": null
+                "firstToken": 627,
+                "lastToken": 627,
+                "children": []
               },
-              "firstToken": 609,
-              "lastToken": 610
+              "firstToken": 626,
+              "lastToken": 627,
+              "children": [
+                "typeQualifier 626",
+                "typeSpecifier 627"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(sunlightColor)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                    "firstToken": 613,
-                    "lastToken": 613
+                    "firstToken": 630,
+                    "lastToken": 630,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: FLOATCONSTANT(8.)",
                     "TOKEN: FLOATCONSTANT(6.)",
                     "TOKEN: FLOATCONSTANT(1.)"
                   ],
-                  "firstToken": 613,
-                  "lastToken": 620
+                  "firstToken": 630,
+                  "lastToken": 637,
+                  "children": [
+                    "typeSpecifier 630"
+                  ]
                 }
               }
             ],
-            "firstToken": 609,
-            "lastToken": 621
+            "firstToken": 626,
+            "lastToken": 638,
+            "children": [
+              "fullySpecifiedType 626",
+              "typeSpecifier 630",
+              "functionCall 630"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
-                "firstToken": 622,
-                "lastToken": 622,
-                "precisionQualifier": null
+                "firstToken": 639,
+                "lastToken": 639,
+                "children": []
               },
-              "firstToken": 622,
-              "lastToken": 622
+              "firstToken": 639,
+              "lastToken": 639,
+              "children": [
+                "typeSpecifier 639"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(aOcc)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(ambientOcclusion)",
-                    "firstToken": 625,
-                    "lastToken": 625
+                    "firstToken": 642,
+                    "lastToken": 642,
+                    "children": []
                   },
                   "args": [
                     {
-                      "type": "FIELD_ACCESS",
+                      "type": "fieldAccess",
                       "on": "TOKEN: IDENTIFIER(hitWC)",
                       "field": "TOKEN: IDENTIFIER(pos)",
-                      "firstToken": 627,
-                      "lastToken": 629
+                      "firstToken": 644,
+                      "lastToken": 646,
+                      "children": [
+                        "typeSpecifier 644"
+                      ]
                     },
                     "TOKEN: IDENTIFIER(hitn1)"
                   ],
-                  "firstToken": 625,
-                  "lastToken": 632
+                  "firstToken": 642,
+                  "lastToken": 649,
+                  "children": [
+                    "typeSpecifier 642",
+                    "fieldAccess 644",
+                    "typeSpecifier 648"
+                  ]
                 }
               }
             ],
-            "firstToken": 622,
-            "lastToken": 633
+            "firstToken": 639,
+            "lastToken": 650,
+            "children": [
+              "fullySpecifiedType 639",
+              "typeSpecifier 642",
+              "functionCall 642"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 634,
-                "lastToken": 634,
-                "precisionQualifier": null
+                "firstToken": 651,
+                "lastToken": 651,
+                "children": []
               },
-              "firstToken": 634,
-              "lastToken": 634
+              "firstToken": 651,
+              "lastToken": 651,
+              "children": [
+                "typeSpecifier 651"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(reflectionDirection)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(reflect)",
-                    "firstToken": 637,
-                    "lastToken": 637
+                    "firstToken": 654,
+                    "lastToken": 654,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: IDENTIFIER(light)",
                     "TOKEN: IDENTIFIER(hitn1)"
                   ],
-                  "firstToken": 637,
-                  "lastToken": 642
+                  "firstToken": 654,
+                  "lastToken": 659,
+                  "children": [
+                    "typeSpecifier 654",
+                    "typeSpecifier 656",
+                    "typeSpecifier 658"
+                  ]
                 }
               }
             ],
-            "firstToken": 634,
-            "lastToken": 643
+            "firstToken": 651,
+            "lastToken": 660,
+            "children": [
+              "fullySpecifiedType 651",
+              "typeSpecifier 654",
+              "functionCall 654"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 644,
-                "lastToken": 644,
-                "precisionQualifier": null
+                "firstToken": 661,
+                "lastToken": 661,
+                "children": []
               },
-              "firstToken": 644,
-              "lastToken": 644
+              "firstToken": 661,
+              "lastToken": 661,
+              "children": [
+                "typeSpecifier 661"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(color)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                    "firstToken": 647,
-                    "lastToken": 647
+                    "firstToken": 664,
+                    "lastToken": 664,
+                    "children": []
                   },
                   "args": [
                     "TOKEN: FLOATCONSTANT(0.0)"
                   ],
-                  "firstToken": 647,
-                  "lastToken": 650
+                  "firstToken": 664,
+                  "lastToken": 667,
+                  "children": [
+                    "typeSpecifier 664"
+                  ]
                 }
               }
             ],
-            "firstToken": 644,
-            "lastToken": 651
+            "firstToken": 661,
+            "lastToken": 668,
+            "children": [
+              "fullySpecifiedType 661",
+              "typeSpecifier 664",
+              "functionCall 664"
+            ]
           },
-          null,
-          null,
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "expressionStatement",
+            "expression": {
+              "type": "assignmentExpression",
+              "lhs": "TOKEN: IDENTIFIER(color)",
+              "op": "TOKEN: ADDASSIGN(+=)",
+              "rhs": {
+                "type": "binaryExpression",
+                "lhs": "TOKEN: IDENTIFIER(material)",
+                "rhs": "TOKEN: IDENTIFIER(aOcc)",
+                "op": "TOKEN: STAR(*)",
+                "firstToken": 671,
+                "lastToken": 673,
+                "children": [
+                  "typeSpecifier 671",
+                  "typeSpecifier 673"
+                ]
+              },
+              "firstToken": 670,
+              "lastToken": 673,
+              "children": [
+                "binaryExpression 671"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 669,
+            "lastToken": 674,
+            "children": [
+              "typeSpecifier 669",
+              "assignmentExpression 670"
+            ]
+          },
+          {
+            "type": "expressionStatement",
+            "expression": {
+              "type": "assignmentExpression",
+              "lhs": "TOKEN: IDENTIFIER(color)",
+              "op": "TOKEN: ADDASSIGN(+=)",
+              "rhs": {
+                "type": "binaryExpression",
+                "lhs": {
+                  "type": "binaryExpression",
+                  "lhs": {
+                    "type": "binaryExpression",
+                    "lhs": "TOKEN: IDENTIFIER(inSun)",
+                    "rhs": "TOKEN: IDENTIFIER(sunlightColor)",
+                    "op": "TOKEN: STAR(*)"
+                  },
+                  "rhs": "TOKEN: IDENTIFIER(material)",
+                  "op": "TOKEN: STAR(*)"
+                },
+                "rhs": {
+                  "type": "functionCall",
+                  "what": {
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
+                    "arraySpecifier": null,
+                    "typeSpecifierNonArray": "TOKEN: IDENTIFIER(max)",
+                    "firstToken": 683,
+                    "lastToken": 683,
+                    "children": []
+                  },
+                  "args": [
+                    "TOKEN: FLOATCONSTANT(0.0)",
+                    {
+                      "type": "functionCall",
+                      "what": {
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
+                        "arraySpecifier": null,
+                        "typeSpecifierNonArray": "TOKEN: IDENTIFIER(dot)",
+                        "firstToken": 687,
+                        "lastToken": 687,
+                        "children": []
+                      },
+                      "args": [
+                        {
+                          "type": "prefixExpression",
+                          "op": "TOKEN: DASH(-)",
+                          "of": "TOKEN: IDENTIFIER(light)",
+                          "firstToken": 689,
+                          "lastToken": 690,
+                          "children": [
+                            "typeSpecifier 690"
+                          ]
+                        },
+                        "TOKEN: IDENTIFIER(hitn1)"
+                      ],
+                      "firstToken": 687,
+                      "lastToken": 693,
+                      "children": [
+                        "typeSpecifier 687",
+                        "prefixExpression 689",
+                        "typeSpecifier 692"
+                      ]
+                    }
+                  ],
+                  "firstToken": 683,
+                  "lastToken": 694,
+                  "children": [
+                    "typeSpecifier 683",
+                    "typeSpecifier 687",
+                    "functionCall 687"
+                  ]
+                },
+                "op": "TOKEN: STAR(*)",
+                "firstToken": 677,
+                "lastToken": 694,
+                "children": [
+                  "typeSpecifier 677",
+                  "typeSpecifier 679",
+                  "typeSpecifier 681",
+                  "typeSpecifier 683",
+                  "functionCall 683"
+                ]
+              },
+              "firstToken": 676,
+              "lastToken": 694,
+              "children": [
+                "binaryExpression 677"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 675,
+            "lastToken": 695,
+            "children": [
+              "typeSpecifier 675",
+              "assignmentExpression 676"
+            ]
+          },
+          {
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 679,
-                "lastToken": 679,
-                "precisionQualifier": null
+                "firstToken": 696,
+                "lastToken": 696,
+                "children": []
               },
-              "firstToken": 679,
-              "lastToken": 679
+              "firstToken": 696,
+              "lastToken": 696,
+              "children": [
+                "typeSpecifier 696"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(camPos)",
                 "arrayInit": null,
                 "init": "TOKEN: IDENTIFIER(aWC)"
               }
             ],
-            "firstToken": 679,
-            "lastToken": 683
+            "firstToken": 696,
+            "lastToken": 700,
+            "children": [
+              "fullySpecifiedType 696",
+              "typeSpecifier 699"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
-                "firstToken": 684,
-                "lastToken": 684,
-                "precisionQualifier": null
+                "firstToken": 701,
+                "lastToken": 701,
+                "children": []
               },
-              "firstToken": 684,
-              "lastToken": 684
+              "firstToken": 701,
+              "lastToken": 701,
+              "children": [
+                "typeSpecifier 701"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(eyeDirection)",
                 "arrayInit": null,
                 "init": {
-                  "type": "PREFIX_EXPRESSION",
+                  "type": "prefixExpression",
                   "op": "TOKEN: DASH(-)",
                   "of": "TOKEN: IDENTIFIER(lookDir1)",
-                  "firstToken": 687,
-                  "lastToken": 688
+                  "firstToken": 704,
+                  "lastToken": 705,
+                  "children": [
+                    "typeSpecifier 705"
+                  ]
                 }
               }
             ],
-            "firstToken": 684,
-            "lastToken": 689
+            "firstToken": 701,
+            "lastToken": 706,
+            "children": [
+              "fullySpecifiedType 701",
+              "prefixExpression 704"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
-                "firstToken": 690,
-                "lastToken": 690,
-                "precisionQualifier": null
+                "firstToken": 707,
+                "lastToken": 707,
+                "children": []
               },
-              "firstToken": 690,
-              "lastToken": 690
+              "firstToken": 707,
+              "lastToken": 707,
+              "children": [
+                "typeSpecifier 707"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(uMaterialShininess)",
                 "arrayInit": null,
                 "init": "TOKEN: FLOATCONSTANT(256.0)"
               }
             ],
-            "firstToken": 690,
-            "lastToken": 694
+            "firstToken": 707,
+            "lastToken": 711,
+            "children": [
+              "fullySpecifiedType 707"
+            ]
           },
           {
-            "type": "INIT_DECLARATOR_LIST",
+            "type": "initDeclaratorListDeclaration",
             "fsType": {
-              "type": "FULLY_SPECIFIED_TYPE",
+              "type": "fullySpecifiedType",
               "typeQualifier": null,
               "typeSpecifier": {
-                "type": "TYPE",
+                "type": "typeSpecifier",
+                "precisionQualifier": null,
                 "arraySpecifier": null,
                 "typeSpecifierNonArray": "TOKEN: FLOAT(float)",
-                "firstToken": 695,
-                "lastToken": 695,
-                "precisionQualifier": null
+                "firstToken": 712,
+                "lastToken": 712,
+                "children": []
               },
-              "firstToken": 695,
-              "lastToken": 695
+              "firstToken": 712,
+              "lastToken": 712,
+              "children": [
+                "typeSpecifier 712"
+              ]
             },
-            "decls": [
+            "declarators": [
               {
-                "type": "DECLARATOR",
+                "type": "declarator",
                 "name": "TOKEN: IDENTIFIER(specularLightWeighting)",
                 "arrayInit": null,
                 "init": {
-                  "type": "FUNCTION_CALL",
+                  "type": "functionCall",
                   "what": {
-                    "type": "TYPE",
+                    "type": "typeSpecifier",
+                    "precisionQualifier": null,
                     "arraySpecifier": null,
                     "typeSpecifierNonArray": "TOKEN: IDENTIFIER(pow)",
-                    "firstToken": 698,
-                    "lastToken": 698
+                    "firstToken": 715,
+                    "lastToken": 715,
+                    "children": []
                   },
                   "args": [
                     {
-                      "type": "FUNCTION_CALL",
+                      "type": "functionCall",
                       "what": {
-                        "type": "TYPE",
+                        "type": "typeSpecifier",
+                        "precisionQualifier": null,
                         "arraySpecifier": null,
                         "typeSpecifierNonArray": "TOKEN: IDENTIFIER(max)",
-                        "firstToken": 700,
-                        "lastToken": 700
+                        "firstToken": 717,
+                        "lastToken": 717,
+                        "children": []
                       },
                       "args": [
                         {
-                          "type": "FUNCTION_CALL",
+                          "type": "functionCall",
                           "what": {
-                            "type": "TYPE",
+                            "type": "typeSpecifier",
+                            "precisionQualifier": null,
                             "arraySpecifier": null,
                             "typeSpecifierNonArray": "TOKEN: IDENTIFIER(dot)",
-                            "firstToken": 702,
-                            "lastToken": 702
+                            "firstToken": 719,
+                            "lastToken": 719,
+                            "children": []
                           },
                           "args": [
                             "TOKEN: IDENTIFIER(reflectionDirection)",
                             "TOKEN: IDENTIFIER(eyeDirection)"
                           ],
-                          "firstToken": 702,
-                          "lastToken": 707
+                          "firstToken": 719,
+                          "lastToken": 724,
+                          "children": [
+                            "typeSpecifier 719",
+                            "typeSpecifier 721",
+                            "typeSpecifier 723"
+                          ]
                         },
                         "TOKEN: FLOATCONSTANT(0.0)"
                       ],
-                      "firstToken": 700,
-                      "lastToken": 710
+                      "firstToken": 717,
+                      "lastToken": 727,
+                      "children": [
+                        "typeSpecifier 717",
+                        "typeSpecifier 719",
+                        "functionCall 719"
+                      ]
                     },
                     "TOKEN: IDENTIFIER(uMaterialShininess)"
                   ],
-                  "firstToken": 698,
-                  "lastToken": 713
+                  "firstToken": 715,
+                  "lastToken": 730,
+                  "children": [
+                    "typeSpecifier 715",
+                    "typeSpecifier 717",
+                    "functionCall 717",
+                    "typeSpecifier 729"
+                  ]
                 }
               }
             ],
-            "firstToken": 695,
-            "lastToken": 714
+            "firstToken": 712,
+            "lastToken": 731,
+            "children": [
+              "fullySpecifiedType 712",
+              "typeSpecifier 715",
+              "functionCall 715"
+            ]
           },
-          null,
-          null,
-          null
+          {
+            "type": "expressionStatement",
+            "expression": {
+              "type": "assignmentExpression",
+              "lhs": "TOKEN: IDENTIFIER(color)",
+              "op": "TOKEN: ADDASSIGN(+=)",
+              "rhs": "TOKEN: IDENTIFIER(specularLightWeighting)",
+              "firstToken": 733,
+              "lastToken": 734,
+              "children": [
+                "typeSpecifier 734"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 732,
+            "lastToken": 735,
+            "children": [
+              "typeSpecifier 732",
+              "assignmentExpression 733"
+            ]
+          },
+          {
+            "type": "expressionStatement",
+            "expression": {
+              "type": "assignmentExpression",
+              "lhs": "TOKEN: IDENTIFIER(color)",
+              "op": "TOKEN: EQUAL(=)",
+              "rhs": {
+                "type": "functionCall",
+                "what": {
+                  "type": "typeSpecifier",
+                  "precisionQualifier": null,
+                  "arraySpecifier": null,
+                  "typeSpecifierNonArray": "TOKEN: IDENTIFIER(pow)",
+                  "firstToken": 738,
+                  "lastToken": 738,
+                  "children": []
+                },
+                "args": [
+                  "TOKEN: IDENTIFIER(color)",
+                  {
+                    "type": "functionCall",
+                    "what": {
+                      "type": "typeSpecifier",
+                      "precisionQualifier": null,
+                      "arraySpecifier": null,
+                      "typeSpecifierNonArray": "TOKEN: VEC3(vec3)",
+                      "firstToken": 742,
+                      "lastToken": 742,
+                      "children": []
+                    },
+                    "args": [
+                      {
+                        "type": "binaryExpression",
+                        "lhs": "TOKEN: FLOATCONSTANT(1.0)",
+                        "rhs": "TOKEN: FLOATCONSTANT(2.2)",
+                        "op": "TOKEN: SLASH(/)",
+                        "firstToken": 744,
+                        "lastToken": 746,
+                        "children": []
+                      }
+                    ],
+                    "firstToken": 742,
+                    "lastToken": 747,
+                    "children": [
+                      "typeSpecifier 742",
+                      "binaryExpression 744"
+                    ]
+                  }
+                ],
+                "firstToken": 738,
+                "lastToken": 748,
+                "children": [
+                  "typeSpecifier 738",
+                  "typeSpecifier 740",
+                  "typeSpecifier 742",
+                  "functionCall 742"
+                ]
+              },
+              "firstToken": 737,
+              "lastToken": 748,
+              "children": [
+                "typeSpecifier 738",
+                "functionCall 738"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 736,
+            "lastToken": 749,
+            "children": [
+              "typeSpecifier 736",
+              "assignmentExpression 737"
+            ]
+          },
+          {
+            "type": "expressionStatement",
+            "expression": {
+              "type": "assignmentExpression",
+              "lhs": "TOKEN: IDENTIFIER(fragColor)",
+              "op": "TOKEN: EQUAL(=)",
+              "rhs": {
+                "type": "functionCall",
+                "what": {
+                  "type": "typeSpecifier",
+                  "precisionQualifier": null,
+                  "arraySpecifier": null,
+                  "typeSpecifierNonArray": "TOKEN: VEC4(vec4)",
+                  "firstToken": 752,
+                  "lastToken": 752,
+                  "children": []
+                },
+                "args": [
+                  "TOKEN: IDENTIFIER(color)",
+                  "TOKEN: FLOATCONSTANT(1.0)"
+                ],
+                "firstToken": 752,
+                "lastToken": 757,
+                "children": [
+                  "typeSpecifier 752",
+                  "typeSpecifier 754"
+                ]
+              },
+              "firstToken": 751,
+              "lastToken": 757,
+              "children": [
+                "typeSpecifier 752",
+                "functionCall 752"
+              ]
+            },
+            "SEMICOLON": "TOKEN: SEMICOLON(;)",
+            "firstToken": 750,
+            "lastToken": 758,
+            "children": [
+              "typeSpecifier 750",
+              "assignmentExpression 751"
+            ]
+          }
         ],
-        "firstToken": 160,
-        "lastToken": 742
+        "firstToken": 164,
+        "lastToken": 759,
+        "children": [
+          "whileStatement 165",
+          "fullySpecifiedType 178",
+          "typeSpecifier 181",
+          "initDeclaratorListDeclaration 178",
+          "fullySpecifiedType 183",
+          "expressionStatement 183",
+          "fullySpecifiedType 201",
+          "expressionStatement 201",
+          "fullySpecifiedType 217",
+          "binaryExpression 220",
+          "initDeclaratorListDeclaration 217",
+          "selectionStatement 227",
+          "fullySpecifiedType 260",
+          "typeSpecifier 266",
+          "functionCall 266",
+          "initDeclaratorListDeclaration 260",
+          "fullySpecifiedType 296",
+          "typeSpecifier 299",
+          "functionCall 299",
+          "initDeclaratorListDeclaration 296",
+          "fullySpecifiedType 304",
+          "typeSpecifier 307",
+          "functionCall 307",
+          "initDeclaratorListDeclaration 304",
+          "forStatement 312",
+          "fullySpecifiedType 377",
+          "typeSpecifier 380",
+          "functionCall 380",
+          "initDeclaratorListDeclaration 377",
+          "fullySpecifiedType 387",
+          "expressionStatement 387",
+          "fullySpecifiedType 394",
+          "typeSpecifier 397",
+          "functionCall 397",
+          "initDeclaratorListDeclaration 394",
+          "fullySpecifiedType 412",
+          "typeSpecifier 415",
+          "functionCall 415",
+          "initDeclaratorListDeclaration 412",
+          "fullySpecifiedType 423",
+          "typeSpecifier 426",
+          "functionCall 426",
+          "initDeclaratorListDeclaration 423",
+          "fullySpecifiedType 433",
+          "typeSpecifier 436",
+          "functionCall 436",
+          "initDeclaratorListDeclaration 433",
+          "fullySpecifiedType 443",
+          "typeSpecifier 446",
+          "functionCall 446",
+          "initDeclaratorListDeclaration 443",
+          "fullySpecifiedType 453",
+          "typeSpecifier 456",
+          "functionCall 456",
+          "initDeclaratorListDeclaration 453",
+          "fullySpecifiedType 463",
+          "typeSpecifier 466",
+          "functionCall 466",
+          "initDeclaratorListDeclaration 463",
+          "fullySpecifiedType 473",
+          "expressionStatement 473",
+          "fullySpecifiedType 482",
+          "typeSpecifier 485",
+          "functionCall 485",
+          "initDeclaratorListDeclaration 482",
+          "fullySpecifiedType 496",
+          "expressionStatement 496",
+          "fullySpecifiedType 504",
+          "typeSpecifier 507",
+          "functionCall 507",
+          "initDeclaratorListDeclaration 504",
+          "fullySpecifiedType 516",
+          "typeSpecifier 519",
+          "functionCall 519",
+          "initDeclaratorListDeclaration 516",
+          "fullySpecifiedType 528",
+          "fieldAccess 531",
+          "initDeclaratorListDeclaration 528",
+          "fullySpecifiedType 535",
+          "typeSpecifier 538",
+          "functionCall 538",
+          "initDeclaratorListDeclaration 535",
+          "fullySpecifiedType 558",
+          "fieldAccess 561",
+          "initDeclaratorListDeclaration 558",
+          "selectionStatement 567",
+          "fullySpecifiedType 586",
+          "fieldAccess 589",
+          "initDeclaratorListDeclaration 586",
+          "selectionStatement 604",
+          "fullySpecifiedType 626",
+          "typeSpecifier 630",
+          "functionCall 630",
+          "initDeclaratorListDeclaration 626",
+          "fullySpecifiedType 639",
+          "typeSpecifier 642",
+          "functionCall 642",
+          "initDeclaratorListDeclaration 639",
+          "fullySpecifiedType 651",
+          "typeSpecifier 654",
+          "functionCall 654",
+          "initDeclaratorListDeclaration 651",
+          "fullySpecifiedType 661",
+          "typeSpecifier 664",
+          "functionCall 664",
+          "initDeclaratorListDeclaration 661",
+          "fullySpecifiedType 669",
+          "expressionStatement 669",
+          "fullySpecifiedType 675",
+          "expressionStatement 675",
+          "fullySpecifiedType 696",
+          "typeSpecifier 699",
+          "initDeclaratorListDeclaration 696",
+          "fullySpecifiedType 701",
+          "prefixExpression 704",
+          "initDeclaratorListDeclaration 701",
+          "fullySpecifiedType 707",
+          "initDeclaratorListDeclaration 707",
+          "fullySpecifiedType 712",
+          "typeSpecifier 715",
+          "functionCall 715",
+          "initDeclaratorListDeclaration 712",
+          "fullySpecifiedType 732",
+          "expressionStatement 732",
+          "fullySpecifiedType 736",
+          "expressionStatement 736",
+          "fullySpecifiedType 750",
+          "expressionStatement 750"
+        ]
       },
-      "firstToken": 156,
-      "lastToken": 742
+      "firstToken": 160,
+      "lastToken": 759,
+      "children": [
+        "fullySpecifiedType 160",
+        "compoundStatement 164"
+      ]
     }
   ],
   "firstToken": -1,
-  "lastToken": 742
+  "lastToken": 759,
+  "children": [
+    "functionDefinition -1",
+    "initDeclaratorListDeclaration 56",
+    "functionDefinition 70",
+    "functionDefinition 160"
+  ],
+  "comments": [
+    "TOKEN: LINE_COMMENT(//)",
+    "TOKEN: LINE_COMMENT(//)",
+    "TOKEN: LINE_COMMENT(//    scaledCoord += 1000.;)",
+    "TOKEN: LINE_COMMENT(//    scaledCoord += highResTimeStamp * normalize(vec2(1000., 1.)) * .0005;)",
+    "TOKEN: LINE_COMMENT(//    scaledCoord *= .3;)",
+    "TOKEN: LINE_COMMENT(//    scaledCoord += .1;)",
+    "TOKEN: LINE_COMMENT(// UNIT GRID)",
+    "TOKEN: LINE_COMMENT(//                return;)",
+    "TOKEN: LINE_COMMENT(// perlin gradients)",
+    "TOKEN: LINE_COMMENT(//            return;)",
+    "TOKEN: LINE_COMMENT(//        float perl = perlin01(vec2(scaledCoord.x, 1.));)",
+    "TOKEN: LINE_COMMENT(//    float perl2 = perlin01(scaledCoord * 2. + 1000.);)",
+    "TOKEN: LINE_COMMENT(//        fragColor = visualize(mixx(0., 1., scaledCoord.x));)",
+    "TOKEN: LINE_COMMENT(//    fragColor = mix(white, black, pow(perl, 1.));)",
+    "TOKEN: LINE_COMMENT(//        fragColor = visualize(smoothstep(0.,1.,perl*.66+perl2*.33));)",
+    "TOKEN: LINE_COMMENT(//    return;)",
+    "TOKEN: LINE_COMMENT(//    return;)",
+    "TOKEN: LINE_COMMENT(//    float inSun=1.;)",
+    "TOKEN: LINE_COMMENT(//    } else if (p.z >= 0.001) {)",
+    "TOKEN: LINE_COMMENT(//        material = vec3(0.2, 0.0, 0.0);)",
+    "TOKEN: LINE_COMMENT(//    } else {)",
+    "TOKEN: LINE_COMMENT(//        vec2 c = vec2(4.0, 2.0);)",
+    "TOKEN: LINE_COMMENT(//        vec2 id = floor(((p.xy - c * 0.5) / c) );)",
+    "TOKEN: LINE_COMMENT(//        material += .15 * cos(vec3(id.x, id.y + 2., id.x + id.y + 4.));)",
+    "TOKEN: LINE_COMMENT(//        material = vec3(1.);)",
+    "TOKEN: LINE_COMMENT(//                        return;)",
+    "TOKEN: LINE_COMMENT(//        color = (hitn1);)",
+    "TOKEN: LINE_COMMENT(//    float lightIntensity = 0.2 + 0.5*clamp( -dot(light, hitn1),0., 1.);)",
+    "TOKEN: LINE_COMMENT(//    float lightIntensity =)",
+    "TOKEN: LINE_COMMENT(//        0.2 + 0.5*clamp( -dot(light, hitn1),0., 1.) + 0.3*specularLightWeighting;)",
+    "TOKEN: LINE_COMMENT(//    fragColor = visualize(blue, red, mix(0.5, 1.0, inSun) * lightIntensity);)",
+    "TOKEN: LINE_COMMENT(//    fragColor = mix(hitWC.color, colorBg, mix(0.5, 1.0, inSun) * clamp(lightIntensity, 0., 1.));)",
+    "TOKEN: LINE_COMMENT(// gamma correction)",
+    "TOKEN: LINE_COMMENT(//    fragColor = visualize(color.x);)"
+  ]
 }

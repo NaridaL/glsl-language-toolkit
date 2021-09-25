@@ -2,7 +2,7 @@
 float ambientOcclusion(highp vec3 pWC, vec3 n1WC, vec4) {
     float k = 1.0, j[] = float[2](1,2);
     float distance = sdff(pWC + n1WC * k);
-    return clamp(distance / k, 0.0, 1.0);
+    return clamp(distance / k, 0., 1.0);
 }
 
 //
@@ -26,6 +26,9 @@ RMResult raymarching2(vec3 start, vec3 dir1) {
 
 void main() {
 
+    while(bool x = 3.+1.>0.) {
+
+    }
     vec2 scaledCoord = coord;
     scaledCoord = mix(vec2(-1.), vec2(1.), scaledCoord);
     //    scaledCoord += 1000.;

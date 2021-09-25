@@ -1,6 +1,10 @@
-import { IToken, TokenType } from "chevrotain"
+import { IToken } from "chevrotain"
 
 export type Token = IToken
+export interface ArrayInit {
+  type: "arrayInit"
+  index: Expression
+}
 export interface BinaryExpression {
   type: "binaryExpression"
   lhs: Expression
@@ -14,6 +18,8 @@ export interface MethodCall {
 }
 export interface FunctionCall {
   type: "functionCall"
+  what: Expression | TypeSpecifier
+  args: Expression[]
 }
 export interface ArrayAccess {
   type: "arrayAccess"
@@ -23,6 +29,7 @@ export interface ArrayAccess {
 export interface TranslationUnit {
   type: "translationUnit"
   declarations: Declaration[]
+  comments?: Token[]
 }
 export interface AssignmentExpression {
   type: "assignmentExpression"
@@ -56,11 +63,18 @@ export interface PrefixExpression {
   on: Expression
   op: Token
 }
-export interface FunctionDeclaration {
-  type: "functionDeclaration"
-}
 export interface FunctionDefinition {
   type: "functionDefinition"
+  name: Token
+  returnType: FullySpecifiedType
+  params: ParameterDeclaration[]
+  body: CompoundStatement
+}
+export interface FunctionPrototype {
+  type: "functionPrototype"
+  name: Token
+  returnType: FullySpecifiedType
+  params: ParameterDeclaration[]
 }
 export interface ParameterDeclaration {
   type: "parameterDeclaration"
@@ -72,6 +86,9 @@ export interface ParameterDeclaration {
 }
 export interface TypeSpecifier {
   type: "typeSpecifier"
+  precisionQualifier: Token | undefined
+  typeSpecifierNonArray: Token | StructSpecifier
+  arraySpecifier: unknown
 }
 export interface CompoundStatement {
   type: "compoundStatement"
@@ -102,7 +119,7 @@ export interface DoWhileStatement {
   WHILE: Token
   LEFT_PAREN: Token
   RIGHT_PAREN: Token
-  expression: Expression
+  conditionExpression: Expression
   statement: Statement
   SEMICOLON: Token
 }
@@ -112,20 +129,24 @@ export interface WhileStatement {
   WHILE: Token
   LEFT_PAREN: Token
   RIGHT_PAREN: Token
-  expression: Expression
+  conditionExpression: Expression
   statement: Statement
 }
 export interface ForStatement {
   type: "forStatement"
   FOR: Token
   LEFT_PAREN: Token
-  initializer: unknown
+  initExpression: unknown
   SEMICOLON1: Token | undefined
-  condition: Expression
+  conditionExpression: Expression | InitDeclaratorListDeclaration
   SEMICOLON2: Token
-  iteration: Expression
+  loopExpression: Expression
   RIGHT_PAREN: Token
   statement: Statement
+}
+export interface ExpressionStatement {
+  type: "expressionStatement"
+  expression: Expression
 }
 
 export type Expression =
@@ -140,10 +161,15 @@ export type Expression =
   | PrefixExpression
   | CommaExpression
 
-export interface InitDeclaratorList {
-  type: "initDeclaratorList"
-  fsType: TypeSpecifier
-  decls: Declarator[]
+export interface InitDeclaratorListDeclaration {
+  type: "initDeclaratorListDeclaration"
+  fsType: FullySpecifiedType
+  declarators: Declarator[]
+}
+export interface PrecisionDeclaration {
+  type: "precisionDeclaration"
+  precisionQualifier: Token
+  typeSpecifierNoPrec: TypeSpecifier
 }
 export interface SelectionStatement {
   type: "selectionStatement"
@@ -152,10 +178,11 @@ export interface SelectionStatement {
   condition: Expression
   RIGHT_PAREN: Token
   yes: Statement
-  ELSE: Token
-  no: Statement
+  ELSE: Token | undefined
+  no: Statement | undefined
 }
 export interface StorageQualifier {
+  type: "storageQualifier"
   CENTROID: Token | undefined
   IN: Token | undefined
   OUT: Token | undefined
@@ -164,6 +191,8 @@ export interface StorageQualifier {
 }
 export interface SwitchStatement {
   type: "switchStatement"
+  initExpression: Expression
+  body: CompoundStatement
 }
 export interface CaseLabel {
   type: "caseLabel"
@@ -176,34 +205,66 @@ export interface FullySpecifiedType {
 }
 export interface TypeQualifier {
   type: "typeQualifier"
-  storageQualifier: Token
-  layoutQualifier: Token
-  interpolationQualifier: Token
-  invariantQualifier: Token
+  storageQualifier: Token | undefined
+  layoutQualifier: LayoutQualifier | undefined
+  interpolationQualifier: Token | undefined
+  invariantQualifier: Token | undefined
+}
+export interface StructSpecifier {
+  type: "structSpecifier"
+  name: Token | undefined
+  declarations: StructDeclaration[]
+}
+export interface LayoutQualifier {
+  type: "layoutQualifier"
+  layoutQualifierIds: { IDENTIFIER: Token; init: Token | undefined }[]
 }
 export interface InvariantDeclaration {
   type: "invariantDeclaration"
   INVARIANT: Token
   IDENTIFIER: Token
 }
+export interface StructDeclaration {
+  type: "structDeclaration"
+  fsType: FullySpecifiedType
+  declarators: { name: Token }[]
+}
 
-export type Declaration = FunctionDeclaration | InitDeclaratorList
+export type Declaration =
+  | FunctionDefinition
+  | FunctionPrototype
+  | InitDeclaratorListDeclaration
+  | PrecisionDeclaration
+  | InvariantDeclaration
 export type JumpStatement =
   | ReturnStatement
   | ContinueStatement
   | BreakStatement
   | DiscardStatement
 export type IterationStatement =
-  | ForStatement
   | DoWhileStatement
+  | ForStatement
   | WhileStatement
-export type Statement = CompoundStatement | JumpStatement | IterationStatement
+export type Statement =
+  | CaseLabel
+  | CompoundStatement
+  | ExpressionStatement
+  | IterationStatement
+  | JumpStatement
+  | SelectionStatement
+  | SwitchStatement
+  | InitDeclaratorListDeclaration
 export type Node =
-  | Expression
+  | ArrayInit
   | Declaration
-  | TranslationUnit
-  | TypeSpecifier
+  | Declarator
+  | Expression
+  | FullySpecifiedType
   | ParameterDeclaration
   | Statement
-  | FullySpecifiedType
   | StorageQualifier
+  | StructDeclaration
+  | StructSpecifier
+  | TranslationUnit
+  | TypeQualifier
+  | TypeSpecifier
