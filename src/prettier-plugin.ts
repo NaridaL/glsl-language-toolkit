@@ -136,7 +136,7 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
               p(n, "typeSpecifier"),
               " ",
               p(n, "pName"),
-              p(n, "arrayInit"),
+              p(n, "arraySpecifier"),
             ]
           case "initDeclaratorListDeclaration":
           case "structDeclaration":
@@ -148,12 +148,12 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
           case "declarator":
             return [
               p(n, "name"),
-              p(n, "arrayInit"),
+              p(n, "arraySpecifier"),
 
               n.init ? [" = ", p(n, "init")] : "",
             ]
-          case "arrayInit":
-            return ["[", "]"]
+          case "arraySpecifier":
+            return ["[", p(n, "size"), "]"]
           case "arrayAccess":
             return [p(n, "on"), "[", p(n, "index"), "]"]
           case "structSpecifier":

@@ -14,8 +14,10 @@ import prettier from "prettier"
 
 import * as prettierPlugin from "./prettier-plugin"
 import { CstNode, GLSL_PARSER } from "./parser"
-import { GLSL_LEXER } from "./lexer"
+import { GLSL_LEXER, RESERVED_KEYWORDS, TOKEN } from "./lexer"
 import { isToken } from "./prettier-plugin"
+import "./checker"
+import RESERVED = TOKEN.RESERVED
 
 // create the HTML Text
 const htmlText = createSyntaxDiagramsCode(
@@ -133,6 +135,27 @@ function checkParsingErrors(input: string, errors: IRecognitionException[]) {
 export function parseInput(text: string) {
   const lexingResult = GLSL_LEXER.tokenize(text)
   checkLexingErrors(text, lexingResult)
+
+  const errors = []
+
+  function markError(where: IToken, err: string) {
+    errors.push({ where, err })
+  }
+
+  for (const token of lexingResult.tokens) {
+    if (token.tokenType === TOKEN.IDENTIFIER) {
+      if (token.image.includes("__")) {
+        markError(
+          token,
+          "All identifiers containing two consecutive underscores (__) are reserved for use by underlying software layers.",
+        )
+      } else if (RESERVED_KEYWORDS.includes(token.image)) {
+        markError(token, token.image + " is a reserved keyword.")
+      } else if (token.image.length > 1024) {
+        markError(token, "G0004", "The maximum identifier length is 1024.")
+      }
+    }
+  }
 
   let message = lexingResult.tokens.map(
     (t) => `${t.tokenType.name}(${t.image})`,

@@ -176,7 +176,7 @@ export interface ForStatement extends BaseNode {
   type: "forStatement"
   FOR: Token
   LEFT_PAREN: Token
-  initExpression: Expression
+  initExpression: Expression | undefined
   SEMICOLON1: Token | undefined
   conditionExpression: Expression | InitDeclaratorListDeclaration
   SEMICOLON2: Token
