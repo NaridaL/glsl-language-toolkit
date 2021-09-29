@@ -1,16 +1,14 @@
-import {
-  AstPath,
-  doc,
-  Doc,
-  getSupportInfo,
-  ParserOptions,
-  Plugin,
-  SupportInfo,
-} from "prettier"
+// noinspection JSUnusedGlobalSymbols
+
+import { AstPath, Doc, Plugin, SupportInfo } from "prettier"
 import { builders } from "prettier/doc"
 import { IToken } from "chevrotain"
-import { CstNode, parseInput } from "./index"
+
+import { CstNode } from "./parser"
 import { Token } from "./nodes"
+import { parseInput } from "./index"
+import { TOKEN } from "./lexer"
+import { format } from "prettier"
 
 const { group, indent, join, line, softline, hardline } = builders
 
@@ -44,8 +42,12 @@ export const parsers: Plugin<CstNode | IToken>["parsers"] = {
     },
   },
 }
-function isToken(x: unknown): x is IToken {
+export function isToken(x: unknown): x is IToken {
   return (x as any).tokenType
+}
+
+function normalizeFloat(image: string) {
+  return (+image).toLocaleString("en-US", { minimumFractionDigits: 1 })
 }
 
 export const printers: Plugin<CstNode | IToken>["printers"] = {
@@ -56,20 +58,21 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
         return []
       }
       if (isToken(n)) {
+        if (n.tokenType === TOKEN.FLOATCONSTANT) {
+          return normalizeFloat(n.image)
+        }
         return n.image
       }
       const p = <N extends CstNode, S extends keyof N>(_: N, s: S) =>
         path.call(print, s)
       try {
         switch (n.type) {
+          ////////// DECLARATIONS
           case "translationUnit":
             return join(hardline, path.map(print, "declarations"))
           case "fullySpecifiedType":
-            return join(
-              " ",
-              [p(n, "typeQualifier"), p(n, "typeSpecifier")].filter(
-                (x) => (x as any).length !== 0,
-              ),
+            return [p(n, "typeQualifier"), p(n, "typeSpecifier")].filter(
+              (x) => (x as any).length !== 0,
             )
           case "typeSpecifier":
             return join(
@@ -91,13 +94,23 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
               ].filter((x) => (x as any).length !== 0),
             )
           case "storageQualifier":
-            return [
-              p(n, "CENTROID"),
-              p(n, "IN"),
-              p(n, "OUT"),
-              p(n, "UNIFORM"),
-              p(n, "CONST"),
-            ]
+            const parts: Doc = []
+            if (n.CONST) {
+              parts.push("const ")
+            }
+            if (n.CENTROID) {
+              parts.push("centroid ")
+            }
+            if (n.IN) {
+              parts.push("in ")
+            }
+            if (n.OUT) {
+              parts.push("out ")
+            }
+            if (n.UNIFORM) {
+              parts.push("uniform ")
+            }
+            return parts
           case "functionPrototype":
           case "functionDefinition":
             return [
@@ -106,45 +119,63 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
                 " ",
                 p(n, "name"),
                 "(",
-                line,
-                indent([join([",", line], path.map(print, "params"))]),
-                line,
+                indent([
+                  softline,
+                  join([",", line], path.map(print, "params")),
+                ]),
+                softline,
                 ")",
               ]),
               "functionPrototype" === n.type ? ";" : [" ", p(n, "body")],
             ]
           case "parameterDeclaration":
             return [
-              p(n, "parameterTypeQualifier"),
-              " ",
+              n.parameterTypeQualifier
+                ? [p(n, "parameterTypeQualifier"), " "]
+                : [],
               p(n, "typeSpecifier"),
               " ",
               p(n, "pName"),
               p(n, "arrayInit"),
             ]
           case "initDeclaratorListDeclaration":
-            return [
+          case "structDeclaration":
+            return group([
               p(n, "fsType"),
-              " ",
-              join([",", line], path.map(print, "declarators")),
+              indent([line, join([",", line], path.map(print, "declarators"))]),
               ";",
-            ]
+            ])
           case "declarator":
             return [
               p(n, "name"),
               p(n, "arrayInit"),
-              " ",
-              n.init ? ["=", " ", p(n, "init")] : "",
+
+              n.init ? [" = ", p(n, "init")] : "",
             ]
           case "arrayInit":
             return ["[", "]"]
           case "arrayAccess":
             return [p(n, "on"), "[", p(n, "index"), "]"]
+          case "structSpecifier":
+            return group([
+              "struct",
+              " ",
+              p(n, "name"),
+              " ",
+              "{",
+              indent([
+                softline,
+                join(softline, path.map(print, "declarations")),
+              ]),
+              softline,
+              "}",
+            ])
+
+          ///////// STATEMENTS
           case "compoundStatement":
             return group([
               "{",
-              line,
-              indent(join(hardline, path.map(print, "statements"))),
+              indent([line, join(hardline, path.map(print, "statements"))]),
               line,
               "}",
             ])
@@ -153,40 +184,39 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
           case "breakStatement":
             return ["break", ";"]
           case "selectionStatement":
-            return [
+            return group([
               "if",
               " ",
               "(",
-              p(n, "condition"),
-              ")",
+              indent([softline, p(n, "condition")]),
+              softline,
+              ") ",
               p(n, "yes"),
               n.no ? ["else", p(n, "no")] : "",
-            ]
-          case "functionCall":
-            return group([
-              p(n, "what"),
-              "(",
-              join([",", line], path.map(print, "args")),
-              ")",
             ])
           case "forStatement":
-            return [
-              "for",
+            return group([
+              "for ",
               "(",
-              p(n, "initExpression"),
-              p(n, "conditionExpression"),
-              ";",
-              line,
-              p(n, "loopExpression"),
-              ")",
+              indent([
+                softline,
+                p(n, "initExpression"),
+                softline,
+                p(n, "conditionExpression"),
+                ";",
+                line,
+                p(n, "loopExpression"),
+              ]),
+              softline,
+              ") ",
               p(n, "statement"),
-            ]
+            ])
           case "whileStatement":
             return [
-              "while",
-              "(",
-              p(n, "conditionExpression"),
-              ")",
+              "while (",
+              // p(n, "conditionExpression"),
+              "true",
+              ") ",
               p(n, "statement"),
             ]
           case "doWhileStatement":
@@ -198,37 +228,36 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
               p(n, "conditionExpression"),
               ")",
             ]
+
+          ////////// EXPRESSIONS
+          case "functionCall":
+            return group([
+              p(n, "what"),
+              "(",
+              indent([softline, join([",", line], path.map(print, "args"))]),
+              softline,
+              ")",
+            ])
           case "postfixExpression":
             return [p(n, "on"), p(n, "op")]
-          case "prefixExpression":
+          case "unaryExpression":
             return [p(n, "op"), p(n, "on")]
           case "assignmentExpression":
-            return group([p(n, "lhs"), " ", p(n, "op"), line, p(n, "rhs")])
+            return group([
+              p(n, "lhs"),
+              " ",
+              p(n, "op"),
+              indent([line, p(n, "rhs")]),
+            ])
           case "binaryExpression":
             return group([p(n, "lhs"), " ", p(n, "op"), line, p(n, "rhs")])
           case "expressionStatement":
             return [p(n, "expression"), ";"]
           case "fieldAccess":
             return [p(n, "on"), ".", p(n, "field")]
-          case "structSpecifier":
-            return [
-              "struct",
-              " ",
-              p(n, "name"),
-              " ",
-              "{",
-              path.map(print, "declarations"),
-              "}",
-            ]
-          case "structDeclaration":
-            return [
-              p(n, "fsType"),
-              " ",
-              join(
-                ",",
-                n.declarators.map((d) => d.name.image),
-              ),
-            ]
+          case "constantExpression":
+            return n._const.image
+
           default:
             throw new Error(
               "unexpected n type " +
@@ -249,14 +278,45 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
     getCommentChildNodes(node: CstNode | Token): CstNode[] {
       return isToken(node) ? [] : (node as any).children
     },
+    canAttachComment(node) {
+      return true
+    },
     printComment(
       // Path to the current comment node
       commentPath: AstPath,
       // Current options
-      options: object,
+      options,
     ): Doc {
-      console.log("printComment".red)
       const n = commentPath.getValue()
+      if (n.tokenType === TOKEN.MULTILINE_COMMENT && n.image[2] === "*") {
+        const src = n.image
+          .substr(3, n.image.length - 5)
+          .split("\n")
+          .map((l: string) => (l.startsWith(" * ") ? l.substr(3) : l))
+          .join("\n")
+        const fsrc = format(src, {
+          ...options,
+          printWidth: options.printWidth - 4,
+          parser: "markdown",
+          proseWrap: "always",
+        })
+        return (
+          "/**\n" +
+          fsrc
+            .split("\n")
+            .map((l) => " * " + l)
+            .join("\n") +
+          "\n */"
+        )
+      }
+      console.log(n.image.blue)
+      const parent = commentPath.getParentNode()
+      console.log(
+        `parent type=${parent.type} first = ${parent.firstToken.image}`.yellow,
+      )
+      console.log(
+        `leading=${n.leading}    trailing=${n.trailing}  ${n.placement}`,
+      )
       return n.image
     },
   },

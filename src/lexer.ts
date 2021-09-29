@@ -8,7 +8,11 @@ export namespace TOKEN {
   // Categories
 
   export const ASSIGN_OP = createToken({ name: "ASSIGN_OP", pattern: Lexer.NA })
-  export const PREFIX_OP = createToken({ name: "PREFIX_OP", pattern: Lexer.NA })
+  export const UNARY_OP = createToken({ name: "PREFIX_OP", pattern: Lexer.NA })
+  export const POSTFIX_OP = createToken({
+    name: "POSTFIX_OP",
+    pattern: Lexer.NA,
+  })
   export const PRECISION_QUALIFIER = createToken({
     name: "PRECISION_QUALIFIER",
     pattern: Lexer.NA,
@@ -127,7 +131,7 @@ export namespace TOKEN {
     name: "INC_OP",
     pattern: "++",
     label: "'++'",
-    categories: PREFIX_OP,
+    categories: [UNARY_OP, POSTFIX_OP],
   })
   export const QUESTION = createToken({
     name: "QUESTION",
@@ -143,7 +147,7 @@ export namespace TOKEN {
     name: "DEC_OP",
     pattern: "--",
     label: "'--'",
-    categories: PREFIX_OP,
+    categories: [UNARY_OP, POSTFIX_OP],
   })
   export const AND_OP = createToken({
     name: "AND_OP",
@@ -212,19 +216,19 @@ export namespace TOKEN {
     name: "PLUS",
     pattern: "+",
     label: "'+'",
-    categories: [PREFIX_OP, ADDITIVE_OP],
+    categories: [UNARY_OP, ADDITIVE_OP],
   })
   export const TILDE = createToken({
     name: "TILDE",
     pattern: "~",
     label: "'~'",
-    categories: PREFIX_OP,
+    categories: UNARY_OP,
   })
   export const BANG = createToken({
     name: "BANG",
     pattern: "!",
     label: "'!'",
-    categories: PREFIX_OP,
+    categories: UNARY_OP,
   })
   export const CARET = createToken({
     name: "CARET",
@@ -236,7 +240,7 @@ export namespace TOKEN {
     pattern: "&",
     label: "'&'",
   })
-  export const VERTICALBAR = createToken({
+  export const VERTICAL_BAR = createToken({
     name: "PIPE",
     pattern: "|",
     label: "'|'",
@@ -263,7 +267,7 @@ export namespace TOKEN {
     name: "DASH",
     pattern: "-",
     label: "'-'",
-    categories: [PREFIX_OP, ADDITIVE_OP],
+    categories: [UNARY_OP, ADDITIVE_OP],
   })
   export const COMMA = createToken({
     name: "COMMA",
@@ -321,7 +325,7 @@ export namespace TOKEN {
   function KEYWORD(const1: string, ...categories: TokenType[]) {
     return createToken({
       name: const1,
-      pattern: RegExp(const1.toLowerCase()),
+      pattern: const1.toLowerCase(),
       label: "'" + const1.toLowerCase() + "'",
       longer_alt: IDENTIFIER,
       categories,
@@ -356,39 +360,48 @@ export namespace TOKEN {
   export const LOWP = KEYWORD("LOWP", PRECISION_QUALIFIER)
   export const MEDIUMP = KEYWORD("MEDIUMP", PRECISION_QUALIFIER)
   export const HIGHP = KEYWORD("HIGHP", PRECISION_QUALIFIER)
+  export const CONSTANT = createToken({ name: "CONSTANT", pattern: Lexer.NA })
   export const BASIC_TYPE = createToken({
     name: "BASIC_TYPE",
     pattern: Lexer.NA,
   })
+  function createBasicType(t: string) {
+    return createToken({
+      name: t.toUpperCase(),
+      pattern: t,
+      longer_alt: IDENTIFIER,
+      categories: BASIC_TYPE,
+    })
+  }
+  export const BOOL = createBasicType("bool")
+  export const INT = createBasicType("int")
+  export const FLOAT = createBasicType("float")
+  export const MAT2 = createBasicType("mat2")
+  export const MAT3 = createBasicType("mat3")
+  export const MAT4 = createBasicType("mat4")
+  export const MAT2X2 = createBasicType("mat2x2")
+  export const MAT2X3 = createBasicType("mat2x3")
+  export const MAT2X4 = createBasicType("mat2x4")
+  export const MAT3X2 = createBasicType("mat3x2")
+  export const MAT3X3 = createBasicType("mat3x3")
+  export const MAT3X4 = createBasicType("mat3x4")
+  export const MAT4X2 = createBasicType("mat4x2")
+  export const MAT4X3 = createBasicType("mat4x3")
+  export const MAT4X4 = createBasicType("mat4x4")
+  export const VEC2 = createBasicType("vec2")
+  export const VEC3 = createBasicType("vec3")
+  export const VEC4 = createBasicType("vec4")
+  export const IVEC2 = createBasicType("ivec2")
+  export const IVEC3 = createBasicType("ivec3")
+  export const IVEC4 = createBasicType("ivec4")
+  export const BVEC2 = createBasicType("bvec2")
+  export const BVEC3 = createBasicType("bvec3")
+  export const BVEC4 = createBasicType("bvec4")
+  export const UINT = createBasicType("uint")
+  export const UVEC2 = createBasicType("uvec2")
+  export const UVEC3 = createBasicType("uvec3")
+  export const UVEC4 = createBasicType("uvec4")
   export const BASIC_TYPES = [
-    "bool",
-    "int",
-    "float",
-    "mat2",
-    "mat3",
-    "mat4",
-    "mat2x2",
-    "mat2x3",
-    "mat2x4",
-    "mat3x2",
-    "mat3x3",
-    "mat3x4",
-    "mat4x2",
-    "mat4x3",
-    "mat4x4",
-    "vec2",
-    "vec3",
-    "vec4",
-    "ivec2",
-    "ivec3",
-    "ivec4",
-    "bvec2",
-    "bvec3",
-    "bvec4",
-    "uint",
-    "uvec2",
-    "uvec3",
-    "uvec4",
     "sampler2D",
     "sampler3D",
     "samplerCube",
@@ -404,23 +417,18 @@ export namespace TOKEN {
     "usampler3D",
     "usamplerCube",
     "usampler2DArray",
-  ].map((t) =>
-    createToken({
-      name: t.toUpperCase(),
-      pattern: t,
-      longer_alt: IDENTIFIER,
-      categories: [BASIC_TYPE],
-    }),
-  )
+  ].map(createBasicType)
   export const IN = KEYWORD("IN", PARAMETER_QUALIFIER)
   export const BOOLCONSTANT = createToken({
     name: "BOOLCONSTANT",
     pattern: /true|false/,
     longer_alt: IDENTIFIER,
+    categories: CONSTANT,
   })
   export const FLOATCONSTANT = createToken({
     name: "FLOATCONSTANT",
     pattern: /((\d+\.\d*|\.\d+)(e[+\-]?\d+)?|\d+e[+\-]?\d+)f?/i,
+    categories: CONSTANT,
   })
   export const DOT = createToken({
     name: "DOT",
@@ -429,11 +437,13 @@ export namespace TOKEN {
   })
   export const UINTCONSTANT = createToken({
     name: "UINTCONSTANT",
-    pattern: /\d+u/,
+    pattern: /(?:0x)?\d+u/i,
+    categories: CONSTANT,
   })
   export const INTCONSTANT = createToken({
     name: "INTCONSTANT",
-    pattern: /\d+/,
+    pattern: /(?:0x)?\d+/,
+    categories: CONSTANT,
   })
 }
 // IDENTIFIER needs to go last, but must be declared first

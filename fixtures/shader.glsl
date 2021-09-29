@@ -10,7 +10,7 @@ float ambientOcclusion(highp vec3 pWC, vec3 n1WC, vec4) {
 struct RMResult {
     float distance;
     vec3 pos;
-    vec4 color;
+    vec4 color, looooooongerName, hhghghjaha;
 };
 RMResult raymarching2(vec3 start, vec3 dir1) {
     vec3 pos = start;
@@ -41,10 +41,14 @@ void main() {
     // UNIT GRID
     vec2 unitGridDistances = scaledCoord - round(scaledCoord);
     if (abs(unitGridDistances.x) < .01 || abs(unitGridDistances.y) < .01) {
-        fragColor = vec4(scaledCoord, 0., 1.);
+        fragColor = vec4(s // x
+        , 0., 1.);
         //                return;
     }
+    return 2;
+    int i = 2;
 
+    int i =3;
 
     // perlin gradients
     vec2[4] offsets = vec2[4](vec2(0), vec2(0., 1.), vec2(1., 0.), vec2(1.));

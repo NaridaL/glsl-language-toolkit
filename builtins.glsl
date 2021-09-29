@@ -15,88 +15,72 @@ const mediump int  gl_MaxProgramTexelOffset = 7;
 
 
 
-// TODO FIX COMMENT
+/**
+ ==== Built-in Functions
 
-//8 Built-in Functions
-//The OpenGL ES Shading Language defines an assortment of built-in convenience functions for scalar and
-//vector operations. Many of these built-in functions can be used in more than one type of shader, but some
-//are intended to provide a direct mapping to hardware and so are available only for a specific type of
-//shader.
-//The built-in functions basically fall into three categories:
-// - They expose some necessary hardware functionality in a convenient way such as accessing a texture
-//map. There is no way in the language for these functions to be emulated by a shader.
+The OpenGL ES Shading Language defines an assortment of built-in convenience functions for scalar and
+vector operations. Many of these built-in functions can be used in more than one type of shader, but some
+are intended to provide a direct mapping to hardware and so are available only for a specific type of
+shader.
+The built-in functions basically fall into three categories:
+ - They expose some necessary hardware functionality in a convenient way such as accessing a texture
+map. There is no way in the language for these functions to be emulated by a shader.
 
-// - They represent a trivial operation (clamp, mix, etc.) that is very simple for the user to write, but they
-//are very common and may have direct hardware support. It is a very hard problem for the compiler to
-//map expressions to complex assembler instructions.
+ - They represent a trivial operation (clamp, mix, etc.) that is very simple for the user to write, but they
+are very common and may have direct hardware support. It is a very hard problem for the compiler to
+map expressions to complex assembler instructions.
 
-// - They represent an operation graphics hardware is likely to accelerate at some point. The trigonometry
-//functions fall into this category.
+ - They represent an operation graphics hardware is likely to accelerate at some point. The trigonometry
+functions fall into this category.
 
-//Many of the functions are similar to the same named ones in common C libraries, but they support vector
-//input as well as the more traditional scalar input.
-//Applications should be encouraged to use the built-in functions rather than do the equivalent computations
-//in their own shader code since the built-in functions are assumed to be optimal (e.g., perhaps supported
-//directly in hardware).
-//When the built-in functions are specified below, where the input arguments (and corresponding output)
-//can be float, vec2, vec3, or vec4, genType is used as the argument. Where the input arguments (and
-//corresponding output) can be int, ivec2, ivec3, or ivec4, genIType is used as the argument. Where the
-//input arguments (and corresponding output) can be uint, uvec2, uvec3, or uvec4, genUType is used as the
-//argument. Where the input arguments (or corresponding output) can be bool, bvec2, bvec3, or bvec4,
-//genBType is used as the argument. For any specific use of a function, the actual types substituted for
-//genType, genIType, genUType, or genBType have to have the same number of components for all
-//arguments and for the return type. Similarly for mat, which can be any matrix basic type.
-//The precision of built-in functions is dependent on the function and arguments. There are three
-//categories:
-//•
+Many of the functions are similar to the same named ones in common C libraries, but they support vector
+input as well as the more traditional scalar input.
+Applications should be encouraged to use the built-in functions rather than do the equivalent computations
+in their own shader code since the built-in functions are assumed to be optimal (e.g., perhaps supported
+directly in hardware).
+When the built-in functions are specified below, where the input arguments (and corresponding output)
+can be float, vec2, vec3, or vec4, genType is used as the argument. Where the input arguments (and
+corresponding output) can be int, ivec2, ivec3, or ivec4, genIType is used as the argument. Where the
+input arguments (and corresponding output) can be uint, uvec2, uvec3, or uvec4, genUType is used as the
+argument. Where the input arguments (or corresponding output) can be bool, bvec2, bvec3, or bvec4,
+genBType is used as the argument. For any specific use of a function, the actual types substituted for
+genType, genIType, genUType, or genBType have to have the same number of components for all
+arguments and for the return type. Similarly for mat, which can be any matrix basic type.
+The precision of built-in functions is dependent on the function and arguments. There are three
+categories:
 
-//Some functions have predefined precisions. The precision is specified
-//e.g.
-//highp ivec2 textureSize (gsampler2D sampler, int lod)
+- Some functions have predefined precisions. The precision is specified
+e.g.
+`highp ivec2 textureSize (gsampler2D sampler, int lod)`
 
-//•
+- For the texture sampling functions, the precision of the return type matches the precision of the
+sampler type.
+  ```
+  uniform lowp sampler2D sampler;
+  highp vec2 coord;
+  // ...
+  lowp vec4 col = texture (sampler, coord); // texture() returns lowp
+  ```
 
-//For the texture sampling functions, the precision of the return type matches the precision of the
-//sampler type.
+- For other built-in functions, a call will return a precision qualification matching the highest precision
+qualification of the call's input arguments. See Section 4.5.2 “Precision Qualifiers” for more detail.
 
-//84
+The built-in functions are assumed to be implemented according to the equations specified in the
+following sections. The precision at which the calculations are performed follows the general rules for
+precision of operations as specified in section 4.5.3 “Precision Qualifiers“.
 
-//uniform lowp sampler2D sampler;
-//highp vec2 coord;
-//...
-//lowp vec4 col = texture (sampler, coord); // texture() returns lowp
-//•
+Example: normalize((x, y, z)) = (1 / sqrt(x² + y² + z²)) * (x, y, z)
 
-//For other built-in functions, a call will return a precision qualification matching the highest precision
-//qualification of the call's input arguments. See Section 4.5.2 “Precision Qualifiers” for more detail.
+If the input vector is lowp, the entire calculation is performed at lowp. For some inputs, this will cause
+the calculation to overflow, even when the correct result is within the range of lowp.
 
-//The built-in functions are assumed to be implemented according to the equations specified in the
-//following sections. The precision at which the calculations are performed follows the general rules for
-//precision of operations as specified in section 4.5.3 “Precision Qualifiers“.
-//Example:
 
-//()
+Angle and Trigonometry Functions
 
-//()
-
-//x
-//x
-//1
-//normalize y = 2 2 2 y
-//z √ x + y +z z
-
-//If the input vector is lowp, the entire calculation is performed at lowp. For some inputs, this will cause
-//the calculation to overflow, even when the correct result is within the range of lowp.
-
-//85
-
-//8.1
-/////////////
-//Angle and Trigonometry Functions
-////////////////////////////
-//Function parameters specified as angle are assumed to be in units of radians. In no case will any of these
-//functions result in a divide by zero error. If the divisor of a ratio is 0, then results will be undefined.
-//These all operate component-wise. The description is per component.
+Function parameters specified as angle are assumed to be in units of radians. In no case will any of these
+functions result in a divide by zero error. If the divisor of a ratio is 0, then results will be undefined.
+These all operate component-wise. The description is per component.
+*/
 
 // Converts degrees to radians, i.e., PI/180*degrees
 genType radians (genType degrees);
@@ -593,71 +577,72 @@ bool all(bvec x);
 bvec not(bvec x);
 
 
-/////////////////////////////////
-//Texture Lookup Functions
-/////////////////////////////////
-//Texture lookup functions are available to vertex and fragment shaders. However, level of detail is not
-//implicitly computed for vertex shaders. The functions in the table below provide access to textures
-//through samplers, as set up through the OpenGL ES API. Texture properties such as size, pixel format,
-//number of dimensions, filtering method, number of mip-map levels, depth comparison, and so on are also
-//defined by OpenGL ES API calls. Such properties are taken into account as the texture is accessed via the
-//built-in functions defined below.
-//
-//Texture data can be stored by the GL as floating point, unsigned normalized integer, unsigned integer or
-//signed integer data. This is determined by the type of the internal format of the texture. Texture lookups
-//on unsigned normalized integer data return floating point values in the range [0, 1].
-//
-//Texture lookup functions are provided that can return their result as floating point, unsigned integer or
-//signed integer, depending on the sampler type passed to the lookup function. Care must be taken to use
-//the right sampler type for texture access. The following table lists the supported combinations of sampler
-//types and texture internal formats. Blank entries are unsupported. Doing a texture lookup will return
-//undefined values for unsupported combinations.
-//
-//Internal Texture Format | Floating Point | Signed Integer | Unsigned Integer
-//                        | Sampler Types  | Sampler Types  | Sampler Types
-//------------------------------------------------------------------------------
-//Floating point          | Supported      |                |
-//Normalized Integer      | Supported      |                |
-//Signed Integer          |                | Supported      |
-//Unsigned Integer        |                |                | Supported
-//
-//If an integer sampler type is used, the result of a texture lookup is an ivec4. If an unsigned integer
-//sampler type is used, the result of a texture lookup is a uvec4. If a floating point sampler type is used, the
-//result of a texture lookup is a vec4.
-//
-//In the prototypes below, the “g” in the return type “gvec4” is used as a placeholder for nothing, “i”, or “u”
-//making a return type of vec4, ivec4, or uvec4. In these cases, the sampler argument type also starts with
-//“g”, indicating the same substitution done on the return type; it is either a floating point, signed integer, or
-//unsigned integer sampler, matching the basic type of the return type, as described above.
-//
-//For shadow forms (the sampler parameter is a shadow-type), a depth comparison lookup on the depth
-//texture bound to sampler is done as described in section 3.8.16 “Texture Comparison Modes” of the
-//OpenGL ES Graphics System Specification. See the table below for which component specifies Dref. The
-//texture bound to sampler must be a depth texture, or results are undefined. If a non-shadow texture call is
-//made to a sampler that represents a depth texture with depth comparisons turned on, then results are
-//undefined. If a shadow texture call is made to a sampler that represents a depth texture with depth
-//comparisons turned off, then results are undefined. If a shadow texture call is made to a sampler that does
-//not represent a depth texture, then results are undefined.
-//
-//In all functions below, the bias parameter is optional for fragment shaders. The bias parameter is not
-//accepted in a vertex shader. For a fragment shader, if bias is present, it is added to the implicit level of
-//detail prior to performing the texture access operation.
-//
-//The implicit level of detail is selected as follows: For a texture that is not mip-mapped, the texture is used
-//directly. If it is mip-mapped and running in a fragment shader, the LOD computed by the implementation
-//is used to do the texture lookup. If it is mip-mapped and running on the vertex shader, then the base
-//texture is used.
-//
-//Some texture functions (non-“Lod” and non-“Grad” versions) may require implicit derivatives. Implicit
-//derivatives are undefined within non-uniform control flow and for vertex texture fetches.
-//For Cube forms, the direction of P is used to select which face to do a 2-dimensional texture lookup in, as
-//described in section 3.8.10 “Cube Map Texture Selection” in the OpenGL ES Graphics System
-//Specification.
-//For Array forms, the array layer used will be
-//max (0,min (d −1, floor(layer+0.5)))
+/**
+TEXTURE LOOKUP FUNCTIONS
 
-//where d is the depth of the texture array and layer comes from the component indicated in the tables
-//below.
+Texture lookup functions are available to vertex and fragment shaders. However, level of detail is not
+implicitly computed for vertex shaders. The functions in the table below provide access to textures
+through samplers, as set up through the OpenGL ES API. Texture properties such as size, pixel format,
+number of dimensions, filtering method, number of mip-map levels, depth comparison, and so on are also
+defined by OpenGL ES API calls. Such properties are taken into account as the texture is accessed via the
+built-in functions defined below.
+
+Texture data can be stored by the GL as floating point, unsigned normalized integer, unsigned integer or
+signed integer data. This is determined by the type of the internal format of the texture. Texture lookups
+on unsigned normalized integer data return floating point values in the range [0, 1].
+
+Texture lookup functions are provided that can return their result as floating point, unsigned integer or
+signed integer, depending on the sampler type passed to the lookup function. Care must be taken to use
+the right sampler type for texture access. The following table lists the supported combinations of sampler
+types and texture internal formats. Blank entries are unsupported. Doing a texture lookup will return
+undefined values for unsupported combinations.
+
+Internal Texture Format | Floating Point | Signed Integer | Unsigned Integer
+                        | Sampler Types  | Sampler Types  | Sampler Types
+------------------------------------------------------------------------------
+Floating point          | Supported      |                |
+Normalized Integer      | Supported      |                |
+Signed Integer          |                | Supported      |
+Unsigned Integer        |                |                | Supported
+
+If an integer sampler type is used, the result of a texture lookup is an ivec4. If an unsigned integer
+sampler type is used, the result of a texture lookup is a uvec4. If a floating point sampler type is used, the
+result of a texture lookup is a vec4.
+
+In the prototypes below, the “g” in the return type “gvec4” is used as a placeholder for nothing, “i”, or “u”
+making a return type of vec4, ivec4, or uvec4. In these cases, the sampler argument type also starts with
+“g”, indicating the same substitution done on the return type; it is either a floating point, signed integer, or
+unsigned integer sampler, matching the basic type of the return type, as described above.
+
+For shadow forms (the sampler parameter is a shadow-type), a depth comparison lookup on the depth
+texture bound to sampler is done as described in section 3.8.16 “Texture Comparison Modes” of the
+OpenGL ES Graphics System Specification. See the table below for which component specifies Dref. The
+texture bound to sampler must be a depth texture, or results are undefined. If a non-shadow texture call is
+made to a sampler that represents a depth texture with depth comparisons turned on, then results are
+undefined. If a shadow texture call is made to a sampler that represents a depth texture with depth
+comparisons turned off, then results are undefined. If a shadow texture call is made to a sampler that does
+not represent a depth texture, then results are undefined.
+
+In all functions below, the bias parameter is optional for fragment shaders. The bias parameter is not
+accepted in a vertex shader. For a fragment shader, if bias is present, it is added to the implicit level of
+detail prior to performing the texture access operation.
+
+The implicit level of detail is selected as follows: For a texture that is not mip-mapped, the texture is used
+directly. If it is mip-mapped and running in a fragment shader, the LOD computed by the implementation
+is used to do the texture lookup. If it is mip-mapped and running on the vertex shader, then the base
+texture is used.
+
+Some texture functions (non-“Lod” and non-“Grad” versions) may require implicit derivatives. Implicit
+derivatives are undefined within non-uniform control flow and for vertex texture fetches.
+For Cube forms, the direction of P is used to select which face to do a 2-dimensional texture lookup in, as
+described in section 3.8.10 “Cube Map Texture Selection” in the OpenGL ES Graphics System
+Specification.
+For Array forms, the array layer used will be
+max (0,min (d −1, floor(layer+0.5)))
+
+where d is the depth of the texture array and layer comes from the component indicated in the tables
+below.
+*/
 
 
 //Returns the dimensions of

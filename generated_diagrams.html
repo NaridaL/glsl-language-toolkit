@@ -70,46 +70,10 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "INTCONSTANT",
-                "label": "INTCONSTANT",
+                "name": "CONSTANT",
+                "label": "CONSTANT",
                 "idx": 0,
-                "pattern": "\\d+"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "UINTCONSTANT",
-                "label": "UINTCONSTANT",
-                "idx": 0,
-                "pattern": "\\d+u"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "FLOATCONSTANT",
-                "label": "FLOATCONSTANT",
-                "idx": 0,
-                "pattern": "((\\d+\\.\\d*|\\.\\d+)(e[+\\-]?\\d+)?|\\d+e[+\\-]?\\d+)f?"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "BOOLCONSTANT",
-                "label": "BOOLCONSTANT",
-                "idx": 0,
-                "pattern": "true|false"
+                "pattern": "NOT_APPLICABLE"
               }
             ]
           }
@@ -217,22 +181,10 @@
                         "definition": [
                           {
                             "type": "Terminal",
-                            "name": "INC_OP",
-                            "label": "'++'",
+                            "name": "POSTFIX_OP",
+                            "label": "POSTFIX_OP",
                             "idx": 0,
-                            "pattern": "++"
-                          }
-                        ]
-                      },
-                      {
-                        "type": "Alternative",
-                        "definition": [
-                          {
-                            "type": "Terminal",
-                            "name": "DEC_OP",
-                            "label": "'--'",
-                            "idx": 0,
-                            "pattern": "--"
+                            "pattern": "NOT_APPLICABLE"
                           }
                         ]
                       }
@@ -907,29 +859,9 @@
                             "idx": 5,
                             "definition": [
                               {
-                                "type": "Terminal",
-                                "name": "LEFT_BRACKET",
-                                "label": "'['",
-                                "idx": 0,
-                                "pattern": "["
-                              },
-                              {
-                                "type": "Option",
-                                "idx": 6,
-                                "definition": [
-                                  {
-                                    "type": "NonTerminal",
-                                    "name": "constantExpression",
-                                    "idx": 0
-                                  }
-                                ]
-                              },
-                              {
-                                "type": "Terminal",
-                                "name": "RIGHT_BRACKET",
-                                "label": "']'",
-                                "idx": 0,
-                                "pattern": "]"
+                                "type": "NonTerminal",
+                                "name": "arraySpecifier",
+                                "idx": 0
                               }
                             ]
                           },
@@ -1029,46 +961,11 @@
         "idx": 1,
         "definition": [
           {
-            "type": "Alternation",
-            "idx": 4,
-            "definition": [
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "IN",
-                    "label": "'in'",
-                    "idx": 0,
-                    "pattern": "in"
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "OUT",
-                    "label": "'out'",
-                    "idx": 0,
-                    "pattern": "out"
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "Terminal",
-                    "name": "INOUT",
-                    "label": "'inout'",
-                    "idx": 0,
-                    "pattern": "inout"
-                  }
-                ]
-              }
-            ]
+            "type": "Terminal",
+            "name": "PARAMETER_QUALIFIER",
+            "label": "PARAMETER_QUALIFIER",
+            "idx": 0,
+            "pattern": "NOT_APPLICABLE"
           }
         ]
       },
@@ -1093,25 +990,9 @@
             "idx": 3,
             "definition": [
               {
-                "type": "Terminal",
-                "name": "LEFT_BRACKET",
-                "label": "'['",
-                "idx": 4,
-                "pattern": "["
-              },
-              {
-                "type": "Terminal",
-                "name": "INTCONSTANT",
-                "label": "INTCONSTANT",
-                "idx": 0,
-                "pattern": "\\d+"
-              },
-              {
-                "type": "Terminal",
-                "name": "RIGHT_BRACKET",
-                "label": "']'",
-                "idx": 4,
-                "pattern": "]"
+                "type": "NonTerminal",
+                "name": "arraySpecifier",
+                "idx": 0
               }
             ]
           }
@@ -1306,7 +1187,7 @@
                         "name": "INTCONSTANT",
                         "label": "INTCONSTANT",
                         "idx": 0,
-                        "pattern": "\\d+"
+                        "pattern": "(?:0x)?\\d+"
                       }
                     ]
                   },
@@ -1318,7 +1199,7 @@
                         "name": "UINTCONSTANT",
                         "label": "UINTCONSTANT",
                         "idx": 0,
-                        "pattern": "\\d+u"
+                        "pattern": "(?:0x)?\\d+u"
                       }
                     ]
                   }
@@ -1550,29 +1431,9 @@
         "idx": 1,
         "definition": [
           {
-            "type": "Terminal",
-            "name": "LEFT_BRACKET",
-            "label": "'['",
-            "idx": 0,
-            "pattern": "["
-          },
-          {
-            "type": "Option",
-            "idx": 2,
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "constantExpression",
-                "idx": 0
-              }
-            ]
-          },
-          {
-            "type": "Terminal",
-            "name": "RIGHT_BRACKET",
-            "label": "']'",
-            "idx": 0,
-            "pattern": "]"
+            "type": "NonTerminal",
+            "name": "arraySpecifier",
+            "idx": 0
           }
         ]
       }
@@ -1699,6 +1560,38 @@
   },
   {
     "type": "Rule",
+    "name": "arraySpecifier",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "LEFT_BRACKET",
+        "label": "'['",
+        "idx": 0,
+        "pattern": "["
+      },
+      {
+        "type": "Option",
+        "idx": 3,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "constantExpression",
+            "idx": 0
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "RIGHT_BRACKET",
+        "label": "']'",
+        "idx": 0,
+        "pattern": "]"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
     "name": "structDeclarationList",
     "orgText": "",
     "definition": [
@@ -1731,32 +1624,12 @@
               },
               {
                 "type": "Option",
-                "idx": 2,
+                "idx": 0,
                 "definition": [
                   {
-                    "type": "Terminal",
-                    "name": "LEFT_BRACKET",
-                    "label": "'['",
-                    "idx": 0,
-                    "pattern": "["
-                  },
-                  {
-                    "type": "Option",
-                    "idx": 3,
-                    "definition": [
-                      {
-                        "type": "NonTerminal",
-                        "name": "constantExpression",
-                        "idx": 0
-                      }
-                    ]
-                  },
-                  {
-                    "type": "Terminal",
-                    "name": "RIGHT_BRACKET",
-                    "label": "']'",
-                    "idx": 0,
-                    "pattern": "]"
+                    "type": "NonTerminal",
+                    "name": "arraySpecifier",
+                    "idx": 0
                   }
                 ]
               }

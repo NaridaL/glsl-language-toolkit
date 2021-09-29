@@ -13,8 +13,9 @@ import "colors"
 import prettier from "prettier"
 
 import * as prettierPlugin from "./prettier-plugin"
-import { GLSL_PARSER } from "./parser"
+import { CstNode, GLSL_PARSER } from "./parser"
 import { GLSL_LEXER } from "./lexer"
+import { isToken } from "./prettier-plugin"
 
 // create the HTML Text
 const htmlText = createSyntaxDiagramsCode(
@@ -23,15 +24,12 @@ const htmlText = createSyntaxDiagramsCode(
 // Write the HTML file to disk
 fs.writeFileSync(path.join(__dirname, "../generated_diagrams.html"), htmlText)
 
-const shader = fs.readFileSync(require.resolve("../fixtures/shader.glsl"), {
+// const fileName = "../fixtures/shader.glsl";
+const fileName = "../builtins.glsl"
+// const fileName = "../fixtures/raymarchingPrimitives.glsl";
+const shader = fs.readFileSync(require.resolve(fileName), {
   encoding: "utf8",
 })
-const raymarchingPrimitives = fs.readFileSync(
-  "./fixtures/raymarchingPrimitives.glsl",
-  {
-    encoding: "utf8",
-  },
-)
 
 function underline(
   str: string,
@@ -139,7 +137,7 @@ export function parseInput(text: string) {
   let message = lexingResult.tokens.map(
     (t) => `${t.tokenType.name}(${t.image})`,
   )
-  console.log(message)
+  // console.log(message)
 
   // "input" is a setter which will reset the glslParser's state.
   GLSL_PARSER.input = lexingResult.tokens
@@ -153,19 +151,22 @@ export function parseInput(text: string) {
 console.time("parsing")
 const cst = parseInput(shader)
 console.timeEnd("parsing")
+function shortDesc(node: CstNode | IToken) {
+  return isToken(node)
+    ? `${node.tokenType.name}(${node.image}) ${node.startOffset}-${node.endOffset}`
+    : `${node.type} ${(node as any).firstToken.startOffset}-${
+        (node as any).lastToken.endOffset
+      }`
+}
 fs.writeFileSync(
   "./cst.json",
   JSON.stringify(
     cst,
     (key, value) =>
-      key == "children"
-        ? value.map((v: any) =>
-            v.tokenType
-              ? "" + v.tokenType.name + " " + v.startOffset
-              : "" + v.type + " " + v.firstToken,
-          )
+      key === "children"
+        ? value.map(shortDesc)
         : value?.image
-        ? `TOKEN: ${value.tokenType.name}(${value.image})`
+        ? shortDesc(value)
         : value || null,
     "  ",
   ),
@@ -178,5 +179,6 @@ console.log("PARSER SUCCESS!!!".green)
 const formatted = prettier.format(shader, {
   parser: "glsl-parse",
   plugins: [prettierPlugin],
+  printWidth: 40,
 })
-fs.writeFileSync("../shader-formatted.glsl", formatted, { encoding: "utf8" })
+fs.writeFileSync("./shader-formatted.glsl", formatted, { encoding: "utf8" })
