@@ -23,6 +23,150 @@ const mediump int
 const mediump int
   gl_MaxProgramTexelOffset = 7;
 /**
+ * The variable gl_FragCoord is
+ * available as an input variable from
+ * within fragment shaders and it holds
+ * the window relative coordinates (x,
+ * y, z, 1/w) values for the fragment.
+ * If multi-sampling, this value can be
+ * for any location within the pixel,
+ * or one of the fragment samples. The
+ * use of centroid does not further
+ * restrict this value to be inside the
+ * current primitive. This value is the
+ * result of the fixed functionality
+ * that interpolates primitives after
+ * vertex processing to generate
+ * fragments. The z component is the
+ * depth value that would be used for
+ * the fragment’s depth if no shader
+ * contained any writes to
+ * gl_FragDepth. This is useful for
+ * invariance if a shader conditionally
+ * computes gl_FragDepth but otherwise
+ * wants the fixed functionality
+ * fragment depth.
+ * 
+ */
+in highp vec4 gl_FragCoord;
+/**
+ * Fragment shaders have access to the
+ * input built-in variable
+ * gl_FrontFacing, whose value is true
+ * if the fragment belongs to a
+ * front-facing primitive. One use of
+ * this is to emulate two-sided
+ * lighting by selecting one of two
+ * colors calculated by a vertex
+ * shader.
+ * 
+ */
+in bool gl_FrontFacing;
+/**
+ * Writing to gl_FragDepth will
+ * establish the depth value for the
+ * fragment being processed. If depth
+ * buffering is enabled, and no shader
+ * writes gl_FragDepth, then the fixed
+ * function value for depth will be
+ * used as the fragment’s depth value.
+ * If a shader statically assigns a
+ * value to gl_FragDepth, and there is
+ * an execution path through the shader
+ * that does not set gl_FragDepth, then
+ * the value of the fragment’s depth
+ * may be undefined for executions of
+ * the shader that take that path. That
+ * is, if the set of linked fragment
+ * shaders statically contain a write
+ * to gl_FragDepth, then it is
+ * responsible for always writing it.
+ * 
+ */
+out highp float gl_FragDepth;
+/**
+ * The values in gl_PointCoord are
+ * two-dimensional coordinates
+ * indicating where within a point
+ * primitive the current fragment is
+ * located, when point sprites are
+ * enabled. They range from 0.0 to 1.0
+ * across the point. If the current
+ * primitive is not a point, or if
+ * point sprites are not enabled, then
+ * the values read from gl_PointCoord
+ * are undefined
+ * 
+ */
+in mediump vec2 gl_PointCoord;
+/**
+ * True if the fragment shader
+ * invocation is considered a “helper”
+ * invocation and false otherwise. A
+ * helper invocation is a fragment
+ * shader invocation that is created
+ * solely for the purposes of
+ * evaluating derivatives for the
+ * built-in functions texture()
+ * (section 8.9 “Texture Functions”),
+ * dFdx(), dFdy(), and fwidth() for
+ * other non-helper fragment shader
+ * invocations
+ * 
+ * ragment shader helper invocations
+ * execute the same shader code as
+ * non-helper invocations, but will not
+ * have side effects that modify the
+ * framebuffer or other
+ * shader-accessible memory. In
+ * particular:
+ * 
+ * - Fragments corresponding to helper
+ *   invocations are discarded when
+ *   shader execution is complete,
+ *   without updating the framebuffer.
+ * - Stores to image and buffer
+ *   variables performed by helper
+ *   invocations have no effect on the
+ *   underlying image or buffer memory.
+ * - Atomic operations to image,
+ *   buffer, or atomic counter
+ *   variables performed by helper
+ *   invocations have no effect on the
+ *   underlying image or buffer memory.
+ *   The values returned by such atomic
+ *   operations are undefined. Helper
+ *   invocations may be generated for
+ *   pixels not covered by a primitive
+ *   being rendered. While fragment
+ *   shader inputs qualified with
+ *   "centroid" are normally required
+ *   to be sampled in the intersection
+ *   of the pixel and the primitive,
+ *   the requirement is ignored for
+ *   such pixels since there is no
+ *   intersection between the pixel and
+ *   primitive. Helper invocations may
+ *   also be generated for fragments
+ *   that are covered by a primitive
+ *   being rendered when the fragment
+ *   is killed by early fragment tests
+ *   (using the early_fragment_tests
+ *   qualifier) or where the
+ *   implementation is able to
+ *   determine that executing the
+ *   fragment shader would have no
+ *   effect other than assisting in
+ *   computing derivatives for other
+ *   fragment shader invocations. The
+ *   set of helper invocations
+ *   generated when processing any set
+ *   of primitives is implementation-
+ *   dependent
+ * 
+ */
+in bool gl_HelperInvocation;
+/**
  * ==== Built-in Functions
  * 
  * The OpenGL ES Shading Language
@@ -168,16 +312,16 @@ genType cos(genType angle);
 //The standard trigonometric tangent.
 genType tan(genType angle);
 //Arc sine. Returns an angle whose sine is x. The range of values returned by this function is [-PI/2, PI/2].
-//Results are undefined if ∣x∣1.
+//Results are undefined if |x|<1.
 genType asin(genType x);
 //Arc cosine. Returns an angle whose cosine is x. The
 //range of values returned by this function is [0, p].
-//Results are undefined if ∣x∣1.
+//Results are undefined if |x|<1.
 genType acos(genType x);
 //Arc tangent. Returns an angle whose tangent is y/x. The
 //signs of x and y are used to determine what quadrant the
 //angle is in. The range of values returned by this
-//function is [−π , π]. Results are undefined if x and y
+//function is [-π , π]. Results are undefined if x and y
 //are both 0.
 genType atan(genType y, genType x);
 //Arc tangent. Returns an angle whose tangent is
@@ -195,7 +339,7 @@ genType asinh(genType x);
 //of cosh. Results are undefined if x < 1.
 genType acosh(genType x);
 //Arc hyperbolic tangent; returns the inverse of tanh.
-//Results are undefined if ∣x∣≥1.
+//Results are undefined if |x|≥1.
 genType atanh(genType x);
 //////////////////////////
 //Exponential Functions
@@ -227,10 +371,10 @@ genType inversesqrt(genType x);
 //Common Functions
 /////////////
 //These all operate component-wise. The description is per component.
-//Returns x if x >= 0, otherwise it returns –x.
+//Returns x if x >= 0, otherwise it returns -x.
 genType abs(genType x);
 genIType abs(genIType x);
-//Returns 1.0 if x > 0, 0.0 if x = 0, or –1.0 if x < 0.
+//Returns 1.0 if x > 0, 0.0 if x = 0, or -1.0 if x < 0.
 genType sign(genType x);
 genIType sign(genIType x);
 //Returns a value equal to the nearest integer that is less
@@ -252,9 +396,9 @@ genType roundEven(genType x);
 //Returns a value equal to the nearest integer that is
 //greater than or equal to x.
 genType ceil(genType x);
-//Returns x – floor (x).
+//Returns x - floor (x).
 genType fract(genType x);
-//Modulus. Returns x – y * floor (x/y).
+//Modulus. Returns x - y * floor (x/y).
 genType mod(genType x, float y);
 genType mod(genType x, genType y);
 //Returns the fractional part of x and sets i to the integer
@@ -345,8 +489,8 @@ genType step(float edge, genType x);
 //you would want a threshold function with a smooth
 //transition. This is equivalent to:
 //genType t;
-//t = clamp ((x – edge0) / (edge1 – edge0), 0, 1);
-//return t * t * (3 – 2 * t);
+//t = clamp ((x - edge0) / (edge1 - edge0), 0, 1);
+//return t * t * (3 - 2 * t);
 //Results are undefined if edge0 >= edge1.
 genType smoothstep(
   genType edge0,
@@ -461,20 +605,20 @@ mediump vec2 unpackHalf2x16(
 //These operate on vectors as vectors, not component-wise.
 //Returns the length of vector x, i.e., sqrt(x[0]^2 + x[1]^2 + ...)
 float length(genType x);
-//Returns the distance between p0 and p1, i.e., length (p0 – p1)
+//Returns the distance between p0 and p1, i.e., length (p0 - p1)
 float distance(genType p0, genType p1);
 //Returns the dot product of x and y, i.e., x[0]*y[0] + x[1]*y[1] + ...
 float dot(genType x, genType y);
 //Returns the cross product of x and y, i.e.,
 //vec3(
-//  x[1]*y[2]− y[1]*x[2],
-//  x[2]*y[0]− y[2]*x[0],
-//  x[0]*y[1]− y[0]*x[1])
+//  x[1]*y[2]- y[1]*x[2],
+//  x[2]*y[0]- y[2]*x[0],
+//  x[0]*y[1]- y[0]*x[1])
 vec3 cross(vec3 x, vec3 y);
 //Returns a vector in the same direction as x but with a length of 1 i.e.
 // x/length(x)
 genType normalize(genType x);
-//If dot(Nref, I) < 0 return N, otherwise return –N.
+//If dot(Nref, I) < 0 return N, otherwise return -N.
 genType faceforward(
   genType N,
   genType I,
@@ -482,7 +626,7 @@ genType faceforward(
 );
 //For the incident vector I and surface orientation N,
 //returns the reflection direction:
-//I – 2 * dot(N, I) * N
+//I - 2 * dot(N, I) * N
 //N must already be normalized in order to achieve the
 //desired result.
 genType reflect(genType I, genType N);
@@ -724,7 +868,7 @@ bvec not(bvec x);
  * Map Texture Selection” in the OpenGL
  * ES Graphics System Specification.
  * For Array forms, the array layer
- * used will be max (0,min (d −1,
+ * used will be max (0,min (d -1,
  * floor(layer+0.5)))
  * 
  * where d is the depth of the texture
@@ -1383,16 +1527,16 @@ float textureProjGradOffset(
 //computation. Derivatives are undefined within non-uniform control flow.
 //The expected behavior of a derivative is specified using forward/backward differencing.
 //Forward differencing:
-//F  xdx −F  x ~ dFdx  x⋅dx
+//F  xdx -F  x ~ dFdx  x⋅dx
 //dFdx  x ~
-//F  xdx −F  x
+//F  xdx -F  x
 //dx
 //1a
 //1b
 //Backward differencing:
-//F  x−dx −F  x ~ −dFdx x⋅dx
+//F  x-dx -F  x ~ -dFdx x⋅dx
 //dFdx  x ~
-//F  x−F x−dx
+//F  x-F x-dx
 //dx
 //2a
 //2b

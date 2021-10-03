@@ -24,6 +24,13 @@ RMResult raymarching2(vec3 start, vec3 dir1) {
     return RMResult(hit.distance, pos, hit.color);
 }
 
+
+struct g{ float a; int b; } blub() {
+ return    g(1., 1);
+}
+
+g h;
+
 void main() {
 
     while(bool x = 3.+1.>0.) {
@@ -45,6 +52,8 @@ void main() {
         , 0., 1.);
         //                return;
     }
+    mat4 m;
+    mat3(m[0], 1.);
     return 2;
     int i = 2;
 

@@ -2,6 +2,7 @@
 
 import { createToken, Lexer, TokenType } from "chevrotain"
 import { pull } from "lodash"
+
 import { DEV } from "./util"
 
 export const RESERVED_KEYWORDS = [
@@ -422,12 +423,6 @@ export namespace TOKEN {
     pattern: /\w[\w\d]*/i,
   })
 
-  export const RESERVED = createToken({
-    name: "RESERVED",
-    pattern: RegExp(RESERVED_KEYWORDS.join("|")),
-    longer_alt: IDENTIFIER,
-  })
-
   function KEYWORD(const1: string, ...categories: TokenType[]) {
     return createToken({
       name: const1,
@@ -482,18 +477,31 @@ export namespace TOKEN {
   export const BOOL = createBasicType("bool")
   export const INT = createBasicType("int")
   export const FLOAT = createBasicType("float")
-  export const MAT2 = createBasicType("mat2")
-  export const MAT3 = createBasicType("mat3")
-  export const MAT4 = createBasicType("mat4")
-  export const MAT2X2 = createBasicType("mat2x2")
+
   export const MAT2X3 = createBasicType("mat2x3")
   export const MAT2X4 = createBasicType("mat2x4")
+  export const MAT2X2 = createToken({
+    name: "mat2x2".toUpperCase(),
+    pattern: /mat2(?:x2)?/,
+    longer_alt: IDENTIFIER,
+    categories: BASIC_TYPE,
+  })
   export const MAT3X2 = createBasicType("mat3x2")
-  export const MAT3X3 = createBasicType("mat3x3")
   export const MAT3X4 = createBasicType("mat3x4")
+  export const MAT3X3 = createToken({
+    name: "mat3x3".toUpperCase(),
+    pattern: /mat3(?:x3)?/,
+    longer_alt: IDENTIFIER,
+    categories: BASIC_TYPE,
+  })
   export const MAT4X2 = createBasicType("mat4x2")
   export const MAT4X3 = createBasicType("mat4x3")
-  export const MAT4X4 = createBasicType("mat4x4")
+  export const MAT4X4 = createToken({
+    name: "MAT4X4",
+    pattern: /mat4(?:x4)?/,
+    longer_alt: IDENTIFIER,
+    categories: BASIC_TYPE,
+  })
   export const VEC2 = createBasicType("vec2")
   export const VEC3 = createBasicType("vec3")
   export const VEC4 = createBasicType("vec4")
@@ -533,7 +541,7 @@ export namespace TOKEN {
   })
   export const FLOATCONSTANT = createToken({
     name: "FLOATCONSTANT",
-    pattern: /((\d+\.\d*|\.\d+)(e[+\-]?\d+)?|\d+e[+\-]?\d+)f?/i,
+    pattern: /((\d+\.\d*|\.\d+)(e[+-]?\d+)?|\d+e[+-]?\d+)f?/i,
     categories: CONSTANT,
   })
   export const DOT = createToken({
@@ -543,12 +551,12 @@ export namespace TOKEN {
   })
   export const UINTCONSTANT = createToken({
     name: "UINTCONSTANT",
-    pattern: /(?:0x)?\d+u/i,
+    pattern: /0x[\da-f]+u|\d+u/i,
     categories: CONSTANT,
   })
   export const INTCONSTANT = createToken({
     name: "INTCONSTANT",
-    pattern: /(?:0x)?\d+/,
+    pattern: /0x[\da-f]+|\d+/i,
     categories: CONSTANT,
   })
 }

@@ -1,14 +1,12 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { AstPath, Doc, Plugin, SupportInfo } from "prettier"
+import { AstPath, Doc, format, Plugin, SupportInfo } from "prettier"
 import { builders } from "prettier/doc"
 import { IToken } from "chevrotain"
 
-import { CstNode } from "./parser"
-import { Token } from "./nodes"
-import { parseInput } from "./index"
+import { Node, Token } from "./nodes"
 import { TOKEN } from "./lexer"
-import { format } from "prettier"
+import { parseInput } from "./parser"
 
 const { group, indent, join, line, softline, hardline } = builders
 
@@ -16,24 +14,22 @@ export const languages: SupportInfo["languages"] = [
   { name: "glsl", parsers: ["glsl-parser"] },
 ]
 
-export const parsers: Plugin<CstNode | IToken>["parsers"] = {
+export const parsers: Plugin<Node | IToken>["parsers"] = {
   "glsl-parse": {
     parse(text, parsers, options) {
       const translationUnit = parseInput(text)
-      translationUnit.comments?.forEach(
-        (c) => ((c as any).value = JSON.stringify(c)),
-      )
+      translationUnit.comments?.forEach((c) => (c.value = JSON.stringify(c)))
       return translationUnit
     },
     astFormat: "glsl-ast",
-    locStart(node: CstNode | IToken) {
+    locStart(node: Node | IToken) {
       return (
         isToken(node)
           ? node
           : (node as unknown as { firstToken: IToken }).firstToken
       ).startOffset
     },
-    locEnd(node: CstNode | IToken) {
+    locEnd(node: Node | IToken) {
       return (
         isToken(node)
           ? node
@@ -50,7 +46,7 @@ function normalizeFloat(image: string) {
   return (+image).toLocaleString("en-US", { minimumFractionDigits: 1 })
 }
 
-export const printers: Plugin<CstNode | IToken>["printers"] = {
+export const printers: Plugin<Node | IToken>["printers"] = {
   "glsl-ast": {
     print(path, options, print): Doc {
       const n = path.getValue()
@@ -63,7 +59,7 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
         }
         return n.image
       }
-      const p = <N extends CstNode, S extends keyof N>(_: N, s: S) =>
+      const p = <N extends Node, S extends keyof N>(_: N, s: S) =>
         path.call(print, s)
       try {
         switch (n.type) {
@@ -126,7 +122,7 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
                 softline,
                 ")",
               ]),
-              "functionPrototype" === n.type ? ";" : [" ", p(n, "body")],
+              n.type === "functionPrototype" ? ";" : [" ", p(n, "body")],
             ]
           case "parameterDeclaration":
             return [
@@ -275,7 +271,7 @@ export const printers: Plugin<CstNode | IToken>["printers"] = {
     },
 
     // @ts-expect-error
-    getCommentChildNodes(node: CstNode | Token): CstNode[] {
+    getCommentChildNodes(node: Node | Token): Node[] {
       return isToken(node) ? [] : (node as any).children
     },
     canAttachComment(node) {

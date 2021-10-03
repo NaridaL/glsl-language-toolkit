@@ -1,6 +1,13 @@
+import { isEqualWith, last, pick } from "lodash"
+import { TokenType } from "chevrotain"
+import "colors"
+
 import {
   AbstractVisitor,
+  ArrayAccess,
+  ArraySpecifier,
   AssignmentExpression,
+  BaseNode,
   BinaryExpression,
   CompoundStatement,
   ConditionalExpression,
@@ -9,6 +16,7 @@ import {
   DoWhileStatement,
   FieldAccess,
   ForStatement,
+  FullySpecifiedType,
   FunctionCall,
   FunctionDefinition,
   FunctionPrototype,
@@ -18,52 +26,78 @@ import {
   ReturnStatement,
   SelectionStatement,
   StructSpecifier,
+  SwitchStatement,
   Token,
   TranslationUnit,
+  TypeSpecifier,
   UnaryExpression,
   VariableExpression,
   WhileStatement,
 } from "./nodes"
-import { last } from "lodash"
-import { TokenType } from "chevrotain"
-import { isToken } from "./prettier-plugin"
 import { TOKEN } from "./lexer"
-import _ from "lodash"
 
-let errors: { where: Token | Node; err: string }[] = []
+type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
+type ArrayType = Readonly<{
+  kind: "array"
+  of: NormalizedType | undefined
+  size: number
+}>
+type StructType = Readonly<{
+  specifier: StructSpecifier
+  kind: "struct"
+  fields: {
+    [name: string]: {
+      type: NormalizedType | undefined
+      declarator: Declarator
+    }
+  }
+}>
+
+function isVectorType(n: NormalizedType | undefined): n is BasicType {
+  return n?.kind === "basic" && getVectorSize(n.type) !== 0
+}
+
+type NormalizedType = BasicType | ArrayType | StructType
+
+function NormalizedType(type?: TokenType): NormalizedType | undefined {
+  return type && { kind: "basic", type }
+}
+
+namespace NormalizedType {
+  export const FLOAT: NormalizedType = { kind: "basic", type: TOKEN.FLOAT }
+  export const BOOL: NormalizedType = { kind: "basic", type: TOKEN.BOOL }
+  export const VOID: NormalizedType = { kind: "basic", type: TOKEN.VOID }
+  export const INT: NormalizedType = { kind: "basic", type: TOKEN.INT }
+  export const UINT: NormalizedType = { kind: "basic", type: TOKEN.UINT }
+}
+
+export type Error = { where: Token | Node; err: string }
+let errors: Error[] = []
+
 function markError(
   where: Token | Node,
   err: string,
-  ...args: (NormalizedType | string | undefined)[]
+  ...args: (NormalizedType[] | NormalizedType | string | number | undefined)[]
 ) {
   errors.push({ where, err })
 }
 
 function isLValue(l: Node): boolean {
-  if (l.type === "variableExpression") return true
-  if (l.type === "fieldAccess") return isLValue(l.on)
-  if (l.type === "arrayAccess") return isLValue(l.on)
+  if (l.type === "variableExpression") {
+    return true
+  }
+  if (l.type === "fieldAccess") {
+    return isLValue(l.on)
+  }
+  if (l.type === "arrayAccess") {
+    return isLValue(l.on)
+  }
   // if (l.type === "parenExpression")
   return false
 }
 
-interface NormalizedType {
-  type: TokenType | StructSpecifier
-  size: number // 0 = no array
-}
-function NormalizedType(type: TokenType | undefined) {
-  return type && { type, size: 0 }
-}
-namespace NormalizedType {
-  export const FLOAT = { type: TOKEN.FLOAT, size: 0 }
-  export const BOOL = { type: TOKEN.BOOL, size: 0 }
-  export const VOID = { type: TOKEN.VOID, size: 0 }
-  export const INT = { type: TOKEN.INT, size: 0 }
-  export const UINT = { type: TOKEN.UINT, size: 0 }
-}
-
 function isConstructorCall(b: FunctionCall): boolean {
-  return b.what.type == "typeSpecifier"
+  return b.what.type === "typeSpecifier"
 }
 
 function getVectorSize(t: TokenType): number {
@@ -87,6 +121,7 @@ function getVectorSize(t: TokenType): number {
       return 0
   }
 }
+
 function getVectorElementType(t: TokenType): TokenType | undefined {
   switch (t) {
     case TOKEN.BVEC2:
@@ -126,6 +161,27 @@ function getVectorType(
     default:
       return undefined
   }
+}
+
+function getComponentCount(t: TokenType): number {
+  const mDims = getMatrixDimensions(t)
+  if (mDims) {
+    return mDims[0] * mDims[1]
+  }
+  const vDim = getVectorSize(t)
+  if (vDim) {
+    return vDim
+  }
+  if (getScalarType(t)) {
+    return 1
+  }
+  return 0
+}
+
+function getComponentType(t: TokenType): TokenType | undefined {
+  return getMatrixDimensions(t)
+    ? TOKEN.FLOAT
+    : getVectorElementType(t) || getScalarType(t)
 }
 
 function evaluateBinaryOp(
@@ -198,28 +254,59 @@ function evaluateBinaryOp(
   } else if (aType === TOKEN.INT) {
     return {
       type: NormalizedType.INT,
-      value: (value as bigint) & BigInt("0xffff_ffff"),
+      value: value | 0,
     }
   } else if (aType === TOKEN.UINT) {
     return {
       type: NormalizedType.INT,
-      value: mod(value as bigint, BigInt("0xffff_ffff")),
+      value: mod(value, 0x1_0000_0000),
     }
   } else {
     throw new Error()
   }
 }
 
-function mod(x: bigint, a: bigint) {
+function mod(x: number, a: number) {
   return ((x % a) + a) % a
 }
 
-function evaluateConstantExpression(n: Node): {
-  type: NormalizedType
-  value: any
-} {
+function norm(value: number | boolean, type: TokenType) {
+  switch (type) {
+    case TOKEN.BOOL:
+      return !!value
+    case TOKEN.FLOAT:
+      return Math.fround(+value)
+    case TOKEN.INT:
+      return +value | 0
+    case TOKEN.UINT:
+      return mod(+value, 0x1_0000_0000)
+    default:
+      throw new Error(type.name)
+  }
+}
+
+function getScalarType(t: TokenType): TokenType | undefined {
+  switch (t) {
+    case TOKEN.FLOAT:
+    case TOKEN.INT:
+    case TOKEN.UINT:
+    case TOKEN.BOOL:
+      return t
+    default:
+      return undefined
+  }
+}
+
+export function evaluateConstantExpression(n: Node):
+  | {
+      type: NormalizedType
+      value: any
+    }
+  | undefined {
   function evalIntConstant(s: string) {
-    return BigInt(s)
+    return s.length >= 2 && s[0] === "0" && s[1] !== "x"
+      ? parseInt(s, 8)
+      : Number(s)
   }
 
   switch (n.type) {
@@ -250,36 +337,58 @@ function evaluateConstantExpression(n: Node): {
         default:
           throw new Error()
       }
-    case "binaryExpression":
+    case "unaryExpression": {
+      const on = evaluateConstantExpression(n.on)
+      if (!on) {
+        return undefined
+      }
+      if (on.type.kind !== "basic") {
+        throw new Error()
+      }
+      const compType = getComponentType(on.type.type)!
+      const opp = (op: TokenType, on: number, t: TokenType) => {
+        switch (op) {
+          case TOKEN.TILDE:
+            return norm(~on, t)
+          case TOKEN.BANG:
+            return norm(!on, t)
+          case TOKEN.DASH:
+            return norm(-on, t)
+          default:
+            assertNever()
+        }
+      }
+      let value
+      if (getScalarType(on.type.type)) {
+        value = opp(n.op.tokenType, on.value, compType)
+      } else {
+        value = (on.value as any[]).map((e) => opp(n.op.tokenType, e, compType))
+        Object.assign(value, pick(on.value, "rows"))
+      }
+      return { type: on.type, value }
+    }
+    case "binaryExpression": {
       const l = evaluateConstantExpression(n.lhs)
       const r = evaluateConstantExpression(n.rhs)
-      if (
-        typesEqual(l.type, NormalizedType.FLOAT) ||
-        typesEqual(l.type, NormalizedType.INT) ||
-        typesEqual(l.type, NormalizedType.UINT) ||
-        typesEqual(l.type, NormalizedType.BOOL)
-      ) {
+      if (!l || !r) {
+        return undefined
+      }
+      if (l.type.kind === "basic" && getScalarType(l.type.type)) {
         if (typesNotEqual(l.type, l.type)) {
           throw new Error("types don't match")
         } else {
           const lv = l.value
           const rv = r.value
-          return evaluateBinaryOp(n.op, lv, rv, l.type.type as TokenType)
+          return evaluateBinaryOp(n.op, lv, rv, l.type.type)
         }
-      } else if (
-        isToken(l.type.type) &&
-        getVectorSize(l.type.type.tokenType) !== 0
-      ) {
-        const vectorSize = getVectorSize(l.type.type.tokenType)
-        if (
-          isToken(l.type.type) &&
-          getVectorSize(l.type.type.tokenType) === vectorSize
-        ) {
+      } else if (isVectorType(l.type)) {
+        const vectorSize = getVectorSize(l.type.type)
+        if (isVectorType(r.type)) {
           // two vectors
           return {
             type: l.type,
             value: (l.value as any[]).map((lv, i) =>
-              evaluateBinaryOp(n.op, lv, r.value[i], l.type.type as TokenType),
+              evaluateBinaryOp(n.op, lv, r.value[i], (<BasicType>l.type).type),
             ),
           }
         } else {
@@ -294,8 +403,132 @@ function evaluateConstantExpression(n: Node): {
       } else {
         throw new Error("???")
       }
+    }
+    case "arrayAccess":
+      {
+        const on = evaluateConstantExpression(n.on)
+        if (!on) {
+          return undefined
+        }
+        const index = evaluateConstantExpression(n.index)
+        if (!index) {
+          return undefined
+        }
+        const value1 = index.value as number
+        if (on.type.kind === "array") {
+          const ofType = on.type.of
+          return (
+            index &&
+            ofType && { type: ofType, value: (on.value as any[])[value1] }
+          )
+        } else if (on.type.kind === "basic") {
+          if (getVectorSize(on.type.type)) {
+            return {
+              type: { kind: "basic", type: getComponentType(on.type.type)! },
+              value: (on.value as any[])[value1],
+            }
+          } else if (getMatrixDimensions(on.type.type)) {
+            const [, rows] = getMatrixDimensions(on.type.type)!
+            return {
+              type: { kind: "basic", type: getVectorType(TOKEN.FLOAT, rows)! },
+              value: (on.value as any[]).slice(
+                value1 * rows,
+                (value1 + 1) * rows,
+              ),
+            }
+          }
+        }
+      }
+      throw new Error()
+
+    case "functionCall": {
+      const args = n.args.map(evaluateConstantExpression)
+      if (!allDefined(args)) {
+        return undefined
+      }
+      if (n.binding) {
+        // function call
+      } else {
+        // constructor
+
+        const cType = n.constructorType!
+        if (cType.kind === "array") {
+          // array constructor
+          if (cType.size === args.length) {
+            return {
+              type: cType,
+              value: args.map((a) => a.value),
+            }
+          } else {
+            return undefined
+          }
+        } else if (cType.kind === "struct") {
+          const value: Record<string, unknown> = {}
+          const fields = Object.keys(cType.fields)
+          for (let i = 0; i < fields.length; i++) {
+            value[fields[i]] = args[i].value
+          }
+          return { type: cType, value }
+        } else {
+          // basic type constructor call
+
+          const matDims = getMatrixDimensions(cType.type)
+          if (matDims && args.length === 1 && isMatrixType(args[0].type)) {
+            // this is the matXxY(matZxW) case
+            const [cols, rows] = matDims
+            const o = args[0].value as number[]
+            const [oCols, oRows] = getMatrixDimensions(args[0].type.type)!
+            const value = Object.assign(Array(cols * rows), { rows })
+            for (let c = 0; c < cols; c++) {
+              for (let r = 0; r < rows; r++) {
+                value[c * rows + r] =
+                  c < oCols && r < oRows ? o[c * oRows + r] : +(c === r)
+              }
+            }
+            return { type: { kind: "basic", type: cType.type }, value }
+          }
+          const neededSize = getComponentCount(cType.type)
+          const neededType = getComponentType(cType.type)!
+          let result = args
+            .map((arg) => arg.value)
+            .flatMap<any>((arg) => (Array.isArray(arg) ? arg : [arg]))
+            .slice(0, neededSize)
+            .map((e) => norm(e, neededType))
+          if (result.length === 1) {
+            if (getVectorSize(cType.type)) {
+              result = Array(neededSize).fill(result[0])
+            } else if (matDims) {
+              const [cols, rows] = matDims
+              const mat = Object.assign(Array(cols * rows).fill(0), { rows })
+              for (let i = 0; i < Math.min(cols, rows); i++) {
+                mat[i * rows + i] = result[0]
+              }
+              result = mat
+            }
+          }
+          return {
+            type: { kind: "basic", type: cType.type },
+            value: neededSize === 1 ? result[0] : result,
+          }
+        }
+      }
+      throw new Error()
+    }
     case "commaExpression":
-      throw new Error("commaExpression not supported in constant expression")
+      return undefined
+    case "methodCall": {
+      const on = evaluateConstantExpression(n.on)
+      if (on && on.type.kind === "array") {
+        return { type: NormalizedType.INT, value: on.type.size }
+      }
+      return undefined
+    }
+    case "variableExpression":
+      return (
+        n.binding?.dl?.fsType.typeQualifier.storageQualifier?.CONST &&
+        n.binding.d?.init &&
+        evaluateConstantExpression(n.binding.d?.init)
+      )
     default:
       throw new Error("???")
   }
@@ -307,75 +540,151 @@ function isConstantExpression(n: Node): boolean {
     return n.what.type === "typeSpecifier"
   }
 
+  // a constant expression is one of
   switch (n.type) {
+    // a literal value (e.g. 5 or true)
     case "constantExpression":
       return true
-    case "variableExpression": // TODO check if defined as const
-      return true
+
+    // a global or local variable qualified as const (i.e., not including function parameters)
+    case "variableExpression": {
+      const binding: VariableBinding | undefined = n.binding
+      return !!binding?.dl?.fsType.typeQualifier.storageQualifier?.CONST
+    }
+
+    // an expression formed by an operator on operands that are all constant expressions, including getting an
+    // element of a constant array, or a field of a constant structure, or components of a constant vector.
+    // However, the sequence operator ( , ) and the assignment operators ( =, +=, ...)  are not included in the
+    // operators that can create a constant expression
     case "binaryExpression":
       return isConstantExpression(n.lhs) && isConstantExpression(n.rhs)
     case "unaryExpression":
     case "postfixExpression":
       return isConstantExpression(n.on)
-    case "functionCall":
+
+    // the length() methode on an array, whether or not the object itself is constant
+    case "methodCall": {
+      const what = n.functionCall.what
       return (
-        isConstructorCall(n) ||
-        (isBuiltInFunctionCall(n) &&
-          n.args.every((a) => isConstantExpression(a)))
+        what.arraySpecifier === undefined &&
+        isToken(what.typeSpecifierNonArray) &&
+        what.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER &&
+        what.typeSpecifierNonArray.image === "length"
       )
+    }
+
+    case "functionCall": {
+      const ts = n.what.typeSpecifierNonArray as Token
+      if (ts.tokenType === TOKEN.IDENTIFIER) {
+        n.what.binding
+      }
+      return (
+        (isConstructorCall(n) || isBuiltInFunctionCall(n)) &&
+        n.args.every(isConstantExpression)
+      )
+    }
     default:
       return false
+  }
+}
+
+interface FunctionBinding {
+  kind: "function"
+  overloads: {
+    params: NormalizedType[]
+    result: NormalizedType
+    def: FunctionDefinition | FunctionPrototype
+  }[]
+}
+
+interface StructBinding {
+  kind: "struct"
+  type: StructType
+}
+
+interface VariableBinding {
+  kind: "variable"
+  dl?: InitDeclaratorListDeclaration
+  d?: Declarator
+  pd?: ParameterDeclaration
+  type: NormalizedType | undefined
+}
+
+type Binding = StructBinding | VariableBinding | FunctionBinding
+
+declare module "./nodes" {
+  export interface FunctionCall extends BaseNode {
+    constructorType?: NormalizedType
+    binding?: FunctionBinding
+  }
+
+  export interface VariableExpression extends BaseNode {
+    binding?: VariableBinding
   }
 }
 
 interface Scope {
   parent: Scope | undefined
   defs: {
-    [k: string]: {
-      type: "function" | "struct" | "variable"
-      dl?: InitDeclaratorListDeclaration
-      d?: Declarator
-      pd?: ParameterDeclaration
-      overloads?: {
-        args: NormalizedType[]
-        def: FunctionDefinition | FunctionPrototype
-      }[]
-    }
+    [k: string]: Binding
   }
+}
+
+export function isToken(x: Token | Node): x is Token {
+  return "tokenType" in x
 }
 
 function isTokenType(type: TokenType | StructSpecifier): type is TokenType {
   return typeof type.name === "string"
 }
 
-function typesEqual(
-  a: NormalizedType | undefined,
-  b: NormalizedType | undefined,
-): boolean {
-  if (!a || !b) return false
-  if (a.size !== b.size) return false
-  if (isTokenType(a.type)) {
-    if (!isTokenType(b.type) || a.type !== b.type) return false
-  } else {
+function assertNever(x?: never): never {
+  throw new Error()
+}
+
+function assert(x: boolean): x is true {
+  if (!x) {
     throw new Error()
   }
   return true
 }
+
+function typesEqual(
+  a: NormalizedType | undefined,
+  b: NormalizedType | undefined,
+): boolean {
+  if (!a || !b) {
+    return false
+  }
+  switch (a.kind) {
+    case "basic":
+      return b.kind === "basic" && a.type === b.type
+    case "array":
+      return b.kind === "array" && a.size === b.size && typesEqual(a.of, b.of)
+    case "struct":
+      return b.kind === "struct" && a.specifier === b.specifier
+    default:
+      assertNever(a)
+  }
+}
+
 function typesNotEqual(
   a: NormalizedType | undefined,
   b: NormalizedType | undefined,
 ): boolean {
-  if (!a || !b) return false
+  if (!a || !b) {
+    return false
+  }
   return !typesEqual(a, b)
 }
 
 function findMatchingFunctionDefinition(
   paramTypes: NormalizedType[],
-  existingDef: Scope["defs"][string],
+  existingDef: FunctionBinding,
 ) {
-  const overloads = existingDef.overloads!
+  const overloads = existingDef.overloads
   for (const overload of overloads) {
-    if (overload.args.every((a, i) => typesEqual(a, paramTypes[i]))) {
+    if (isEqualWith(overload, paramTypes, typesEqual)) {
       return overload
     }
   }
@@ -383,36 +692,102 @@ function findMatchingFunctionDefinition(
 }
 
 class BinderVisitor extends AbstractVisitor<any> {
-  scopes: Scope[] = []
+  protected scopes: Scope[] = []
+  private currentFunctionPrototypeParams:
+    | (NormalizedType | undefined)[]
+    | undefined = undefined
 
-  get scope() {
+  protected get scope() {
     const s = last(this.scopes)
-    if (!s) throw new Error()
+    if (!s) {
+      throw new Error()
+    }
     return s
   }
 
-  pushScope() {
-    this.scopes.push({ parent: this.scope, defs: {} })
+  structSpecifier(n: StructSpecifier): any {
+    const fields: StructType["fields"] = {}
+    for (const declaration of n.declarations) {
+      declaration.type
+      for (const declarator of declaration.declarators) {
+        // Bind array specifier and initializer first.
+        this.declarator(declarator)
+
+        if (fields[declarator.name.image]) {
+          markError(declarator.name, "field already exists in this struct")
+        } else {
+          fields[declarator.name.image] = {
+            type: this.figure(declaration.fsType, declarator.arraySpecifier),
+            declarator: declarator,
+          }
+        }
+      }
+    }
+
+    if (n.name) {
+      const existingDef = this.scope.defs[n.name.image]
+      if (existingDef) {
+        markError(n, "S0022")
+      } else {
+        this.scope.defs[n.name.image] = {
+          kind: "struct",
+          type: { kind: "struct", fields, specifier: n },
+        }
+      }
+    }
   }
 
-  popScope() {
-    this.scopes.pop()
-  }
-
-  variableExpression(n: VariableExpression) {
+  resolve(symbol: string): Binding | undefined {
     let scope: Scope | undefined = this.scope
     while (scope) {
-      const x = scope.defs[n.var.image]
+      const x = scope.defs[symbol]
       if (x) {
-        n.binding = x
-        return
+        return x
       }
       scope = scope.parent
     }
-    markError(n, "G0002")
+  }
+
+  variableExpression(n: VariableExpression) {
+    const binding = this.resolve(n.var.image)
+    if (binding) {
+      n.binding = binding
+    } else {
+      markError(n, "G0002")
+    }
+  }
+
+  public functionCall(n: FunctionCall): any {
+    super.functionCall(n)
+    const ts = n.what
+    if (isToken(ts.typeSpecifierNonArray)) {
+      if (
+        ts.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER &&
+        !ts.arraySpecifier
+      ) {
+        // this could be a regular function call (not a constructor)
+        const b = this.resolve(ts.typeSpecifierNonArray.image)
+        if (b?.kind === "function") {
+          n.binding = b
+          return
+        }
+      }
+      // assume it is a constructor
+      n.constructorType = this.figure(ts, undefined)
+      if (
+        n.constructorType?.kind === "array" &&
+        ts.arraySpecifier &&
+        !ts.arraySpecifier.size
+      ) {
+        ;(n.constructorType as any).size = n.args.length
+      }
+    } else {
+      markError(ts, "structure definition cannot be constructor")
+    }
   }
 
   initDeclaratorListDeclaration(n: InitDeclaratorListDeclaration) {
+    this.visit(n.fsType)
     for (const d of n.declarators) {
       // Bind array specifier and initializer first.
       this.declarator(d)
@@ -421,7 +796,12 @@ class BinderVisitor extends AbstractVisitor<any> {
       if (existingDef) {
         markError(d, "S0022")
       } else {
-        this.scope.defs[d.name.image] = { type: "variable", dl: n, d }
+        this.scope.defs[d.name.image] = {
+          kind: "variable",
+          dl: n,
+          d,
+          type: this.figure(n.fsType, d.arraySpecifier),
+        }
       }
     }
   }
@@ -433,40 +813,47 @@ class BinderVisitor extends AbstractVisitor<any> {
   }
 
   functionDefinition(n: FunctionDefinition) {
+    this.visit(n.returnType)
     this.pushScope()
-    super.functionDefinition(n)
+    if (this.currentFunctionPrototypeParams) {
+      throw new Error()
+    }
+    this.currentFunctionPrototypeParams = []
+    for (const param of n.params) {
+      this.visit(param)
+    }
+    const params = this.currentFunctionPrototypeParams
+    this.currentFunctionPrototypeParams = undefined
+    this.visit(n.body)
     this.popScope()
-
     const existingDef = this.scope.defs[n.name.image]
-    if (existingDef.type != "function") {
-      markError(n, "S0024")
-    }
-    const paramTypes = n.params.map((p): NormalizedType => {
-      return {
-        type: isToken(p.typeSpecifier.typeSpecifierNonArray)
-          ? p.typeSpecifier.typeSpecifierNonArray.tokenType
-          : p.typeSpecifier.typeSpecifierNonArray,
-        size:
-          Number(
-            evaluateConstantExpression(
-              p.typeSpecifier.arraySpecifier?.size || p.arraySpecifier?.size!,
-            ).value as bigint,
-          ) || 0,
-      }
-    })
     if (existingDef) {
-      findMatchingFunctionDefinition(paramTypes, existingDef)
+      if (existingDef.kind !== "function") {
+        markError(n, "S0024")
+      } else if (allDefined(params)) {
+        findMatchingFunctionDefinition(params, existingDef)
+      }
     }
+    n.returnTypeResolved = this.figure(n.returnType, undefined)
   }
+
   parameterDeclaration(n: ParameterDeclaration) {
     super.parameterDeclaration(n)
 
+    const type = this.figure(n.typeSpecifier, n.arraySpecifier)
+    this.currentFunctionPrototypeParams!.push(type)
+    if (!isToken(n.typeSpecifier.typeSpecifierNonArray)) {
+      markError(
+        n.typeSpecifier.typeSpecifierNonArray,
+        "no struct specifier as parameter type",
+      )
+    }
     if (n.pName) {
       const existingDef = this.scope.defs[n.pName.image]
       if (existingDef) {
         markError(n, "S0022")
       } else {
-        this.scope.defs[n.pName.image] = { type: "variable", pd: n }
+        this.scope.defs[n.pName.image] = { kind: "variable", pd: n, type }
       }
     }
   }
@@ -476,18 +863,79 @@ class BinderVisitor extends AbstractVisitor<any> {
     super.compoundStatement(n)
     this.popScope()
   }
+
+  protected pushScope() {
+    this.scopes.push({ parent: last(this.scopes), defs: {} })
+  }
+
+  protected popScope() {
+    this.scopes.pop()
+  }
+
+  protected figure(
+    typeSpecifier: FullySpecifiedType | TypeSpecifier,
+    arraySpecifier: ArraySpecifier | undefined,
+  ): NormalizedType | undefined {
+    if (typeSpecifier.type === "fullySpecifiedType") {
+      typeSpecifier = typeSpecifier.typeSpecifier
+    }
+    const typeSpecifierNonArray = typeSpecifier.typeSpecifierNonArray
+    if (isToken(typeSpecifierNonArray)) {
+      let result: NormalizedType | undefined
+      if (typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER) {
+        // refers to a struct
+        const binding = this.resolve(typeSpecifierNonArray.image)
+        if (binding?.kind === "struct") {
+          result = binding.type
+        } else {
+          // TODO markError
+        }
+      } else {
+        result = { kind: "basic", type: typeSpecifierNonArray.tokenType }
+      }
+      for (const as of [typeSpecifier.arraySpecifier, arraySpecifier]) {
+        if (as) {
+          const size =
+            as.size === undefined
+              ? -1
+              : +(evaluateConstantExpression(as.size)?.value ?? 0)
+          result = { kind: "array", of: result, size }
+        }
+      }
+      return result
+    }
+  }
 }
 
-function isBasicType(
-  n: NormalizedType | undefined,
-): n is { size: 0; type: TokenType } {
-  return n !== undefined && n.size === 0 && isTokenType(n.type)
+function getMatrixDimensions(
+  t: TokenType,
+): [cols: number, rows: number] | undefined {
+  switch (t) {
+    case TOKEN.MAT2X2:
+      return [2, 2]
+    case TOKEN.MAT2X3:
+      return [2, 3]
+    case TOKEN.MAT2X4:
+      return [2, 4]
+    case TOKEN.MAT3X2:
+      return [3, 2]
+    case TOKEN.MAT3X3:
+      return [3, 3]
+    case TOKEN.MAT3X4:
+      return [3, 4]
+    case TOKEN.MAT4X2:
+      return [4, 2]
+    case TOKEN.MAT4X3:
+      return [4, 3]
+    case TOKEN.MAT4X4:
+      return [4, 4]
+    default:
+      return undefined
+  }
 }
 
-function isVectorType(n: NormalizedType): boolean {
-  return (
-    n.size === 0 && isToken(n.type) && getVectorSize(n.type.tokenType) !== 0
-  )
+function isMatrixType(n: NormalizedType | undefined): n is BasicType {
+  return n?.kind === "basic" && getMatrixDimensions(n.type) !== undefined
 }
 
 const MATRIX_TYPES = [
@@ -588,17 +1036,17 @@ const VALID_BINARY_OPERATIONS: T4[] = [
     TOKEN.CARET,
     TOKEN.VERTICAL_BAR,
   ].flatMap<T4>((op) => [
-    [TOKEN.PERCENT, TOKEN.INT, TOKEN.INT, TOKEN.INT],
-    [TOKEN.PERCENT, TOKEN.UINT, TOKEN.UINT, TOKEN.UINT],
+    [op, TOKEN.INT, TOKEN.INT, TOKEN.INT],
+    [op, TOKEN.UINT, TOKEN.UINT, TOKEN.UINT],
     ...UVEC_TYPES.flatMap<T4>((t) => [
-      [TOKEN.PERCENT, TOKEN.UINT, t, t],
-      [TOKEN.PERCENT, t, TOKEN.UINT, t],
-      [TOKEN.PERCENT, t, t, t],
+      [op, TOKEN.UINT, t, t],
+      [op, t, TOKEN.UINT, t],
+      [op, t, t, t],
     ]),
     ...IVEC_TYPES.flatMap<T4>((t) => [
-      [TOKEN.PERCENT, TOKEN.INT, t, t],
-      [TOKEN.PERCENT, t, TOKEN.INT, t],
-      [TOKEN.PERCENT, t, t, t],
+      [op, TOKEN.INT, t, t],
+      [op, t, TOKEN.INT, t],
+      [op, t, t, t],
     ]),
   ]),
   // TODO: add hints for lessThan, greaterThan, etc
@@ -637,9 +1085,14 @@ const VALID_BINARY_OPERATIONS: T4[] = [
 // console.table(VALID_BINARY_OPERATIONS.map((x) => x.map((y) => y.PATTERN)))
 console.log("VALID_BINARY_OPERATIONS.length", VALID_BINARY_OPERATIONS.length)
 
+function allDefined<T>(ts: (T | undefined)[]): ts is T[] {
+  return ts.every(Boolean)
+}
+
 class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   private currentFunctionPrototypeReturnType: NormalizedType | undefined =
     undefined
+
   assignmentExpression(n: AssignmentExpression) {
     // We parse conditionExpressions on the LHS, but only unaryExpressions are allowed.
 
@@ -695,18 +1148,59 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return
   }
 
+  switchStatement(n: SwitchStatement): NormalizedType | undefined {
+    const iType = this.visit(n.initExpression)
+    if (
+      typesNotEqual(iType, NormalizedType.INT) &&
+      typesNotEqual(iType, NormalizedType.UINT)
+    ) {
+      markError(n.initExpression, "S0057")
+    }
+    this.visit(n.body)
+    return super.switchStatement(n)
+  }
+
+  arrayAccess(n: ArrayAccess): NormalizedType | undefined {
+    const iType = this.visit(n.index)
+    if (
+      typesNotEqual(iType, NormalizedType.INT) &&
+      typesNotEqual(iType, NormalizedType.UINT)
+    ) {
+      markError(n, "S0002")
+    }
+
+    const oType = this.visit(n.on)
+    if (oType?.kind === "array") {
+      // array access
+      return oType.of
+    } else if (isVectorType(oType)) {
+      return NormalizedType(getVectorElementType(oType.type))
+    } else if (isMatrixType(oType)) {
+      // return column
+      const [, mRows] = getMatrixDimensions(oType.type)!
+      return NormalizedType(getVectorType(TOKEN.FLOAT, mRows))
+    }
+    // TODO: if constant expression, check array access size
+  }
+
+  variableExpression(n: VariableExpression): NormalizedType | undefined {
+    const binding: VariableBinding | undefined = n.binding
+
+    return binding?.type
+  }
+
   fieldAccess(n: FieldAccess): NormalizedType | undefined {
     const oType = this.visit(n.on)
-    if (oType && isVectorType(oType)) {
+    if (isVectorType(oType)) {
       const f = n.field.image
       if (/^[xyzwrgbastpq]+$/.test(f)) {
         // treat as field swizzle
-        if (!/^[xyzw]+|[rgba]+|[stpq]+$/.test(f)) {
+        if (!/^([xyzw]+|[rgba]+|[stpq]+)$/.test(f)) {
           markError(n.field, "S0025")
         } else if (f.length > 4) {
           markError(n.field, "S0026", "Swizzle can select at most 4 fields.")
         } else {
-          const vectorSize = getVectorSize(oType.type as TokenType)
+          const vectorSize = getVectorSize(oType.type)
           for (let i = 0; i < f.length; i++) {
             // eg "r" => 0, "z" => 3
             const vectorFieldIndex = "xyzwrgbastpq".indexOf(f[i]) % 4
@@ -722,14 +1216,23 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
         }
 
         return NormalizedType(
-          getVectorType(
-            getVectorElementType(oType.type as TokenType)!,
-            f.length,
-          ),
+          getVectorType(getVectorElementType(oType.type)!, f.length),
         )
       }
+    } else if (oType?.kind === "struct") {
+      const f = n.field.image
+      const field = oType.fields[f]
+      if (field) {
+        return field.type
+      } else {
+        markError(
+          n.field,
+          `field ${f} is not defined on type ${oType.specifier.name}`,
+        )
+      }
+    } else {
+      markError(n.field, "field access cannot be used on array")
     }
-    return super.fieldAccess(n)
   }
 
   binaryExpression(n: BinaryExpression): NormalizedType | undefined {
@@ -753,13 +1256,13 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
       )
     }
 
-    if (isBasicType(lType) && isBasicType(rType)) {
+    if (lType?.kind === "basic" && rType?.kind === "basic") {
       const validOp = VALID_BINARY_OPERATIONS.find(
         ([op, lhs, rhs, _result]) =>
           op === n.op.tokenType && lhs === lType.type && rhs === rType.type,
       )
       if (validOp) {
-        return NormalizedType(validOp[3])
+        return { kind: "basic", type: validOp[3] }
       } else {
         markErr(n)
       }
@@ -782,30 +1285,63 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     }
 
     const oType = this.visit(n.on)
-    if (
-      oType &&
-      isBasicType(oType) &&
-      (TOKEN.INT === oType.type ||
-        TOKEN.UINT === oType.type ||
-        TOKEN.FLOAT === oType.type ||
-        VEC_TYPES.includes(oType.type) ||
-        UVEC_TYPES.includes(oType.type) ||
-        IVEC_TYPES.includes(oType.type) ||
-        MATRIX_TYPES.includes(oType.type))
-    ) {
-      return oType
-    } else if (oType) {
-      markError(
-        n,
-        "S0004",
-        `Valid operand types for ${n.op.tokenType} are integer, float, vector or matrix types, not `,
-        oType,
-      )
+    if (!oType) {
+      return
     }
-    return
+    switch (n.op.tokenType) {
+      case TOKEN.DEC_OP:
+      case TOKEN.INC_OP:
+      case TOKEN.DASH:
+        if (
+          oType?.kind === "basic" &&
+          (TOKEN.INT === oType.type ||
+            TOKEN.UINT === oType.type ||
+            TOKEN.FLOAT === oType.type ||
+            VEC_TYPES.includes(oType.type) ||
+            UVEC_TYPES.includes(oType.type) ||
+            IVEC_TYPES.includes(oType.type) ||
+            MATRIX_TYPES.includes(oType.type))
+        ) {
+          return oType
+        } else {
+          markError(
+            n,
+            "S0004",
+            `Valid operand types for ${n.op.tokenType} are integer, float, vector or matrix types, not `,
+            oType,
+          )
+          return
+        }
+      case TOKEN.BANG:
+        if (typesNotEqual(oType, NormalizedType.BOOL)) {
+          markError(
+            n,
+            "S0004",
+            "Unary operator for ! is only applicable to bool.",
+          )
+        }
+        return NormalizedType.BOOL
+      case TOKEN.TILDE:
+        if (
+          oType?.kind === "basic" &&
+          (TOKEN.INT === oType.type ||
+            TOKEN.UINT === oType.type ||
+            UVEC_TYPES.includes(oType.type) ||
+            IVEC_TYPES.includes(oType.type))
+        ) {
+          return oType
+        } else {
+          markError(
+            n,
+            "S0004",
+            `Valid operand types for ${n.op.tokenType} are integer scalars or vectors `,
+            oType,
+          )
+        }
+    }
   }
 
-  conditionalExpression(n: ConditionalExpression) {
+  conditionalExpression(n: ConditionalExpression): NormalizedType | undefined {
     const cType = this.visit(n.condition)
     const yType = this.visit(n.yes)
     const nType = this.visit(n.no)
@@ -843,32 +1379,169 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   }
 
   functionPrototype(n: FunctionPrototype): NormalizedType | undefined {
-    if (this.currentFunctionPrototypeReturnType) {
-      throw new Error()
-    }
-    // TODO figure out function return type
     this.currentFunctionPrototypeReturnType = undefined
     super.functionPrototype(n)
     this.currentFunctionPrototypeReturnType = undefined
     return
   }
-  constantExpression(n: ConstantExpression): NormalizedType | undefined {
-    switch (n._const.tokenType) {
-      case TOKEN.INTCONSTANT:
-        return NormalizedType(TOKEN.INT)
-      case TOKEN.UINTCONSTANT:
-        return NormalizedType(TOKEN.UINT)
-      case TOKEN.FLOATCONSTANT:
-        return NormalizedType(TOKEN.FLOAT)
-      case TOKEN.BOOLCONSTANT:
-        return NormalizedType(TOKEN.BOOL)
+
+  public functionDefinition(n: FunctionDefinition): NormalizedType | undefined {
+    if (this.currentFunctionPrototypeReturnType) {
+      throw new Error()
     }
+    // TODO figure out function return type
+    this.currentFunctionPrototypeReturnType = n.returnTypeResolved
+    super.functionDefinition(n)
+    this.currentFunctionPrototypeReturnType = undefined
+    return
+  }
+
+  public functionCall(n: FunctionCall): NormalizedType | undefined {
+    const aTypes = n.args.map((a) => this.visit(a))
+    const ts = n.what.typeSpecifierNonArray
+    if (
+      !n.what.arraySpecifier &&
+      isToken(ts) &&
+      ts.tokenType === TOKEN.IDENTIFIER
+    ) {
+      // form IDENTIFIER(args)
+      // could be either struct constructor or function call
+      const binding = n.binding
+      if (binding?.kind === "struct") {
+        if (allDefined(aTypes)) {
+          const expectedArgs: NormalizedType[] = Object.values(
+            binding.type.fields,
+          ).map((f) => f.type)
+          if (!isEqualWith(aTypes, expectedArgs)) {
+            markError(n, "S0007", `expected ${expectedArgs} but was ${aTypes}`)
+          }
+        }
+        return binding.type
+      } else if (binding?.kind === "function") {
+        if (allDefined(aTypes)) {
+          const overload = findMatchingFunctionDefinition(aTypes, binding)
+          if (overload) {
+            return overload.result
+          } else {
+            markError(n, "no matching overload for params", aTypes)
+          }
+        }
+      } else if (binding?.kind === "variable") {
+        markError(n.what, "cannot call variable")
+      }
+    } else if (!n.what.arraySpecifier && isToken(ts)) {
+      // BASIC_TYPE(args)
+
+      const fillVectorOrMatrixConstructor = (needed: number): void => {
+        let provided = 0
+        for (let i = 0; i < aTypes.length; i++) {
+          if (provided >= needed) {
+            markError(
+              n.args[i],
+              "S0008",
+              "Too many arguments. Need ",
+              needed + " components, already have ",
+              provided,
+            )
+          } else {
+            const aType = aTypes[i]
+            if (aType?.kind === "basic") {
+              const aSize = getComponentCount(aType.type)
+              if (!aSize) {
+                markError(
+                  n.args[i],
+                  "S0007",
+                  "only scalar, vector and matrix types are allowed, but was",
+                  aType,
+                )
+              } else {
+                provided += aSize
+              }
+            } else {
+              markError(
+                n.args[i],
+                "S0007",
+                "only scalar, vector and matrix types are allowed, but was",
+                aType,
+              )
+            }
+          }
+        }
+        if (provided !== 1 && provided < needed) {
+          markError(n.what, "S0009", `Need ${needed} but only got ${provided}`)
+        }
+      }
+
+      if (getScalarType(ts.tokenType)) {
+        if (
+          aTypes[0] &&
+          (aTypes[0].kind !== "basic" ||
+            getComponentCount(aTypes[0].type) === 0)
+        ) {
+          markError(
+            n.args[0],
+            "S0007",
+            "only scalar, vector and matrix types are allowed, but was",
+            aTypes[0],
+          )
+        }
+        for (let i = 1; i < n.args.length; i++) {
+          markError(
+            n.args[i],
+            "S0008",
+            "only one argument is allowed for a scalar constructor",
+          )
+        }
+      } else if (getVectorSize(ts.tokenType)) {
+        const needed = getVectorSize(ts.tokenType)
+        fillVectorOrMatrixConstructor(needed)
+      } else if (getMatrixDimensions(ts.tokenType)) {
+        const matrixArg = aTypes.find((t) => isMatrixType(t))
+        if (matrixArg) {
+          for (let i = 0; i < n.args.length; i++) {
+            if (aTypes[i] !== matrixArg) {
+              markError(
+                n.args[i],
+                "S0007",
+                "if a matrix argument is given to a matrix constructor, it must be the only one",
+              )
+            }
+          }
+        } else {
+          const needed = getComponentCount(ts.tokenType)!
+          fillVectorOrMatrixConstructor(needed)
+        }
+      }
+      return { kind: "basic", type: ts.tokenType }
+    }
+  }
+
+  constantExpression(n: ConstantExpression): NormalizedType | undefined {
+    function getConstantType(t: TokenType): TokenType {
+      switch (t) {
+        case TOKEN.INTCONSTANT:
+          return TOKEN.INT
+        case TOKEN.UINTCONSTANT:
+          return TOKEN.UINT
+        case TOKEN.FLOATCONSTANT:
+          return TOKEN.FLOAT
+        case TOKEN.BOOLCONSTANT:
+          return TOKEN.BOOL
+        default:
+          assertNever()
+      }
+    }
+
+    return { kind: "basic", type: getConstantType(n._const.tokenType) }
   }
 }
 
+const BINDER_VISITOR = new BinderVisitor()
 const CHECKER_VISITOR = new CheckerVisitor()
-export function check(u: TranslationUnit) {
+
+export function check(u: TranslationUnit): Error[] {
   const result = errors
+  BINDER_VISITOR.visit(u)
   CHECKER_VISITOR.visit(u)
   errors = []
   return result

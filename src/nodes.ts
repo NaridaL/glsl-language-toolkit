@@ -28,7 +28,7 @@ export interface MethodCall extends BaseNode {
 
 export interface FunctionCall extends BaseNode {
   type: "functionCall"
-  what: Expression | TypeSpecifier
+  what: TypeSpecifier
   args: Expression[]
 }
 
@@ -72,7 +72,6 @@ export interface PostfixExpression extends BaseNode {
 export interface VariableExpression extends BaseNode {
   type: "variableExpression"
   var: Token
-  binding?: any
 }
 export interface ConstantExpression extends BaseNode {
   type: "constantExpression"
@@ -97,6 +96,8 @@ export interface FunctionDefinition extends BaseNode {
   returnType: FullySpecifiedType
   params: ParameterDeclaration[]
   body: CompoundStatement
+
+  returnTypeResolved?: any
 }
 
 export interface FunctionPrototype extends BaseNode {
@@ -259,7 +260,7 @@ export interface FullySpecifiedType extends BaseNode {
 
 export interface TypeQualifier extends BaseNode {
   type: "typeQualifier"
-  storageQualifier: Token | undefined
+  storageQualifier: StorageQualifier | undefined
   layoutQualifier: LayoutQualifier | undefined
   interpolationQualifier: Token | undefined
   invariantQualifier: Token | undefined
@@ -396,7 +397,7 @@ export class AbstractVisitor<R> {
     return
   }
   compoundStatement(n: CompoundStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    n.statements.forEach((n) => this.visit(n))
     return
   }
   returnStatement(n: ReturnStatement): R | undefined {
