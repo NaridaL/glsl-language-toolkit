@@ -147,59 +147,104 @@ These all operate component-wise. The description is per component.
 */
 
 // Converts degrees to radians, i.e., PI/180*degrees
-genType radians (genType degrees);
+float radians (float degrees);
+vec2 radians (vec2 degrees);
+vec3 radians (vec3 degrees);
+vec4 radians (vec4 degrees);
 
 // Converts radians to degrees, i.e., 180/PI*radians
-genType degrees (genType radians);
+float degrees (float radians);
+vec2 degrees (vec2 radians);
+vec3 degrees (vec3 radians);
+vec4 degrees (vec4 radians);
 
 //The standard trigonometric sine function.
-genType sin (genType angle);
+float sin (float angle);
+vec2 sin (vec2 angle);
+vec3 sin (vec3 angle);
+vec4 sin (vec4 angle);
 
 //The standard trigonometric cosine function.
-genType cos (genType angle);
+float cos (float angle);
+vec2 cos (vec2 angle);
+vec3 cos (vec3 angle);
+vec4 cos (vec4 angle);
 
 //The standard trigonometric tangent.
-genType tan (genType angle);
+float tan (float angle);
+vec2 tan (vec2 angle);
+vec3 tan (vec3 angle);
+vec4 tan (vec4 angle);
 
 //Arc sine. Returns an angle whose sine is x. The range of values returned by this function is [-PI/2, PI/2].
 //Results are undefined if |x|<1.
-genType asin (genType x);
+float asin (float x);
+vec2 asin (vec2 x);
+vec3 asin (vec3 x);
+vec4 asin (vec4 x);
 
 //Arc cosine. Returns an angle whose cosine is x. The
 //range of values returned by this function is [0, p].
 //Results are undefined if |x|<1.
-genType acos (genType x);
+float acos (float x);
+vec2 acos (vec2 x);
+vec3 acos (vec3 x);
+vec4 acos (vec4 x);
 
 //Arc tangent. Returns an angle whose tangent is y/x. The
 //signs of x and y are used to determine what quadrant the
 //angle is in. The range of values returned by this
 //function is [-π , π]. Results are undefined if x and y
 //are both 0.
-genType atan (genType y, genType x);
+float atan (float y, float x);
+vec2 atan (vec2 y, vec2 x);
+vec3 atan (vec3 y, vec3 x);
+vec4 atan (vec4 y, vec4 x);
 
 //Arc tangent. Returns an angle whose tangent is
 //y_over_x. The range of values returned by this function is [-PI/2, PI/2].
-genType atan (genType y_over_x);
+float atan (float y_over_x);
+vec2 atan (vec2 y_over_x);
+vec3 atan (vec3 y_over_x);
+vec4 atan (vec4 y_over_x);
 
 //Returns the hyperbolic sine function (pow(e, x) - pow(e, -x))/2.
-genType sinh (genType x);
+float sinh (float x);
+vec2 sinh (vec2 x);
+vec3 sinh (vec3 x);
+vec4 sinh (vec4 x);
 
 //Returns the hyperbolic cosine function (pow(e, x) + pow(e, -x))/2.
-genType cosh (genType x);
+float cosh (float x);
+vec2 cosh (vec2 x);
+vec3 cosh (vec3 x);
+vec4 cosh (vec4 x);
 
 //Returns the hyperbolic tangent function sinh(x)/cosh(x).
-genType tanh (genType x);
+float tanh (float x);
+vec2 tanh (vec2 x);
+vec3 tanh (vec3 x);
+vec4 tanh (vec4 x);
 
 //Arc hyperbolic sine; returns the inverse of sinh.
-genType asinh (genType x);
+float asinh (float x);
+vec2 asinh (vec2 x);
+vec3 asinh (vec3 x);
+vec4 asinh (vec4 x);
 
 //Arc hyperbolic cosine; returns the non-negative inverse
 //of cosh. Results are undefined if x < 1.
-genType acosh (genType x);
+float acosh (float x);
+vec2 acosh (vec2 x);
+vec3 acosh (vec3 x);
+vec4 acosh (vec4 x);
 
 //Arc hyperbolic tangent; returns the inverse of tanh.
 //Results are undefined if |x|≥1.
-genType atanh (genType x);
+float atanh (float x);
+vec2 atanh (vec2 x);
+vec3 atanh (vec3 x);
+vec4 atanh (vec4 x);
 
 //////////////////////////
 //Exponential Functions
@@ -209,32 +254,53 @@ genType atanh (genType x);
 //Returns x raised to the y power, i.e., x^y.
 //Results are undefined if x < 0.
 //Results are undefined if x = 0 and y <= 0.
-genType pow (genType x, genType y);
+float pow (float x, float y);
+vec2 pow (vec2 x, vec2 y);
+vec3 pow (vec3 x, vec3 y);
+vec4 pow (vec4 x, vec4 y);
 
 //Returns the natural exponentiation of x, i.e., e^x.
-genType exp (genType x);
+float exp (float x);
+vec2 exp (vec2 x);
+vec3 exp (vec3 x);
+vec4 exp (vec4 x);
 
 //Returns the natural logarithm of x, i.e., returns the value
 //y which satisfies the equation x = ey.
 //Results are undefined if x <= 0.
-genType log (genType x);
+float log (float x);
+vec2 log (vec2 x);
+vec3 log (vec3 x);
+vec4 log (vec4 x);
 
 //Returns 2 raised to the x power, i.e., 2^x.
-genType exp2 (genType x);
+float exp2 (float x);
+vec2 exp2 (vec2 x);
+vec3 exp2 (vec3 x);
+vec4 exp2 (vec4 x);
 
 //Returns the base 2 logarithm of x, i.e., returns the value
 //y which satisfies the equation x= 2^y
 //Results are undefined if x <= 0.
-genType log2 (genType x);
+float log2 (float x);
+vec2 log2 (vec2 x);
+vec3 log2 (vec3 x);
+vec4 log2 (vec4 x);
 
 //Returns √x.
 //Results are undefined if x < 0.
-genType sqrt (genType x);
+float sqrt (float x);
+vec2 sqrt (vec2 x);
+vec3 sqrt (vec3 x);
+vec4 sqrt (vec4 x);
 
 
 //Returns 1/(√x)
 //Results are undefined if x <= 0.
-genType inversesqrt (genType x);
+float inversesqrt (float x);
+vec2 inversesqrt (vec2 x);
+vec3 inversesqrt (vec3 x);
+vec4 inversesqrt (vec4 x);
 
 ////////////////
 //Common Functions
@@ -242,21 +308,39 @@ genType inversesqrt (genType x);
 //These all operate component-wise. The description is per component.
 
 //Returns x if x >= 0, otherwise it returns -x.
-genType abs (genType x);
-genIType abs (genIType x);
+float abs (float x);
+vec2 abs (vec2 x);
+vec3 abs (vec3 x);
+vec4 abs (vec4 x);
+int abs (int x);
+ivec2 abs (ivec2 x);
+ivec3 abs (ivec3 x);
+ivec4 abs (ivec4 x);
 
 
 //Returns 1.0 if x > 0, 0.0 if x = 0, or -1.0 if x < 0.
-genType sign (genType x);
-genIType sign (genIType x);
+float sign (float x);
+vec2 sign (vec2 x);
+vec3 sign (vec3 x);
+vec4 sign (vec4 x);
+int sign (int x);
+ivec2 sign (ivec2 x);
+ivec3 sign (ivec3 x);
+ivec4 sign (ivec4 x);
 
 //Returns a value equal to the nearest integer that is less
 //than or equal to x.
-genType floor (genType x);
+float floor (float x);
+vec2 floor (vec2 x);
+vec3 floor (vec3 x);
+vec4 floor (vec4 x);
 
 //Returns a value equal to the nearest integer to x whose
 //absolute value is not larger than the absolute value of x.
-genType trunc (genType x);
+float trunc (float x);
+vec2 trunc (vec2 x);
+vec3 trunc (vec3 x);
+vec4 trunc (vec4 x);
 
 
 //Returns a value equal to the nearest integer to x. The
@@ -264,26 +348,44 @@ genType trunc (genType x);
 //implementation, presumably the direction that is fastest.
 //This includes the possibility that round(x) returns the
 //same value as roundEven(x) for all values of x.
-genType round (genType x);
+float round (float x);
+vec2 round (vec2 x);
+vec3 round (vec3 x);
+vec4 round (vec4 x);
 
 
 //Returns a value equal to the nearest integer to x. A
 //fractional part of 0.5 will round toward the nearest even
 //integer. (Both 3.5 and 4.5 for x will return 4.0.)
-genType roundEven (genType x);
+float roundEven (float x);
+vec2 roundEven (vec2 x);
+vec3 roundEven (vec3 x);
+vec4 roundEven (vec4 x);
 
 
 //Returns a value equal to the nearest integer that is
 //greater than or equal to x.
-genType ceil (genType x);
+float ceil (float x);
+vec2 ceil (vec2 x);
+vec3 ceil (vec3 x);
+vec4 ceil (vec4 x);
 
 
 //Returns x - floor (x).
-genType fract (genType x);
+float fract (float x);
+vec2 fract (vec2 x);
+vec3 fract (vec3 x);
+vec4 fract (vec4 x);
 
 //Modulus. Returns x - y * floor (x/y).
-genType mod (genType x, float y);
-genType mod (genType x, genType y);
+float mod (float x, float y);
+vec2 mod (vec2 x, float y);
+vec3 mod (vec3 x, float y);
+vec4 mod (vec4 x, float y);
+float mod (float x, float y);
+vec2 mod (vec2 x, vec2 y);
+vec3 mod (vec3 x, vec3 y);
+vec4 mod (vec4 x, vec4 y);
 
 
 
@@ -293,40 +395,103 @@ genType mod (genType x, genType y);
 //sign as x.
 //If x has the value +/- INF, the return value should be
 //NaN and must be either NaN or 0.0.
-genType modf (genType x, out genType i);
+float modf (float x, out float i);
+vec2 modf (vec2 x, out vec2 i);
+vec3 modf (vec3 x, out vec3 i);
+vec4 modf (vec4 x, out vec4 i);
 
 //Returns y if y < x, otherwise it returns x.
-genType min (genType x, genType y);
-genType min (genType x, float y);
-genIType min (genIType x, genIType y);
-genIType min (genIType x, int y);
-genUType min (genUType x, genUType y);
-genUType min (genUType x, uint y);
+float min (float x, float y);
+vec2 min (vec2 x, vec2 y);
+vec3 min (vec3 x, vec3 y);
+vec4 min (vec4 x, vec4 y);
+float min (float x, float y);
+vec2 min (vec2 x, float y);
+vec3 min (vec3 x, float y);
+vec4 min (vec4 x, float y);
+int min (int x, int y);
+ivec2 min (ivec2 x, ivec2 y);
+ivec3 min (ivec3 x, ivec3 y);
+ivec4 min (ivec4 x, ivec4 y);
+int min (int x, int y);
+ivec2 min (ivec2 x, int y);
+ivec3 min (ivec3 x, int y);
+ivec4 min (ivec4 x, int y);
+uint min (uint x, uint y);
+uvec2 min (uvec2 x, uvec2 y);
+uvec3 min (uvec3 x, uvec3 y);
+uvec4 min (uvec4 x, uvec4 y);
+uint min (uint x, uint y);
+uvec2 min (uvec2 x, uint y);
+uvec3 min (uvec3 x, uint y);
+uvec4 min (uvec4 x, uint y);
 
 
 //Returns y if x < y, otherwise it returns x.
-genType max (genType x, genType y);
-genType max (genType x, float y);
-genIType max (genIType x, genIType y);
-genIType max (genIType x, int y);
-genUType max (genUType x, genUType y);
-genUType max (genUType x, uint y);
+float max (float x, float y);
+vec2 max (vec2 x, vec2 y);
+vec3 max (vec3 x, vec3 y);
+vec4 max (vec4 x, vec4 y);
+float max (float x, float y);
+vec2 max (vec2 x, float y);
+vec3 max (vec3 x, float y);
+vec4 max (vec4 x, float y);
+int max (int x, int y);
+ivec2 max (ivec2 x, ivec2 y);
+ivec3 max (ivec3 x, ivec3 y);
+ivec4 max (ivec4 x, ivec4 y);
+int max (int x, int y);
+ivec2 max (ivec2 x, int y);
+ivec3 max (ivec3 x, int y);
+ivec4 max (ivec4 x, int y);
+uint max (uint x, uint y);
+uvec2 max (uvec2 x, uvec2 y);
+uvec3 max (uvec3 x, uvec3 y);
+uvec4 max (uvec4 x, uvec4 y);
+uint max (uint x, uint y);
+uvec2 max (uvec2 x, uint y);
+uvec3 max (uvec3 x, uint y);
+uvec4 max (uvec4 x, uint y);
 
 
 
 //Returns min (max (x, minVal), maxVal).
 //Results are undefined if minVal > maxVal.
-genType clamp (genType x, genType minVal, genType maxVal);
-genType clamp (genType x, float minVal, float maxVal);
-genIType clamp (genIType x, genIType minVal, genIType maxVal);
-genIType clamp (genIType x, int minVal, int maxVal);
-genUType clamp (genUType x, genUType minVal, genUType maxVal);
-genUType clamp (genUType x, uint minVal, uint maxVal);
+float clamp (float x, float minVal, genType maxVal);
+vec2 clamp (vec2 x, vec2 minVal, genType maxVal);
+vec3 clamp (vec3 x, vec3 minVal, genType maxVal);
+vec4 clamp (vec4 x, vec4 minVal, genType maxVal);
+float clamp (float x, float minVal, float maxVal);
+vec2 clamp (vec2 x, float minVal, float maxVal);
+vec3 clamp (vec3 x, float minVal, float maxVal);
+vec4 clamp (vec4 x, float minVal, float maxVal);
+int clamp (int x, int minVal, int maxVal);
+ivec2 clamp (ivec2 x, ivec2 minVal, ivec2 maxVal);
+ivec3 clamp (ivec3 x, ivec3 minVal, ivec3 maxVal);
+ivec4 clamp (ivec4 x, ivec4 minVal, ivec4 maxVal);
+int clamp (int x, int minVal, int maxVal);
+ivec2 clamp (ivec2 x, int minVal, int maxVal);
+ivec3 clamp (ivec3 x, int minVal, int maxVal);
+ivec4 clamp (ivec4 x, int minVal, int maxVal);
+uint clamp (uint x, uint minVal, uint maxVal);
+uvec2 clamp (uvec2 x, uvec2 minVal, uvec2 maxVal);
+uvec3 clamp (uvec3 x, uvec3 minVal, uvec3 maxVal);
+uvec4 clamp (uvec4 x, uvec4 minVal, uvec4 maxVal);
+uint clamp (uint x, uint minVal, uint maxVal);
+uvec2 clamp (uvec2 x, uint minVal, uint maxVal);
+uvec3 clamp (uvec3 x, uint minVal, uint maxVal);
+uvec4 clamp (uvec4 x, uint minVal, uint maxVal);
 
 
 //Returns the linear blend of x and y, i.e., x*(1-a)+y*a.
-genType mix (genType x, genType y, genType a);
-genType mix (genType x, genType y, float a);
+float mix (float x, float y, float a);
+vec2 mix (vec2 x, vec2 y, vec2 a);
+vec3 mix (vec3 x, vec3 y, vec3 a);
+vec4 mix (vec4 x, vec4 y, vec4 a);
+float mix (float x, float y, float a);
+vec2 mix (vec2 x, vec2 y, float a);
+vec3 mix (vec3 x, vec3 y, float a);
+vec4 mix (vec4 x, vec4 y, float a);
 
 //Selects which vector each returned component comes
 //from. For a component of a that is false, the
@@ -354,7 +519,7 @@ genType step (float edge, genType x);
 //return t * t * (3 - 2 * t);
 //Results are undefined if edge0 >= edge1.
 genType smoothstep (genType edge0, genType edge1, genType x);
-genType smoothstep (float edge0, float edge1, genType x);
+genType smoothstep (float edge0, float edge1, float x);
 
 
 
@@ -386,8 +551,14 @@ genUType floatBitsToUint (genType value);
 //lowp and mediump, the value is first converted to the
 //corresponding signed or unsigned highp integer and then
 //reinterpreted as a highp floating point value as before.
-genType intBitsToFloat (genIType value);
-genType uintBitsToFloat (genUType value);
+float intBitsToFloat (int value);
+vec2 intBitsToFloat (ivec2 value);
+vec3 intBitsToFloat (ivec3 value);
+vec4 intBitsToFloat (ivec4 value);
+float uintBitsToFloat (uint value);
+vec2 uintBitsToFloat (uvec2 value);
+vec3 uintBitsToFloat (uvec3 value);
+vec4 uintBitsToFloat (uvec4 value);
 
 ///////////////////////////
 //Floating-Point Pack and Unpack Functions
@@ -497,7 +668,6 @@ vec3 cross (vec3 x, vec3 y);
 // x/length(x)
 genType normalize (genType x);
 
-// Orients a vector to point away from a surface as defined by its normal.
 //If dot(Nref, I) < 0 return N, otherwise return -N.
 genType faceforward(genType N, genType I, genType Nref);
 

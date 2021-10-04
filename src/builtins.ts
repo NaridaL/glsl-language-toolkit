@@ -1,78 +1,78 @@
-import { clamp, pick } from "lodash"
+import { clamp } from "lodash"
 
-const mathProps: (keyof Math)[] = [
-  "sin",
-  "cos",
-  "tan",
-  "asin",
-  "acos",
-  "atan2",
-  "sinh",
-  "cosh",
-  "tanh",
-  "asinh",
-  "acosh",
-  "atanh",
-  "pow",
-  "exp",
-  "log",
-  "log2",
-  "sqrt",
-  "abs",
-  "sign",
-  "floor",
-  "trunc",
-  "round",
-  "ceil",
-  "min",
-  "max",
-]
-export const COMPONENT_FUNCTIONS = Object.assign(
-  {
-    radians: (degrees: number): number => (Math.PI / 180) * degrees,
-    degrees: (radians: number): number => (180 / Math.PI) * radians,
-    exp2: (x: number): number => Math.pow(2, x),
-    inversesqrt: (x: number): number => 1 / Math.sqrt(x),
-    roundEven: (n: number, d = 2): number => {
-      const x = n * Math.pow(10, d)
-      const r = Math.round(x)
-      const br = Math.abs(x) % 1 === 0.5 ? (r % 2 === 0 ? r : r - 1) : r
-      return br / Math.pow(10, d)
-    },
-    fract: (x: number): number => x - Math.floor(x),
-    mod: (x: number, y: number): number => x - y * Math.floor(x / y),
-    clamp,
-    mix: (x: number, y: number, a: number): number => x * (1 - a) + y * a,
-    step: (edge: number, x: number): number => +(edge <= x),
-    smoothstep: (edge0: number, edge1: number, x: number): number => {
-      const t = clamp((x - edge0) / (edge1 - edge0), 0, 1)
-      return t * t * (3 - 2 * t)
-    },
-    isnan: isNaN,
-    isinf: (x: number): boolean => Math.abs(x) === Infinity,
-    floatBitsToInt: (value: number): number => {
-      const buf = new ArrayBuffer(4)
-      new Float32Array(buf)[0] = value
-      return new Int32Array(buf)[0]
-    },
-    floatBitsToUInt: (value: number): number => {
-      const buf = new ArrayBuffer(4)
-      new Float32Array(buf)[0] = value
-      return new Uint32Array(buf)[0]
-    },
-    intBitsToFloat: (value: number): number => {
-      const buf = new ArrayBuffer(4)
-      new Int32Array(buf)[0] = value
-      return new Float32Array(buf)[0]
-    },
-    uintBitsToFloat: (value: number): number => {
-      const buf = new ArrayBuffer(4)
-      new Uint32Array(buf)[0] = value
-      return new Float32Array(buf)[0]
-    },
+const COMPONENT_FUNCTIONS = {
+  radians: (degrees: number): number => (Math.PI / 180) * degrees,
+  degrees: (radians: number): number => (180 / Math.PI) * radians,
+  exp2: (x: number): number => Math.pow(2, x),
+  inversesqrt: (x: number): number => 1 / Math.sqrt(x),
+  roundEven: (n: number): number => {
+    const r = Math.round(n)
+    return r - +(Math.abs(n) % 1 === 0.5 && r % 2 !== 0)
   },
-  pick(Math, ...mathProps),
-)
+  fract: (x: number): number => x - Math.floor(x),
+  mod: (x: number, y: number): number => x - y * Math.floor(x / y),
+  clamp,
+  mix: (x: number, y: number, a: number | boolean): number => {
+    if (typeof a === "boolean") {
+      return a ? y : x
+    } else {
+      return x * (1 - a) + y * a
+    }
+  },
+  step: (edge: number, x: number): number => +(edge <= x),
+  smoothstep: (edge0: number, edge1: number, x: number): number => {
+    const t = clamp((x - edge0) / (edge1 - edge0), 0, 1)
+    return t * t * (3 - 2 * t)
+  },
+  isnan: isNaN,
+  isinf: (x: number): boolean => Math.abs(x) === Infinity,
+  floatBitsToInt: (value: number): number => {
+    const buf = new ArrayBuffer(4)
+    new Float32Array(buf)[0] = value
+    return new Int32Array(buf)[0]
+  },
+  floatBitsToUInt: (value: number): number => {
+    const buf = new ArrayBuffer(4)
+    new Float32Array(buf)[0] = value
+    return new Uint32Array(buf)[0]
+  },
+  intBitsToFloat: (value: number): number => {
+    const buf = new ArrayBuffer(4)
+    new Int32Array(buf)[0] = value
+    return new Float32Array(buf)[0]
+  },
+  uintBitsToFloat: (value: number): number => {
+    const buf = new ArrayBuffer(4)
+    new Uint32Array(buf)[0] = value
+    return new Float32Array(buf)[0]
+  },
+  sin: Math.sin,
+  cos: Math.cos,
+  tan: Math.tan,
+  asin: Math.asin,
+  acos: Math.acos,
+  atan: (yOrYOverX: number, x?: number) =>
+    x === undefined ? Math.atan(yOrYOverX) : Math.atan2(yOrYOverX, x),
+  sinh: Math.sinh,
+  cosh: Math.cosh,
+  tanh: Math.tanh,
+  asinh: Math.asinh,
+  acosh: Math.acosh,
+  atanh: Math.atanh,
+  pow: Math.pow,
+  exp: Math.exp,
+  log: Math.log,
+  log2: Math.log2,
+  sqrt: Math.sqrt,
+  abs: Math.abs,
+  sign: Math.sign,
+  floor: Math.floor,
+  trunc: Math.trunc,
+  round: Math.round,
+  ceil: Math.ceil,
+  min: Math.min,
+  max: Math.max,
+}
 
 const PACKING = {
   // TODO
@@ -84,7 +84,7 @@ const dot = (x: number[], y: number[]): number => {
   }
   return result
 }
-export const GEOMETRIC = {
+const GEOMETRIC = {
   length: (x: number[]): number => Math.hypot(...x),
   distance: (p0: number[], p1: number[]): number => {
     const diff = []
@@ -120,37 +120,91 @@ export const GEOMETRIC = {
   },
 }
 
-export const MATRIX = {
+type Matrix = number[] & { rows: number }
+const MATRIX = {
   matrixCompMult: (x: number[], y: number[]): number[] =>
     x.map((xi, i) => xi * y[i]),
 
   // TODO
+  outerProduct: (c: number[], r: number[]) => {
+    const rows = c.length
+    const cols = r.length
+    const result = Object.assign(new Array(cols * rows), { rows })
+    for (let ci = 0; ci < cols; ci++) {
+      for (let ri = 0; ri < rows; ri++) {
+        result[ci * rows + ri] = c[ri] * r[ci]
+      }
+    }
+    return result
+  },
+
+  transpose: (m: Matrix) => {
+    if (!m.rows) {
+      throw new Error()
+    }
+    const mCols = m.length / m.rows
+    const result = Object.assign(new Array(mCols * m.rows), { rows: mCols })
+    for (let ci = 0; ci < m.rows; ci++) {
+      for (let ri = 0; ri < mCols; ri++) {
+        result[ci * mCols + ri] = m[ri * m.rows + ci]
+      }
+    }
+    return result
+  },
 }
 
-function componentWise2<X, Y, R>(
-  f: (x: X, y: Y) => R,
-): (x: X[], y: Y[]) => R[] {
-  return (x, y) => x.map((xi, i) => f(xi, i[y]))
+const VECTOR_RELATIONAL_COMPONENT_WISE = {
+  lessThan: (x: number, y: number): boolean => x < y,
+  lessThanEqual: (x: number, y: number): boolean => x <= y,
+  greaterThan: (x: number, y: number): boolean => x > y,
+  greaterThanEqual: (x: number, y: number): boolean => x >= y,
+  equal: (x: number, y: number): boolean => x === y,
+  notEqual: (x: number, y: number): boolean => x !== y,
 }
-export const VECTOR_RELATIONAL = {
-  lessThan: componentWise2((x: number, y: number): boolean => x < y),
-  lessThanEqual: componentWise2((x: number, y: number): boolean => x <= y),
-  greaterThan: componentWise2((x: number, y: number): boolean => x > y),
-  greaterThanEqual: componentWise2((x: number, y: number): boolean => x >= y),
-  equal: componentWise2((x: number, y: number): boolean => x === y),
-  notEqual: componentWise2((x: number, y: number): boolean => x !== y),
+const VECTOR_RELATIONAL = {
   any: (x: boolean[]): boolean => x.some(Boolean),
   all: (x: boolean[]): boolean => x.every(Boolean),
   not: (x: boolean[]): boolean[] => x.map((xi) => !xi),
 }
-export const FRAGMENT_PROCESSING = {
+const FRAGMENT_PROCESSING = {
   dFdx: (): number => 0,
   dFdy: (): number => 0,
   fwidth: (): number => 0,
 }
 
-// TODO : atan2
+const AS_WHOLE: Record<string, (...args: any[]) => any> = Object.assign(
+  {},
+  GEOMETRIC,
+  VECTOR_RELATIONAL,
+  FRAGMENT_PROCESSING,
+  MATRIX,
+)
+const COMPONENT_WISE: Record<string, (...args: any[]) => any> = Object.assign(
+  {},
+  COMPONENT_FUNCTIONS,
+  VECTOR_RELATIONAL_COMPONENT_WISE,
+)
+
 // TODO : modf
 // TODO: test which checks constant expression values for large values
 // TODO: test of the form `any(bvec(true, true))` for every function
-// TODO :mix with genbtype
+
+export function applyBuiltinFunction(name: string, args: any[]): any {
+  let f: (...args: any[]) => any
+  if ((f = AS_WHOLE[name])) {
+    return f(...args)
+  } else if ((f = COMPONENT_WISE[name])) {
+    const arrArg = args.find(Array.isArray)
+    if (arrArg) {
+      const result = arrArg.map((_, i) =>
+        f(...args.map((a) => (Array.isArray(a) ? a[i] : a))),
+      )
+      if ("rows" in arrArg) {
+        Object.assign(result, { rows: (arrArg as Matrix).rows })
+      }
+      return result
+    } else {
+      return f(...args)
+    }
+  }
+}

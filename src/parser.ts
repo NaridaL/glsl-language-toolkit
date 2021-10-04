@@ -869,37 +869,25 @@ class GLSLParser extends EmbeddedActionsParser {
   expressionStatement = this.RULE(
     "expressionStatement",
     (): ExpressionStatement => {
-      return {
-        type: "expressionStatement",
-        expression: this.OPTION(() => this.SUBRULE(this.expression)),
-        SEMICOLON: this.CONSUME(TOKEN.SEMICOLON),
-      }
+      const expression = this.OPTION(() => this.SUBRULE(this.expression))
+      this.CONSUME(TOKEN.SEMICOLON)
+      return { type: "expressionStatement", expression }
     },
   )
   //SPEC//     statementWithScope
   selectionStatement = this.RULE(
     "selectionStatement",
     (): SelectionStatement => {
-      const IF = this.CONSUME(TOKEN.IF)
-      const LEFT_PAREN = this.CONSUME(TOKEN.LEFT_PAREN)
+      this.CONSUME(TOKEN.IF)
+      this.CONSUME(TOKEN.LEFT_PAREN)
       const condition = this.SUBRULE(this.expression)
-      const RIGHT_PAREN = this.CONSUME(TOKEN.RIGHT_PAREN)
+      this.CONSUME(TOKEN.RIGHT_PAREN)
       const yes = this.SUBRULE2(this.statement, { ARGS: [true] })
-      let ELSE, no
-      this.OPTION(() => {
-        ELSE = this.CONSUME(TOKEN.ELSE)
-        this.SUBRULE3(this.statement, { ARGS: [true] })
+      const no = this.OPTION(() => {
+        this.CONSUME(TOKEN.ELSE)
+        return this.SUBRULE3(this.statement, { ARGS: [true] })
       })
-      return {
-        type: "selectionStatement",
-        IF,
-        LEFT_PAREN,
-        condition,
-        RIGHT_PAREN,
-        yes,
-        ELSE,
-        no,
-      }
+      return { type: "selectionStatement", condition, yes, no }
     },
   )
   //SPEC// structDeclarationList:
@@ -1128,6 +1116,19 @@ class GLSLParser extends EmbeddedActionsParser {
     "statement",
     (newScope?): Statement =>
       this.OR<Statement>([
+        {
+          // We want "IDENTIFIER ;" to be parsed as a variableExpression, so
+          // we add a special rule here.
+          ALT: () => {
+            const v = this.CONSUME(TOKEN.IDENTIFIER)
+            this.CONSUME(TOKEN.SEMICOLON)
+            return {
+              type: "expressionStatement",
+              expression: { type: "variableExpression", var: v },
+            }
+          },
+          IGNORE_AMBIGUITIES: true,
+        },
         // declarationStatement
         {
           GATE: this.BACKTRACK(this.declaration),
@@ -1218,7 +1219,7 @@ class GLSLParser extends EmbeddedActionsParser {
       try {
         const result = implementation(args)
         if (!this.RECORDING_PHASE && !this.backtracking && result) {
-          if ((result as any).type && !result.firstToken) {
+          if ("type" in result && !result.firstToken) {
             result.firstToken = firstToken
             result.lastToken = this.LA(0)
             result.children = this.currentChildren
@@ -1308,18 +1309,14 @@ function checkParsingErrors(input: string, errors: IRecognitionException[]) {
   }
 }
 
-export function parseInput(text: string): {
-  lexerErrors: x[]
-  parserErrors: []
-  result: TranslationUnit
-} {
+export function parseInput(text: string): TranslationUnit {
   const lexingResult = GLSL_LEXER.tokenize(text)
   checkLexingErrors(text, lexingResult)
 
   const errors = []
 
   function markError(where: IToken, err: string, msg?: string) {
-    errors.push({ where, err })
+    errors.push({ where, err, msg })
   }
 
   for (const token of lexingResult.tokens) {
@@ -1336,11 +1333,6 @@ export function parseInput(text: string): {
       }
     }
   }
-
-  const message = lexingResult.tokens.map(
-    (t) => `${t.tokenType.name}(${t.image})`,
-  )
-  // console.log(message)
 
   // "input" is a setter which will reset the glslParser's state.
   GLSL_PARSER.input = lexingResult.tokens

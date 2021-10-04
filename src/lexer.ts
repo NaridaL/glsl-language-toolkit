@@ -515,23 +515,21 @@ export namespace TOKEN {
   export const UVEC2 = createBasicType("uvec2")
   export const UVEC3 = createBasicType("uvec3")
   export const UVEC4 = createBasicType("uvec4")
-  export const BASIC_TYPES = [
-    "sampler2D",
-    "sampler3D",
-    "samplerCube",
-    "sampler2DShadow",
-    "samplerCubeShadow",
-    "sampler2DArray",
-    "sampler2DArrayShadow",
-    "isampler2D",
-    "isampler3D",
-    "isamplerCube",
-    "isampler2DArray",
-    "usampler2D   ",
-    "usampler3D",
-    "usamplerCube",
-    "usampler2DArray",
-  ].map(createBasicType)
+  export const USAMPLERCUBE = createBasicType("usamplerCube")
+  export const USAMPLER3D = createBasicType("usampler3D")
+  export const USAMPLER2DARRAY = createBasicType("usampler2DArray")
+  export const USAMPLER2D = createBasicType("usampler2D")
+  export const SAMPLERCUBESHADOW = createBasicType("samplerCubeShadow")
+  export const SAMPLERCUBE = createBasicType("samplerCube")
+  export const SAMPLER3D = createBasicType("sampler3D")
+  export const SAMPLER2DSHADOW = createBasicType("sampler2DShadow")
+  export const SAMPLER2DARRAYSHADOW = createBasicType("sampler2DArrayShadow")
+  export const SAMPLER2DARRAY = createBasicType("sampler2DArray")
+  export const SAMPLER2D = createBasicType("sampler2D")
+  export const ISAMPLERCUBE = createBasicType("isamplerCube")
+  export const ISAMPLER3D = createBasicType("isampler3D")
+  export const ISAMPLER2DARRAY = createBasicType("isampler2DArray")
+  export const ISAMPLER2D = createBasicType("isampler2D")
   export const IN = KEYWORD("IN", PARAMETER_QUALIFIER)
   export const BOOLCONSTANT = createToken({
     name: "BOOLCONSTANT",

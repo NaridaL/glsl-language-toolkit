@@ -96,8 +96,6 @@ export interface FunctionDefinition extends BaseNode {
   returnType: FullySpecifiedType
   params: ParameterDeclaration[]
   body: CompoundStatement
-
-  returnTypeResolved?: any
 }
 
 export interface FunctionPrototype extends BaseNode {
@@ -189,7 +187,6 @@ export interface ForStatement extends BaseNode {
 export interface ExpressionStatement extends BaseNode {
   type: "expressionStatement"
   expression: Expression
-  SEMICOLON: Token
 }
 
 export type Expression =
@@ -220,12 +217,8 @@ export interface PrecisionDeclaration extends BaseNode {
 
 export interface SelectionStatement extends BaseNode {
   type: "selectionStatement"
-  IF: Token
-  LEFT_PAREN: Token
   condition: Expression
-  RIGHT_PAREN: Token
   yes: Statement
-  ELSE: Token | undefined
   no: Statement | undefined
 }
 
@@ -254,7 +247,7 @@ export interface CaseLabel extends BaseNode {
 
 export interface FullySpecifiedType extends BaseNode {
   type: "fullySpecifiedType"
-  typeQualifier: TypeQualifier
+  typeQualifier: TypeQualifier | undefined
   typeSpecifier: TypeSpecifier
 }
 
@@ -433,7 +426,7 @@ export class AbstractVisitor<R> {
     return
   }
   expressionStatement(n: ExpressionStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.expression)
     return
   }
   initDeclaratorListDeclaration(

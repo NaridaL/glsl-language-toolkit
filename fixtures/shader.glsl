@@ -36,6 +36,11 @@ void main() {
     while(bool x = 3.+1.>0.) {
 
     }
+
+    int i;
+
+    i;
+
     vec2 scaledCoord = coord;
     scaledCoord = mix(vec2(-1.), vec2(1.), scaledCoord);
     //    scaledCoord += 1000.;

@@ -1,4 +1,5 @@
 import { IToken } from "chevrotain"
+import { Many } from "lodash"
 
 export const DEV = process.env.NODE_ENV !== "production"
 
@@ -16,6 +17,12 @@ export function underline(
   )
 }
 
+export function cmap<T, R>(
+  x: Many<T>,
+  f: (x: T, i: number, arr: Many<T>) => R,
+): Many<R> {
+  return Array.isArray(x) ? x.map(f) : f(x as T, 0, x)
+}
 export function substrContext(
   input: string,
   token: Pick<IToken, "startLine" | "endLine" | "startColumn" | "endColumn">,

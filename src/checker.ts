@@ -1,4 +1,7 @@
-import { isEqualWith, last, pick } from "lodash"
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
+import * as path from "path"
+import { readFileSync, writeFileSync } from "fs"
+import { last, pick } from "lodash"
 import { TokenType } from "chevrotain"
 import "colors"
 
@@ -21,6 +24,7 @@ import {
   FunctionDefinition,
   FunctionPrototype,
   InitDeclaratorListDeclaration,
+  MethodCall,
   Node,
   ParameterDeclaration,
   ReturnStatement,
@@ -35,6 +39,9 @@ import {
   WhileStatement,
 } from "./nodes"
 import { TOKEN } from "./lexer"
+import { applyBuiltinFunction } from "./builtins"
+import { parseInput } from "./parser"
+import { cmap } from "./util"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
 type ArrayType = Readonly<{
@@ -59,11 +66,11 @@ function isVectorType(n: NormalizedType | undefined): n is BasicType {
 
 type NormalizedType = BasicType | ArrayType | StructType
 
-function NormalizedType(type?: TokenType): NormalizedType | undefined {
+function BasicType(type?: TokenType): NormalizedType | undefined {
   return type && { kind: "basic", type }
 }
 
-namespace NormalizedType {
+namespace BasicType {
   export const FLOAT: NormalizedType = { kind: "basic", type: TOKEN.FLOAT }
   export const BOOL: NormalizedType = { kind: "basic", type: TOKEN.BOOL }
   export const VOID: NormalizedType = { kind: "basic", type: TOKEN.VOID }
@@ -71,15 +78,15 @@ namespace NormalizedType {
   export const UINT: NormalizedType = { kind: "basic", type: TOKEN.UINT }
 }
 
-export type Error = { where: Token | Node; err: string }
-let errors: Error[] = []
+export type CError = { where: Token | Node; err: string; error: Error }
+let errors: CError[] = []
 
 function markError(
   where: Token | Node,
   err: string,
   ...args: (NormalizedType[] | NormalizedType | string | number | undefined)[]
 ) {
-  errors.push({ where, err })
+  errors.push({ where, err, error: new Error(err + args.join(" ")) })
 }
 
 function isLValue(l: Node): boolean {
@@ -94,10 +101,6 @@ function isLValue(l: Node): boolean {
   }
   // if (l.type === "parenExpression")
   return false
-}
-
-function isConstructorCall(b: FunctionCall): boolean {
-  return b.what.type === "typeSpecifier"
 }
 
 function getVectorSize(t: TokenType): number {
@@ -243,22 +246,22 @@ function evaluateBinaryOp(
   const value = doOp(op, a, b)
   if (typeof value === "boolean") {
     return {
-      type: NormalizedType.BOOL,
+      type: BasicType.BOOL,
       value: value,
     }
   } else if (aType === TOKEN.FLOAT) {
     return {
-      type: NormalizedType.FLOAT,
+      type: BasicType.FLOAT,
       value: Math.fround(value as number),
     }
   } else if (aType === TOKEN.INT) {
     return {
-      type: NormalizedType.INT,
+      type: BasicType.INT,
       value: value | 0,
     }
   } else if (aType === TOKEN.UINT) {
     return {
-      type: NormalizedType.INT,
+      type: BasicType.INT,
       value: mod(value, 0x1_0000_0000),
     }
   } else {
@@ -270,7 +273,7 @@ function mod(x: number, a: number) {
   return ((x % a) + a) % a
 }
 
-function norm(value: number | boolean, type: TokenType) {
+function norm(type: TokenType, value: number | boolean) {
   switch (type) {
     case TOKEN.BOOL:
       return !!value
@@ -314,22 +317,22 @@ export function evaluateConstantExpression(n: Node):
       switch (n._const.tokenType) {
         case TOKEN.FLOATCONSTANT:
           return {
-            type: NormalizedType.FLOAT,
+            type: BasicType.FLOAT,
             value: +n._const.image,
           }
         case TOKEN.BOOLCONSTANT:
           return {
-            type: NormalizedType.BOOL,
+            type: BasicType.BOOL,
             value: n._const.image === "true",
           }
         case TOKEN.INTCONSTANT:
           return {
-            type: NormalizedType.INT,
+            type: BasicType.INT,
             value: evalIntConstant(n._const.image),
           }
         case TOKEN.UINTCONSTANT:
           return {
-            type: NormalizedType.UINT,
+            type: BasicType.UINT,
             value: evalIntConstant(
               n._const.image.substring(0, n._const.image.length - 1),
             ),
@@ -349,11 +352,11 @@ export function evaluateConstantExpression(n: Node):
       const opp = (op: TokenType, on: number, t: TokenType) => {
         switch (op) {
           case TOKEN.TILDE:
-            return norm(~on, t)
+            return norm(t, ~on)
           case TOKEN.BANG:
-            return norm(!on, t)
+            return norm(t, !on)
           case TOKEN.DASH:
-            return norm(-on, t)
+            return norm(t, -on)
           default:
             assertNever()
         }
@@ -373,30 +376,30 @@ export function evaluateConstantExpression(n: Node):
       if (!l || !r) {
         return undefined
       }
-      if (l.type.kind === "basic" && getScalarType(l.type.type)) {
-        if (typesNotEqual(l.type, l.type)) {
+      const lType = l.type
+      if (lType.kind === "basic" && getScalarType(lType.type)) {
+        if (typeNotEquals(lType, lType)) {
           throw new Error("types don't match")
         } else {
           const lv = l.value
           const rv = r.value
-          return evaluateBinaryOp(n.op, lv, rv, l.type.type)
+          return evaluateBinaryOp(n.op, lv, rv, lType.type)
         }
-      } else if (isVectorType(l.type)) {
-        const vectorSize = getVectorSize(l.type.type)
+      } else if (isVectorType(lType)) {
         if (isVectorType(r.type)) {
           // two vectors
           return {
-            type: l.type,
+            type: lType,
             value: (l.value as any[]).map((lv, i) =>
-              evaluateBinaryOp(n.op, lv, r.value[i], (<BasicType>l.type).type),
+              evaluateBinaryOp(n.op, lv, (r.value as any[])[i], lType.type),
             ),
           }
         } else {
           // vector + scalar
           return {
-            type: l.type,
-            value: (l.value as any[]).map((lv, i) =>
-              evaluateBinaryOp(n.op, lv, r, l.type.type as TokenType),
+            type: lType,
+            value: (l.value as any[]).map((lv) =>
+              evaluateBinaryOp(n.op, lv, r, lType.type),
             ),
           }
         }
@@ -404,42 +407,41 @@ export function evaluateConstantExpression(n: Node):
         throw new Error("???")
       }
     }
-    case "arrayAccess":
-      {
-        const on = evaluateConstantExpression(n.on)
-        if (!on) {
-          return undefined
-        }
-        const index = evaluateConstantExpression(n.index)
-        if (!index) {
-          return undefined
-        }
-        const value1 = index.value as number
-        if (on.type.kind === "array") {
-          const ofType = on.type.of
-          return (
-            index &&
-            ofType && { type: ofType, value: (on.value as any[])[value1] }
-          )
-        } else if (on.type.kind === "basic") {
-          if (getVectorSize(on.type.type)) {
-            return {
-              type: { kind: "basic", type: getComponentType(on.type.type)! },
-              value: (on.value as any[])[value1],
-            }
-          } else if (getMatrixDimensions(on.type.type)) {
-            const [, rows] = getMatrixDimensions(on.type.type)!
-            return {
-              type: { kind: "basic", type: getVectorType(TOKEN.FLOAT, rows)! },
-              value: (on.value as any[]).slice(
-                value1 * rows,
-                (value1 + 1) * rows,
-              ),
-            }
+    case "arrayAccess": {
+      const on = evaluateConstantExpression(n.on)
+      if (!on) {
+        return undefined
+      }
+      const index = evaluateConstantExpression(n.index)
+      if (!index) {
+        return undefined
+      }
+      const value1 = index.value as number
+      if (on.type.kind === "array") {
+        const ofType = on.type.of
+        return (
+          index &&
+          ofType && { type: ofType, value: (on.value as any[])[value1] }
+        )
+      } else if (on.type.kind === "basic") {
+        if (getVectorSize(on.type.type)) {
+          return {
+            type: { kind: "basic", type: getComponentType(on.type.type)! },
+            value: (on.value as any[])[value1],
+          }
+        } else if (getMatrixDimensions(on.type.type)) {
+          const [, rows] = getMatrixDimensions(on.type.type)!
+          return {
+            type: { kind: "basic", type: getVectorType(TOKEN.FLOAT, rows)! },
+            value: (on.value as any[]).slice(
+              value1 * rows,
+              (value1 + 1) * rows,
+            ),
           }
         }
       }
       throw new Error()
+    }
 
     case "functionCall": {
       const args = n.args.map(evaluateConstantExpression)
@@ -448,10 +450,23 @@ export function evaluateConstantExpression(n: Node):
       }
       if (n.binding) {
         // function call
-      } else {
+        const type = findMatchingFunctionDefinition(
+          args.map((a) => a.type),
+          n.binding,
+        )!.result
+        const compType = getComponentType((type as BasicType).type)!
+        const value = cmap(
+          applyBuiltinFunction(
+            (n.what.typeSpecifierNonArray as Token).image,
+            args.map((a) => a.value),
+          ),
+          (x) => norm(compType, x),
+        )
+        return { type, value }
+      } else if (n.constructorType) {
         // constructor
 
-        const cType = n.constructorType!
+        const cType = n.constructorType
         if (cType.kind === "array") {
           // array constructor
           if (cType.size === args.length) {
@@ -493,7 +508,7 @@ export function evaluateConstantExpression(n: Node):
             .map((arg) => arg.value)
             .flatMap<any>((arg) => (Array.isArray(arg) ? arg : [arg]))
             .slice(0, neededSize)
-            .map((e) => norm(e, neededType))
+            .map((e) => norm(neededType, e))
           if (result.length === 1) {
             if (getVectorSize(cType.type)) {
               result = Array(neededSize).fill(result[0])
@@ -506,6 +521,9 @@ export function evaluateConstantExpression(n: Node):
               result = mat
             }
           }
+          if (matDims) {
+            Object.assign(result, { rows: matDims[1] })
+          }
           return {
             type: { kind: "basic", type: cType.type },
             value: neededSize === 1 ? result[0] : result,
@@ -517,76 +535,109 @@ export function evaluateConstantExpression(n: Node):
     case "commaExpression":
       return undefined
     case "methodCall": {
-      const on = evaluateConstantExpression(n.on)
-      if (on && on.type.kind === "array") {
-        return { type: NormalizedType.INT, value: on.type.size }
+      const oType = CHECKER_VISITOR.visit(n.on)
+      if (oType?.kind === "array") {
+        return { type: BasicType.INT, value: oType.size }
       }
       return undefined
     }
     case "variableExpression":
       return (
-        n.binding?.dl?.fsType.typeQualifier.storageQualifier?.CONST &&
+        n.binding?.dl?.fsType.typeQualifier?.storageQualifier?.CONST &&
         n.binding.d?.init &&
         evaluateConstantExpression(n.binding.d?.init)
       )
+    case "fieldAccess": {
+      const on = evaluateConstantExpression(n.on)
+      if (!on) {
+        return
+      }
+      const f = n.field.image
+      if (isVectorType(on.type)) {
+        const swizzle = f.split("").map((e) => {
+          const vectorFieldIndex = "xyzwrgbastpq".indexOf(e) % 4
+          return (on.value as any[])[vectorFieldIndex]
+        })
+        const value = swizzle.length === 1 ? swizzle[0] : swizzle
+        return {
+          type: {
+            kind: "basic",
+            type: getVectorType(
+              getComponentType(on.type.type)!,
+              swizzle.length,
+            )!,
+          },
+          value,
+        }
+      } else if (on.type.kind === "struct") {
+        const fieldType = on.type.fields[f].type
+        return (
+          fieldType && {
+            type: fieldType,
+            value: (on.value as Record<string, unknown>)[f],
+          }
+        )
+      }
+      throw new Error()
+    }
     default:
       throw new Error("???")
   }
 }
 
-function isConstantExpression(n: Node): boolean {
-  function isBuiltInFunctionCall(n: FunctionCall): boolean {
-    // TODO
-    return n.what.type === "typeSpecifier"
-  }
-
-  // a constant expression is one of
-  switch (n.type) {
-    // a literal value (e.g. 5 or true)
-    case "constantExpression":
-      return true
-
-    // a global or local variable qualified as const (i.e., not including function parameters)
-    case "variableExpression": {
-      const binding: VariableBinding | undefined = n.binding
-      return !!binding?.dl?.fsType.typeQualifier.storageQualifier?.CONST
-    }
-
-    // an expression formed by an operator on operands that are all constant expressions, including getting an
-    // element of a constant array, or a field of a constant structure, or components of a constant vector.
-    // However, the sequence operator ( , ) and the assignment operators ( =, +=, ...)  are not included in the
-    // operators that can create a constant expression
-    case "binaryExpression":
-      return isConstantExpression(n.lhs) && isConstantExpression(n.rhs)
-    case "unaryExpression":
-    case "postfixExpression":
-      return isConstantExpression(n.on)
-
-    // the length() methode on an array, whether or not the object itself is constant
-    case "methodCall": {
-      const what = n.functionCall.what
-      return (
-        what.arraySpecifier === undefined &&
-        isToken(what.typeSpecifierNonArray) &&
-        what.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER &&
-        what.typeSpecifierNonArray.image === "length"
-      )
-    }
-
-    case "functionCall": {
-      const ts = n.what.typeSpecifierNonArray as Token
-      if (ts.tokenType === TOKEN.IDENTIFIER) {
-        n.what.binding
-      }
-      return (
-        (isConstructorCall(n) || isBuiltInFunctionCall(n)) &&
-        n.args.every(isConstantExpression)
-      )
-    }
-    default:
-      return false
-  }
-}
+// function isConstantExpression(n: Node): boolean {
+//   function isBuiltInFunctionCall(n: FunctionCall): boolean {
+//     // TODO
+//     return n.what.type === "typeSpecifier"
+//   }
+//
+//   // a constant expression is one of
+//   switch (n.type) {
+//     // a literal value (e.g. 5 or true)
+//     case "constantExpression":
+//       return true
+//
+//     // a global or local variable qualified as const (i.e., not including function parameters)
+//     case "variableExpression": {
+//       const binding: VariableBinding | undefined = n.binding
+//       return !!binding?.dl?.fsType.typeQualifier.storageQualifier?.CONST
+//     }
+//
+//     // an expression formed by an operator on operands that are all constant expressions, including getting an
+//     // element of a constant array, or a field of a constant structure, or components of a constant vector.
+//     // However, the sequence operator ( , ) and the assignment operators ( =, +=, ...)  are not included in the
+//     // operators that can create a constant expression
+//     case "binaryExpression":
+//       return isConstantExpression(n.lhs) && isConstantExpression(n.rhs)
+//     case "unaryExpression":
+//     case "postfixExpression":
+//       return isConstantExpression(n.on)
+//
+//     // the length() methode on an array, whether or not the object itself is constant
+//     case "methodCall": {
+//       const what = n.functionCall.what
+//       return (
+//         what.arraySpecifier === undefined &&
+//         isToken(what.typeSpecifierNonArray) &&
+//         what.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER &&
+//         what.typeSpecifierNonArray.image === "length"
+//       )
+//     }
+//
+//     case "functionCall": {
+//       const ts = n.what.typeSpecifierNonArray as Token
+//       if (ts.tokenType === TOKEN.IDENTIFIER) {
+//         n.what.binding
+//       }
+//       return (
+//         (isConstructorCall(n) || isBuiltInFunctionCall(n)) &&
+//         n.args.every(isConstantExpression)
+//       )
+//     }
+//     default:
+//       return false
+//   }
+// }
 
 interface FunctionBinding {
   kind: "function"
@@ -621,6 +672,14 @@ declare module "./nodes" {
   export interface VariableExpression extends BaseNode {
     binding?: VariableBinding
   }
+
+  export interface FunctionDefinition extends BaseNode {
+    resolvedReturnType?: NormalizedType
+  }
+
+  export interface FunctionPrototype extends BaseNode {
+    resolvedReturnType?: NormalizedType
+  }
 }
 
 interface Scope {
@@ -638,7 +697,7 @@ function isTokenType(type: TokenType | StructSpecifier): type is TokenType {
   return typeof type.name === "string"
 }
 
-function assertNever(x?: never): never {
+function assertNever(_x?: never): never {
   throw new Error()
 }
 
@@ -649,7 +708,7 @@ function assert(x: boolean): x is true {
   return true
 }
 
-function typesEqual(
+function typeEquals(
   a: NormalizedType | undefined,
   b: NormalizedType | undefined,
 ): boolean {
@@ -660,7 +719,7 @@ function typesEqual(
     case "basic":
       return b.kind === "basic" && a.type === b.type
     case "array":
-      return b.kind === "array" && a.size === b.size && typesEqual(a.of, b.of)
+      return b.kind === "array" && a.size === b.size && typeEquals(a.of, b.of)
     case "struct":
       return b.kind === "struct" && a.specifier === b.specifier
     default:
@@ -668,34 +727,43 @@ function typesEqual(
   }
 }
 
-function typesNotEqual(
+function typeNotEquals(
   a: NormalizedType | undefined,
   b: NormalizedType | undefined,
 ): boolean {
   if (!a || !b) {
     return false
   }
-  return !typesEqual(a, b)
+  return !typeEquals(a, b)
 }
 
 function findMatchingFunctionDefinition(
   paramTypes: NormalizedType[],
-  existingDef: FunctionBinding,
+  functionBinding: FunctionBinding,
 ) {
-  const overloads = existingDef.overloads
+  const overloads = functionBinding.overloads
   for (const overload of overloads) {
-    if (isEqualWith(overload, paramTypes, typesEqual)) {
+    if (typesEquals(overload.params, paramTypes)) {
       return overload
     }
   }
   return undefined
 }
 
+function getGenTypes(ts: TypeSpecifier): TokenType[] | undefined {
+  return isToken(ts.typeSpecifierNonArray) &&
+    ts.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER
+    ? GEN_TYPES[ts.typeSpecifierNonArray.image]
+    : undefined
+}
+
 class BinderVisitor extends AbstractVisitor<any> {
   protected scopes: Scope[] = []
+  private BUILTIN_SCOPE: Scope | undefined = undefined
   private currentFunctionPrototypeParams:
     | (NormalizedType | undefined)[]
     | undefined = undefined
+  private doingBuiltins = false
 
   protected get scope() {
     const s = last(this.scopes)
@@ -751,10 +819,19 @@ class BinderVisitor extends AbstractVisitor<any> {
   variableExpression(n: VariableExpression) {
     const binding = this.resolve(n.var.image)
     if (binding) {
-      n.binding = binding
+      if (binding.kind === "variable") {
+        n.binding = binding
+      } else {
+        markError(n, "Expected variable but was " + binding.kind)
+      }
     } else {
       markError(n, "G0002")
     }
+  }
+
+  public methodCall(n: MethodCall): any {
+    this.visit(n.on)
+    // the function call can only be ".length()" so there is nothing to bind
   }
 
   public functionCall(n: FunctionCall): any {
@@ -779,7 +856,7 @@ class BinderVisitor extends AbstractVisitor<any> {
         ts.arraySpecifier &&
         !ts.arraySpecifier.size
       ) {
-        ;(n.constructorType as any).size = n.args.length
+        Object.assign(n.constructorType, { size: n.args.length })
       }
     } else {
       markError(ts, "structure definition cannot be constructor")
@@ -807,12 +884,40 @@ class BinderVisitor extends AbstractVisitor<any> {
   }
 
   translationUnit(n: TranslationUnit) {
+    if (this.BUILTIN_SCOPE) {
+      this.scopes = [this.BUILTIN_SCOPE]
+    }
     this.pushScope()
     super.translationUnit(n)
+    if (this.doingBuiltins) {
+      this.BUILTIN_SCOPE = this.scope
+    }
+    const f = (x: NormalizedType) => (x as BasicType)?.type?.PATTERN || "FAIL"
+    const xx = Object.entries(this.BUILTIN_SCOPE!.defs)
+      .flatMap(([name, binding]) => {
+        if (binding.kind !== "function") {
+          return []
+        }
+        return binding.overloads.map(
+          (o) =>
+            f(o.result) +
+            " " +
+            name +
+            "(" +
+            o.params.map(f).join(", ") +
+            ");\n",
+        )
+      })
+      .join("")
+    writeFileSync("list.txt", xx)
     this.popScope()
   }
 
-  functionDefinition(n: FunctionDefinition) {
+  public functionPrototype(n: FunctionPrototype): any {
+    return this.functionDefinition(n)
+  }
+
+  functionDefinition(n: FunctionDefinition | FunctionPrototype) {
     this.visit(n.returnType)
     this.pushScope()
     if (this.currentFunctionPrototypeParams) {
@@ -824,17 +929,58 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
     const params = this.currentFunctionPrototypeParams
     this.currentFunctionPrototypeParams = undefined
-    this.visit(n.body)
+    if ("body" in n) {
+      this.visit(n.body)
+    }
     this.popScope()
     const existingDef = this.scope.defs[n.name.image]
+    let def: FunctionBinding
     if (existingDef) {
       if (existingDef.kind !== "function") {
         markError(n, "S0024")
+        return
       } else if (allDefined(params)) {
+        // TODO: error if
         findMatchingFunctionDefinition(params, existingDef)
       }
+      def = existingDef
+    } else {
+      def = this.scope.defs[n.name.image] = { kind: "function", overloads: [] }
     }
-    n.returnTypeResolved = this.figure(n.returnType, undefined)
+
+    if (this.doingBuiltins) {
+      const genTypes =
+        getGenTypes(n.returnType.typeSpecifier) ||
+        n.params.map((p) => getGenTypes(p.typeSpecifier)).find(Boolean)
+      const returnTypeResolved = this.figure(
+        n.returnType.typeSpecifier,
+        undefined,
+      )!
+      if (genTypes) {
+        for (let ti = 0; ti < genTypes.length; ti++) {
+          const type = genTypes[ti]
+          const normalized: NormalizedType = { kind: "basic", type }
+          def.overloads.push({
+            def: n,
+            params: n.params.map(
+              (p, pi): NormalizedType =>
+                BasicType(getGenTypes(p.typeSpecifier)?.[ti]) ?? params[pi]!,
+            ),
+            result: getGenTypes(n.returnType.typeSpecifier)
+              ? normalized
+              : returnTypeResolved,
+          })
+        }
+      } else {
+        def.overloads.push({
+          def: n,
+          params: params as NormalizedType[],
+          result: returnTypeResolved,
+        })
+      }
+    } else {
+      n.returnTypeResolved = this.figure(n.returnType, undefined)
+    }
   }
 
   parameterDeclaration(n: ParameterDeclaration) {
@@ -862,6 +1008,12 @@ class BinderVisitor extends AbstractVisitor<any> {
     this.pushScope()
     super.compoundStatement(n)
     this.popScope()
+  }
+
+  public builtins(n: TranslationUnit): void {
+    this.doingBuiltins = true
+    this.translationUnit(n)
+    this.doingBuiltins = false
   }
 
   protected pushScope() {
@@ -949,6 +1101,27 @@ const MATRIX_TYPES = [
   TOKEN.MAT4X3,
   TOKEN.MAT4X4,
 ]
+
+const GEN_TYPES: Readonly<Record<string, TokenType[]>> = {
+  bvec: [TOKEN.BVEC2, TOKEN.BVEC3, TOKEN.BVEC4],
+  genBType: [TOKEN.BOOL, TOKEN.BVEC2, TOKEN.BVEC3, TOKEN.BVEC4],
+  genIType: [TOKEN.INT, TOKEN.IVEC2, TOKEN.IVEC3, TOKEN.IVEC4],
+  genType: [TOKEN.FLOAT, TOKEN.VEC2, TOKEN.VEC3, TOKEN.VEC4],
+  genUType: [TOKEN.UINT, TOKEN.UVEC2, TOKEN.UVEC3, TOKEN.UVEC4],
+  gsampler2D: [TOKEN.SAMPLER2D, TOKEN.ISAMPLER2D, TOKEN.USAMPLER2D],
+  gsampler2DArray: [
+    TOKEN.SAMPLER2DARRAY,
+    TOKEN.ISAMPLER2DARRAY,
+    TOKEN.USAMPLER2DARRAY,
+  ],
+  gsampler3D: [TOKEN.SAMPLER3D, TOKEN.ISAMPLER3D, TOKEN.USAMPLER3D],
+  gsamplerCube: [TOKEN.SAMPLERCUBE, TOKEN.ISAMPLERCUBE, TOKEN.USAMPLERCUBE],
+  gvec4: [TOKEN.VEC4, TOKEN.IVEC4, TOKEN.UVEC4],
+  ivec: [TOKEN.IVEC2, TOKEN.IVEC3, TOKEN.IVEC4],
+  mat: MATRIX_TYPES,
+  uvec: [TOKEN.UVEC2, TOKEN.UVEC3, TOKEN.UVEC4],
+  vec: [TOKEN.VEC2, TOKEN.VEC3, TOKEN.VEC4],
+}
 
 const VEC_TYPES = [TOKEN.VEC2, TOKEN.VEC3, TOKEN.VEC4]
 const UVEC_TYPES = [TOKEN.UVEC2, TOKEN.UVEC3, TOKEN.UVEC4]
@@ -1089,6 +1262,10 @@ function allDefined<T>(ts: (T | undefined)[]): ts is T[] {
   return ts.every(Boolean)
 }
 
+function typesEquals(as: NormalizedType[], bs: NormalizedType[]): boolean {
+  return as.every((a, i) => typeEquals(a, bs[i]))
+}
+
 class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   private currentFunctionPrototypeReturnType: NormalizedType | undefined =
     undefined
@@ -1102,7 +1279,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
 
     const lType = this.visit(n.lhs)
     const rType = this.visit(n.rhs)
-    if (typesNotEqual(lType, rType)) {
+    if (typeNotEquals(lType, rType)) {
       // TODO better error code?
       markError(n, "S0004", lType, rType)
     }
@@ -1113,7 +1290,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     const cType = this.visit(n.condition)
     this.visit(n.yes)
     this.visit(n.no)
-    if (typesNotEqual(cType, NormalizedType.BOOL)) {
+    if (typeNotEquals(cType, BasicType.BOOL)) {
       markError(n.condition, "S0003")
     }
     return
@@ -1124,7 +1301,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     const cType = this.visit(n.conditionExpression)
     this.visit(n.loopExpression)
     this.visit(n.statement)
-    if (typesNotEqual(cType, NormalizedType.BOOL)) {
+    if (typeNotEquals(cType, BasicType.BOOL)) {
       markError(n.conditionExpression, "S0003")
     }
     return
@@ -1133,7 +1310,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   whileStatement(n: WhileStatement): NormalizedType | undefined {
     const cType = this.visit(n.conditionExpression)
     this.visit(n.statement)
-    if (typesNotEqual(cType, NormalizedType.BOOL)) {
+    if (typeNotEquals(cType, BasicType.BOOL)) {
       markError(n.conditionExpression, "S0003")
     }
     return
@@ -1142,7 +1319,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   doWhileStatement(n: DoWhileStatement): NormalizedType | undefined {
     this.visit(n.statement)
     const cType = this.visit(n.conditionExpression)
-    if (typesNotEqual(cType, NormalizedType.BOOL)) {
+    if (typeNotEquals(cType, BasicType.BOOL)) {
       markError(n.conditionExpression, "S0003")
     }
     return
@@ -1151,8 +1328,8 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   switchStatement(n: SwitchStatement): NormalizedType | undefined {
     const iType = this.visit(n.initExpression)
     if (
-      typesNotEqual(iType, NormalizedType.INT) &&
-      typesNotEqual(iType, NormalizedType.UINT)
+      typeNotEquals(iType, BasicType.INT) &&
+      typeNotEquals(iType, BasicType.UINT)
     ) {
       markError(n.initExpression, "S0057")
     }
@@ -1163,8 +1340,8 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   arrayAccess(n: ArrayAccess): NormalizedType | undefined {
     const iType = this.visit(n.index)
     if (
-      typesNotEqual(iType, NormalizedType.INT) &&
-      typesNotEqual(iType, NormalizedType.UINT)
+      typeNotEquals(iType, BasicType.INT) &&
+      typeNotEquals(iType, BasicType.UINT)
     ) {
       markError(n, "S0002")
     }
@@ -1173,14 +1350,18 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     if (oType?.kind === "array") {
       // array access
       return oType.of
-    } else if (isVectorType(oType)) {
-      return NormalizedType(getVectorElementType(oType.type))
-    } else if (isMatrixType(oType)) {
-      // return column
-      const [, mRows] = getMatrixDimensions(oType.type)!
-      return NormalizedType(getVectorType(TOKEN.FLOAT, mRows))
+      // TODO: if constant expression, check array access size
+    } else if (oType?.kind === "basic") {
+      const vecElem = getVectorElementType(oType.type)
+      const mDim = getMatrixDimensions(oType.type)
+      if (vecElem) {
+        return { kind: "basic", type: vecElem }
+      } else if (mDim) {
+        // return column
+        const [, mRows] = mDim
+        return BasicType(getVectorType(TOKEN.FLOAT, mRows))
+      }
     }
-    // TODO: if constant expression, check array access size
   }
 
   variableExpression(n: VariableExpression): NormalizedType | undefined {
@@ -1215,7 +1396,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
           }
         }
 
-        return NormalizedType(
+        return BasicType(
           getVectorType(getVectorElementType(oType.type)!, f.length),
         )
       }
@@ -1230,7 +1411,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
           `field ${f} is not defined on type ${oType.specifier.name}`,
         )
       }
-    } else {
+    } else if (oType) {
       markError(n.field, "field access cannot be used on array")
     }
   }
@@ -1313,14 +1494,14 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
           return
         }
       case TOKEN.BANG:
-        if (typesNotEqual(oType, NormalizedType.BOOL)) {
+        if (typeNotEquals(oType, BasicType.BOOL)) {
           markError(
             n,
             "S0004",
             "Unary operator for ! is only applicable to bool.",
           )
         }
-        return NormalizedType.BOOL
+        return BasicType.BOOL
       case TOKEN.TILDE:
         if (
           oType?.kind === "basic" &&
@@ -1346,10 +1527,10 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     const yType = this.visit(n.yes)
     const nType = this.visit(n.no)
 
-    if (typesNotEqual(cType, NormalizedType.BOOL)) {
+    if (typeNotEquals(cType, BasicType.BOOL)) {
       markError(n.condition, "S0005")
     }
-    if (typesNotEqual(yType, nType)) {
+    if (typeNotEquals(yType, nType)) {
       markError(n, "S0006", yType, nType)
     }
     return yType
@@ -1360,9 +1541,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
       throw new Error()
     }
     const wType = this.visit(n.what)
-    if (
-      typesEqual(this.currentFunctionPrototypeReturnType, NormalizedType.VOID)
-    ) {
+    if (typeEquals(this.currentFunctionPrototypeReturnType, BasicType.VOID)) {
       if (n.what) {
         markError(n.what, "S0039")
       }
@@ -1370,7 +1549,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
       if (!n.what) {
         markError(n, "S0038")
       } else {
-        if (typesNotEqual(wType, this.currentFunctionPrototypeReturnType)) {
+        if (typeNotEquals(wType, this.currentFunctionPrototypeReturnType)) {
           markError(n.what, "S0042")
         }
       }
@@ -1397,123 +1576,156 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   }
 
   public functionCall(n: FunctionCall): NormalizedType | undefined {
-    const aTypes = n.args.map((a) => this.visit(a))
-    const ts = n.what.typeSpecifierNonArray
-    if (
-      !n.what.arraySpecifier &&
-      isToken(ts) &&
-      ts.tokenType === TOKEN.IDENTIFIER
-    ) {
-      // form IDENTIFIER(args)
-      // could be either struct constructor or function call
-      const binding = n.binding
-      if (binding?.kind === "struct") {
+    const aTypes: (NormalizedType | undefined)[] = n.args.map((a) =>
+      this.visit(a),
+    )
+    if (n.binding) {
+      // function call
+      if (allDefined(aTypes)) {
+        const overload = findMatchingFunctionDefinition(aTypes, n.binding)
+        if (overload) {
+          return overload.result
+        } else {
+          markError(n, "no matching overload for params", aTypes)
+        }
+      }
+    } else if (n.constructorType) {
+      if (n.constructorType.kind === "struct") {
         if (allDefined(aTypes)) {
-          const expectedArgs: NormalizedType[] = Object.values(
-            binding.type.fields,
+          const expectedArgs: (NormalizedType | undefined)[] = Object.values(
+            n.constructorType.fields,
           ).map((f) => f.type)
-          if (!isEqualWith(aTypes, expectedArgs)) {
+          if (allDefined(expectedArgs) && !typesEquals(aTypes, expectedArgs)) {
             markError(n, "S0007", `expected ${expectedArgs} but was ${aTypes}`)
           }
         }
-        return binding.type
-      } else if (binding?.kind === "function") {
-        if (allDefined(aTypes)) {
-          const overload = findMatchingFunctionDefinition(aTypes, binding)
-          if (overload) {
-            return overload.result
-          } else {
-            markError(n, "no matching overload for params", aTypes)
-          }
-        }
-      } else if (binding?.kind === "variable") {
-        markError(n.what, "cannot call variable")
-      }
-    } else if (!n.what.arraySpecifier && isToken(ts)) {
-      // BASIC_TYPE(args)
+      } else if (n.constructorType.kind === "basic") {
+        // BASIC_TYPE(args)
 
-      const fillVectorOrMatrixConstructor = (needed: number): void => {
-        let provided = 0
-        for (let i = 0; i < aTypes.length; i++) {
-          if (provided >= needed) {
-            markError(
-              n.args[i],
-              "S0008",
-              "Too many arguments. Need ",
-              needed + " components, already have ",
-              provided,
-            )
-          } else {
-            const aType = aTypes[i]
-            if (aType?.kind === "basic") {
-              const aSize = getComponentCount(aType.type)
-              if (!aSize) {
+        const basicType = n.constructorType.type
+        const fillVectorOrMatrixConstructor = (needed: number): void => {
+          let provided = 0
+          for (let i = 0; i < aTypes.length; i++) {
+            if (provided >= needed) {
+              markError(
+                n.args[i],
+                "S0008",
+                "Too many arguments. Need ",
+                needed + " components, already have ",
+                provided,
+              )
+            } else {
+              const aType = aTypes[i]
+              if (aType?.kind === "basic") {
+                const aSize = getComponentCount(aType.type)
+                if (!aSize) {
+                  markError(
+                    n.args[i],
+                    "S0007",
+                    "only scalar, vector and matrix types are allowed, but was",
+                    aType,
+                  )
+                } else {
+                  provided += aSize
+                }
+              } else {
                 markError(
                   n.args[i],
                   "S0007",
                   "only scalar, vector and matrix types are allowed, but was",
                   aType,
                 )
-              } else {
-                provided += aSize
               }
-            } else {
-              markError(
-                n.args[i],
-                "S0007",
-                "only scalar, vector and matrix types are allowed, but was",
-                aType,
-              )
             }
           }
+          if (provided !== 1 && provided < needed) {
+            markError(
+              n.what,
+              "S0009",
+              `Need ${needed} but only got ${provided}`,
+            )
+          }
         }
-        if (provided !== 1 && provided < needed) {
-          markError(n.what, "S0009", `Need ${needed} but only got ${provided}`)
-        }
-      }
 
-      if (getScalarType(ts.tokenType)) {
-        if (
-          aTypes[0] &&
-          (aTypes[0].kind !== "basic" ||
-            getComponentCount(aTypes[0].type) === 0)
-        ) {
-          markError(
-            n.args[0],
-            "S0007",
-            "only scalar, vector and matrix types are allowed, but was",
-            aTypes[0],
-          )
-        }
-        for (let i = 1; i < n.args.length; i++) {
-          markError(
-            n.args[i],
-            "S0008",
-            "only one argument is allowed for a scalar constructor",
-          )
-        }
-      } else if (getVectorSize(ts.tokenType)) {
-        const needed = getVectorSize(ts.tokenType)
-        fillVectorOrMatrixConstructor(needed)
-      } else if (getMatrixDimensions(ts.tokenType)) {
-        const matrixArg = aTypes.find((t) => isMatrixType(t))
-        if (matrixArg) {
-          for (let i = 0; i < n.args.length; i++) {
-            if (aTypes[i] !== matrixArg) {
-              markError(
-                n.args[i],
-                "S0007",
-                "if a matrix argument is given to a matrix constructor, it must be the only one",
-              )
-            }
+        if (getScalarType(basicType)) {
+          if (
+            aTypes[0] &&
+            (aTypes[0].kind !== "basic" ||
+              getComponentCount(aTypes[0].type) === 0)
+          ) {
+            markError(
+              n.args[0],
+              "S0007",
+              "only scalar, vector and matrix types are allowed, but was",
+              aTypes[0],
+            )
           }
-        } else {
-          const needed = getComponentCount(ts.tokenType)!
+          for (let i = 1; i < n.args.length; i++) {
+            markError(
+              n.args[i],
+              "S0008",
+              "only one argument is allowed for a scalar constructor",
+            )
+          }
+        } else if (getVectorSize(basicType)) {
+          const needed = getVectorSize(basicType)
           fillVectorOrMatrixConstructor(needed)
+        } else if (getMatrixDimensions(basicType)) {
+          const matrixArg = aTypes.find((t) => isMatrixType(t))
+          if (matrixArg) {
+            for (let i = 0; i < n.args.length; i++) {
+              if (aTypes[i] !== matrixArg) {
+                markError(
+                  n.args[i],
+                  "S0007",
+                  "if a matrix argument is given to a matrix constructor, it must be the only one",
+                )
+              }
+            }
+          } else {
+            const needed = getComponentCount(basicType)!
+            fillVectorOrMatrixConstructor(needed)
+          }
+        }
+        return { kind: "basic", type: basicType }
+      } else if (n.constructorType.kind === "array") {
+        if (n.constructorType.size !== n.args.length) {
+          markError(
+            n.what,
+            "Wrong number of arguments, expected",
+            n.constructorType.size,
+            "but was ",
+            n.args.length,
+          )
+        }
+        for (let i = 0; i < n.args.length; i++) {
+          if (typeNotEquals(aTypes[i], n.constructorType.of)) {
+            markError(n.what, "Types do not match")
+          }
         }
       }
-      return { kind: "basic", type: ts.tokenType }
+      return n.constructorType
     }
+  }
+
+  public methodCall(n: MethodCall): NormalizedType | undefined {
+    // there is only one method: array.length()
+
+    const onType = this.visit(n.on)
+    if (onType && onType.kind !== "array") {
+      markError(n.on, "method call only valid on arrays")
+    }
+
+    if (!isToken(n.functionCall.what.typeSpecifierNonArray)) {
+      throw new Error()
+    }
+    if (n.functionCall.what.typeSpecifierNonArray.image !== "length") {
+      markError(n.functionCall.what, "only method is .length()")
+    }
+    for (const a of n.functionCall.args) {
+      markError(a, "No arguments to .length()")
+    }
+    return BasicType.INT
   }
 
   constantExpression(n: ConstantExpression): NormalizedType | undefined {
@@ -1539,7 +1751,18 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
 const BINDER_VISITOR = new BinderVisitor()
 const CHECKER_VISITOR = new CheckerVisitor()
 
-export function check(u: TranslationUnit): Error[] {
+function loadBuiltins() {
+  const builtinsSrc = readFileSync(
+    path.join(__dirname, "..", "builtins.glsl"),
+    { encoding: "utf8" },
+  )
+  const u = parseInput(builtinsSrc)
+  BINDER_VISITOR.builtins(u)
+}
+
+loadBuiltins()
+
+export function check(u: TranslationUnit): CError[] {
   const result = errors
   BINDER_VISITOR.visit(u)
   CHECKER_VISITOR.visit(u)
