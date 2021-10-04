@@ -21,6 +21,10 @@ function ttt(p: string, ...expectedErrors: string[]) {
   expect(errs.map((x) => x.err)).toEqual(expectedErrors)
   return errs
 }
+
+function tttexpr(expr: string, ...expectedErrors: string[]): void {
+  ttt(`void main() { ${expr}; }`, ...expectedErrors)
+}
 test("checks shader.glsl", () => {
   const c = readFileSync(__dirname + "/../fixtures/shader.glsl", {
     encoding: "utf8",
@@ -64,8 +68,9 @@ test("S0026: can swizzle at most 4 fields", () => {
 test("S0027: TODO", () => {
   ttt("void main() { 1++; }", "S0027")
 })
+
 test("too many args to builtin", () => {
-  ttt("min(.2, .3, .5)", "no matching overload for params")
+  tttexpr("min(.2, .3, .5)", "no matching overload for params")
 })
 
 function uint(value: number): number {
@@ -282,6 +287,23 @@ describe("/*constant expressions", () => {
     test(
       "outerProduct(vec3(1,2,3), vec2(4,5))",
       c(mat([4, 5], [8, 10], [12, 15])),
+    )
+    test("inverse(mat2(0,1, 1,1))", c(mat([-1, 1], [1, -0])))
+    test("inverse(mat2(4,2, 7,6))", c(mat([0.6, -0.7], [-0.2, 0.4])))
+    test(
+      "inverse(mat3(0,1,1, 1,1,1, 1,2,3))",
+      c(mat([-1, 1, 0], [2, 1, -1], [-1, -1, 1])),
+    )
+    test(
+      "inverse(mat4(1,5,9,4, 2,6,1,5, 3,7,2,6, 4,8,3,8))",
+      c(
+        mat(
+          [-0.1388888888888889, 0.027777777777777776, 0.1111111111111111, 0],
+          [-1.7222222222222223, -0.05555555555555555, -0.2222222222222222, 1],
+          [1.8611111111111112, 1.0277777777777777, 0.1111111111111111, -2],
+          [-0.25, -0.75, 0, 1],
+        ),
+      ),
     )
 
     test("lessThan(vec3(2, 1, 0),vec3(1))", c([false, false, true]))

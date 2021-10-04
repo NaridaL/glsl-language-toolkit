@@ -1,4 +1,5 @@
 import { clamp } from "lodash"
+import { inverse2, inverse3, inverse4 } from "./matinverse"
 
 const COMPONENT_FUNCTIONS = {
   radians: (degrees: number): number => (Math.PI / 180) * degrees,
@@ -121,6 +122,7 @@ const GEOMETRIC = {
 }
 
 export type Matrix = number[] & { rows: number }
+
 const MATRIX = {
   matrixCompMult: (x: Matrix, y: Matrix): number[] =>
     Object.assign(
@@ -153,6 +155,21 @@ const MATRIX = {
       }
     }
     return result
+  },
+  inverse: (m: Matrix) => {
+    if (!m.rows) {
+      throw new Error()
+    }
+    if (m.length === 16) {
+      return inverse4(m)
+    }
+    if (m.length === 9) {
+      return inverse3(m)
+    }
+    if (m.length === 4) {
+      return inverse2(m)
+    }
+    throw new Error()
   },
 }
 
