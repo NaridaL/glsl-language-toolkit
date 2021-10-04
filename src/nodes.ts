@@ -330,7 +330,8 @@ export class AbstractVisitor<R> {
     return
   }
   binaryExpression(n: BinaryExpression): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.lhs)
+    this.visit(n.rhs)
     return
   }
   methodCall(n: MethodCall): R | undefined {
@@ -410,7 +411,8 @@ export class AbstractVisitor<R> {
     return
   }
   declarator(n: Declarator): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.arraySpecifier)
+    this.visit(n.init)
     return
   }
   doWhileStatement(n: DoWhileStatement): R | undefined {

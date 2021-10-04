@@ -17,12 +17,20 @@ export function underline(
   )
 }
 
-export function cmap<T, R>(
+export function ccorrect<T, R>(
   x: Many<T>,
   f: (x: T, i: number, arr: Many<T>) => R,
 ): Many<R> {
-  return Array.isArray(x) ? x.map(f) : f(x as T, 0, x)
+  if (Array.isArray(x)) {
+    for (let i = 0; i < x.length; i++) {
+      x[i] = f(x[i], i, x)
+    }
+    return x
+  } else {
+    return f(x as T, 0, x)
+  }
 }
+
 export function substrContext(
   input: string,
   token: Pick<IToken, "startLine" | "endLine" | "startColumn" | "endColumn">,

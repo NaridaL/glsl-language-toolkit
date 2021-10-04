@@ -4,7 +4,7 @@ import { last, Many } from "lodash"
 import { check, evaluateConstantExpression } from "./checker"
 import { parseInput } from "./parser"
 import { ExpressionStatement, FunctionDefinition } from "./nodes"
-import { cmap } from "./util"
+import { ccorrect } from "./util"
 import ProvidesCallback = jest.ProvidesCallback
 
 function bla(p: string) {
@@ -64,6 +64,9 @@ test("S0026: can swizzle at most 4 fields", () => {
 test("S0027: TODO", () => {
   ttt("void main() { 1++; }", "S0027")
 })
+test("too many args to builtin", () => {
+  ttt("min(.2, .3, .5)", "no matching overload for params")
+})
 
 function uint(value: number): number {
   const buf = new ArrayBuffer(4)
@@ -88,7 +91,11 @@ describe("/*constant expressions", () => {
   function c(expectedValue: Many<V>): ProvidesCallback {
     const cfround = (x: V): V =>
       typeof x === "number" && x % 1 !== 0 ? Math.fround(x) : x
-    expectedValue = cmap(expectedValue, cfround)
+    const rows = expectedValue.rows
+    expectedValue = ccorrect(expectedValue, cfround)
+    if (rows) {
+      expectedValue.rows = rows
+    }
     return () => {
       const exprStr = expect.getState().currentTestName
       const unit = parseInput(`void main() { ${exprStr}; }`)
@@ -105,7 +112,7 @@ describe("/*constant expressions", () => {
         ) as ExpressionStatement
       ).expression
       const value = evaluateConstantExpression(expr)?.value
-      delete value.cols
+
       expect(value).toEqual(expectedValue)
     }
   }
@@ -115,16 +122,16 @@ describe("/*constant expressions", () => {
     int = c
 
   describe("constants*/", () => {
-    test("1", c(1))
-    test("010", c(8))
-    test("0xff", c(255))
+    test("1", int(1))
+    test("010", int(8))
+    test("0xff", int(255))
 
-    test("1u", c(1))
-    test("010u", c(8))
-    test("0xffu", c(255))
+    test("1u", uint(1))
+    test("010u", uint(8))
+    test("0xffu", uint(255))
 
-    test("1.", c(1))
-    test("1e2", c(100))
+    test("1.", float(1))
+    test("1e2", float(100))
 
     test("true", c(true))
     test("false", c(false))
@@ -136,12 +143,12 @@ describe("/*constant expressions", () => {
   })
 
   describe("constructors*/", () => {
-    test("float(true)", c(1))
-    test("float(0xffffffffu)", c(Math.fround(0xffff_ffff)))
-    test("int(1.2)", c(1))
-    test("uint(-0)", c(0))
-    test("uint(-1)", c(0xffff_ffff))
-    test("uint(-2)", c(0xffff_fffe))
+    test("float(true)", float(1))
+    test("float(0xffffffffu)", float(Math.fround(0xffff_ffff)))
+    test("int(1.2)", int(1))
+    test("uint(-0)", uint(0))
+    test("uint(-1)", uint(0xffff_ffff))
+    test("uint(-2)", uint(0xffff_fffe))
 
     test("vec2(1., 2.)", c([1, 2]))
     test("vec4(1., 2, 3u, false)", c([1, 2, 3, 0]))
@@ -157,9 +164,9 @@ describe("/*constant expressions", () => {
   })
 
   describe("unary operations*/", () => {
-    test("-12", c(-12))
-    test("-1u", c(0xffff_ffff))
-    test("-1.2", c(-1.2))
+    test("-12", int(-12))
+    test("-1u", uint(0xffff_ffff))
+    test("-1.2", float(-1.2))
 
     test("-vec2(1)", c([-1, -1]))
     test("-ivec2(1)", c([-1, -1]))
@@ -177,10 +184,10 @@ describe("/*constant expressions", () => {
       ),
     )
 
-    test("~2", c(-3))
-    test("~2u", c(0xffff_fffd))
-    test("~ivec2(1)", c([-2, -2]))
-    test("~uvec2(1, 2)", c([0xffff_fffe, 0xffff_fffd]))
+    test("~2", int(-3))
+    test("~2u", uint(0xffff_fffd))
+    test("~ivec2(1)", int([-2, -2]))
+    test("~uvec2(1, 2)", uint([0xffff_fffe, 0xffff_fffd]))
 
     test("!true", c(false))
     test("!false", c(true))
@@ -196,29 +203,29 @@ describe("/*constant expressions", () => {
     test("float[2](2., 3.)", c([2, 3]))
   })
 
-  describe("operations on scalars*/", () => {
-    test("1+3", c(4))
-    test("1.2+1.4", c(2.6))
-    test("2u-3u", c(0xffff_ffff))
+  describe("binary operations*/", () => {
+    test("1+3", int(4))
+    test("1.2+1.4", float(2.6))
+    test("2u-3u", uint(0xffff_ffff))
   })
 
   describe("array access*/", () => {
-    test("vec3(1)[0]", c(1))
-    test("mat3(2)[1]", c([0, 2, 0]))
-    test("mat4x2(3)[2]", c([0, 0]))
-    test("float[](2., 3.)[1]", c(3))
+    test("vec3(1)[0]", float(1))
+    test("mat3(2)[1]", float([0, 2, 0]))
+    test("mat4x2(3)[2]", float([0, 0]))
+    test("float[](2., 3.)[1]", float(3))
   })
 
   describe("method call*/", () => {
-    test("float[2](3., 4.).length()", c(2))
-    test("struct S { int i; } x; S[](x).length()", c(1))
+    test("float[2](3., 4.).length()", int(2))
+    test("struct S { int i; } x; S[](x).length()", int(1))
   })
 
   describe("field access*/", () => {
-    test("struct S { float f; }; S(2.0).f", c(2))
-    test("vec3(1).x", c(1))
-    test("vec4(1, 2, 3, 4).rrgb", c([1, 1, 2, 3]))
-    test("vec4(1, 2, 3, 4).bb", c([3, 3]))
+    test("struct S { float f; }; S(2.0).f", float(2))
+    test("vec3(1).x", float(1))
+    test("vec4(1, 2, 3, 4).rrgb", float([1, 1, 2, 3]))
+    test("vec4(1, 2, 3, 4).bb", float([3, 3]))
   })
 
   describe("builtin functions*/", () => {
@@ -230,8 +237,8 @@ describe("/*constant expressions", () => {
     test("cos(2.)", float(Math.cos(2)))
     test("tan(3.)", float(Math.tan(3)))
     // no point testing the rest of the Math functions the same way
-    test("atan(1./-1.)", float(-2.35619449))
-    test("atan(1., -1.)", float(-2.35619449))
+    test("atan(1./-1.)", float(-0.78539818))
+    test("atan(1., -1.)", float(2.35619449))
     test("atan(vec2(1,-1),vec2(1,-1))", float([0.785398163, -2.35619449]))
     test("exp2(2.)", float(4))
     test("inversesqrt(vec2(1, 2))", float([1, Math.SQRT1_2]))
@@ -242,17 +249,16 @@ describe("/*constant expressions", () => {
     test("mod(vec2(3), vec2(2))", float([1, 1]))
     test("clamp(3.2, 2., 3.)", float(3))
     test("mix(.2, .3, .5)", float(0.25))
-    test("min(.2, .3, .5)", float(0.25)) // TODO: should be error
     test("mix(3., 1./0., false)", float(3))
     test("step(.5, vec2(.4, .6))", float([0, 1]))
     test("smoothstep(.2, .3, .1)", float(0))
     test("smoothstep(.2, .3, vec2(.1, .25))", float([0, 0.5]))
     test("isnan(sqrt(-1.))", c(true))
     test("isinf(-1./0.)", c(true))
-    test("floatBitsToInt(vec2(0, -3.25))", int([0, 0xc0500000]))
-    test("floatBitsToUint(vec2(0, -3.25))", int([0, 0xc0500000]))
+    test("floatBitsToInt(vec2(0, -3.25))", int([0, -0x3fb00000]))
+    test("floatBitsToUint(vec2(0, -3.25))", uint([0, 0xc0500000]))
     test("intBitsToFloat(ivec2(0, 0xc0500000))", float([0, -3.25]))
-    test("uintBitsToFloat(ivec2(0, 0xc0500000))", float([0, -3.25]))
+    test("uintBitsToFloat(uvec2(0, 0xc0500000))", float([0, -3.25]))
     //fract
     // mod
     // clamp

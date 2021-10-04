@@ -39,9 +39,9 @@ import {
   WhileStatement,
 } from "./nodes"
 import { TOKEN } from "./lexer"
-import { applyBuiltinFunction } from "./builtins"
+import { applyBuiltinFunction, Matrix } from "./builtins"
 import { parseInput } from "./parser"
-import { cmap } from "./util"
+import { ccorrect } from "./util"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
 type ArrayType = Readonly<{
@@ -188,13 +188,13 @@ function getComponentType(t: TokenType): TokenType | undefined {
 }
 
 function evaluateBinaryOp(
-  op: Token,
+  op: TokenType,
   a: any,
   b: any,
   aType: TokenType,
 ): { type: NormalizedType; value: any } {
-  function doOp(op: Token, a: any, b: any) {
-    switch (op.tokenType) {
+  function doOp(op: TokenType, a: any, b: any) {
+    switch (op) {
       case TOKEN.PLUS:
         return a + b
       case TOKEN.DASH:
@@ -300,6 +300,22 @@ function getScalarType(t: TokenType): TokenType | undefined {
   }
 }
 
+function doMatrixMult(a: Matrix, b: Matrix): Matrix {
+  const rows = a.rows
+  const cols = b.length / b.rows
+  const result = Object.assign(Array(cols * rows), { rows })
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      let v = 0
+      for (let i = 0; i < b.rows; i++) {
+        v += a[i * a.rows + r] * b[r * b.rows + i]
+      }
+      result[c * rows + r] = v
+    }
+  }
+  return result
+}
+
 export function evaluateConstantExpression(n: Node):
   | {
       type: NormalizedType
@@ -383,7 +399,7 @@ export function evaluateConstantExpression(n: Node):
         } else {
           const lv = l.value
           const rv = r.value
-          return evaluateBinaryOp(n.op, lv, rv, lType.type)
+          return evaluateBinaryOp(n.op.tokenType, lv, rv, lType.type)
         }
       } else if (isVectorType(lType)) {
         if (isVectorType(r.type)) {
@@ -391,7 +407,12 @@ export function evaluateConstantExpression(n: Node):
           return {
             type: lType,
             value: (l.value as any[]).map((lv, i) =>
-              evaluateBinaryOp(n.op, lv, (r.value as any[])[i], lType.type),
+              evaluateBinaryOp(
+                n.op.tokenType,
+                lv,
+                (r.value as any[])[i],
+                lType.type,
+              ),
             ),
           }
         } else {
@@ -399,13 +420,31 @@ export function evaluateConstantExpression(n: Node):
           return {
             type: lType,
             value: (l.value as any[]).map((lv) =>
-              evaluateBinaryOp(n.op, lv, r, lType.type),
+              evaluateBinaryOp(n.op.tokenType, lv, r, lType.type),
             ),
           }
         }
-      } else {
-        throw new Error("???")
+      } else if (
+        n.op.tokenType === TOKEN.STAR &&
+        (isMatrixType(lType) || isMatrixType(r.type))
+      ) {
+        const ll = isVectorType(lType)
+          ? Object.assign([], l.value, { rows: 1 })
+          : l
+        const rr = isVectorType(r.type)
+          ? Object.assign([], r.value, { rows: r.value.size })
+          : r
+
+        const type = VALID_BINARY_OPERATIONS.find(
+          ([op, lhs, rhs, _result]) =>
+            op === n.op.tokenType &&
+            lhs === (lType as BasicType).type &&
+            rhs === (r.type as BasicType).type,
+        )
+        const value = doMatrixMult(ll, rr)
+        return { type, value }
       }
+      throw new Error("???")
     }
     case "arrayAccess": {
       const on = evaluateConstantExpression(n.on)
@@ -455,7 +494,7 @@ export function evaluateConstantExpression(n: Node):
           n.binding,
         )!.result
         const compType = getComponentType((type as BasicType).type)!
-        const value = cmap(
+        const value = ccorrect(
           applyBuiltinFunction(
             (n.what.typeSpecifierNonArray as Token).image,
             args.map((a) => a.value),
@@ -1263,7 +1302,7 @@ function allDefined<T>(ts: (T | undefined)[]): ts is T[] {
 }
 
 function typesEquals(as: NormalizedType[], bs: NormalizedType[]): boolean {
-  return as.every((a, i) => typeEquals(a, bs[i]))
+  return as.length === bs.length && as.every((a, i) => typeEquals(a, bs[i]))
 }
 
 class CheckerVisitor extends AbstractVisitor<NormalizedType> {

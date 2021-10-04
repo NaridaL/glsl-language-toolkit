@@ -31,7 +31,7 @@ const COMPONENT_FUNCTIONS = {
     new Float32Array(buf)[0] = value
     return new Int32Array(buf)[0]
   },
-  floatBitsToUInt: (value: number): number => {
+  floatBitsToUint: (value: number): number => {
     const buf = new ArrayBuffer(4)
     new Float32Array(buf)[0] = value
     return new Uint32Array(buf)[0]
@@ -120,10 +120,13 @@ const GEOMETRIC = {
   },
 }
 
-type Matrix = number[] & { rows: number }
+export type Matrix = number[] & { rows: number }
 const MATRIX = {
-  matrixCompMult: (x: number[], y: number[]): number[] =>
-    x.map((xi, i) => xi * y[i]),
+  matrixCompMult: (x: Matrix, y: Matrix): number[] =>
+    Object.assign(
+      x.map((xi, i) => xi * y[i]),
+      { rows: x.rows },
+    ),
 
   // TODO
   outerProduct: (c: number[], r: number[]) => {
