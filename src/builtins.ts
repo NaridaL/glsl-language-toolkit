@@ -126,19 +126,25 @@ const GEOMETRIC = {
 }
 
 export type Matrix = number[] & { rows: number }
+export function Matrix(cols: number, rows: number): Matrix {
+  return Object.assign(new Array(cols * rows), { rows })
+}
+export function isMatrix(x: number[] | number): x is Matrix {
+  return typeof x === "object" && "rows" in x
+}
 
 const MATRIX = {
-  matrixCompMult: (x: Matrix, y: Matrix): number[] =>
-    Object.assign(
+  matrixCompMult: (x: Matrix, y: Matrix): number[] => {
+    return Object.assign(
       x.map((xi, i) => xi * y[i]),
       { rows: x.rows },
-    ),
+    )
+  },
 
-  // TODO
   outerProduct: (c: number[], r: number[]) => {
     const rows = c.length
     const cols = r.length
-    const result = Object.assign(new Array(cols * rows), { rows })
+    const result = Matrix(cols, rows)
     for (let ci = 0; ci < cols; ci++) {
       for (let ri = 0; ri < rows; ri++) {
         result[ci * rows + ri] = c[ri] * r[ci]
@@ -152,7 +158,7 @@ const MATRIX = {
       throw new Error()
     }
     const mCols = m.length / m.rows
-    const result = Object.assign(new Array(mCols * m.rows), { rows: mCols })
+    const result = Matrix(m.rows, mCols)
     for (let ci = 0; ci < m.rows; ci++) {
       for (let ri = 0; ri < mCols; ri++) {
         result[ci * mCols + ri] = m[ri * m.rows + ci]

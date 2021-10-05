@@ -12,6 +12,7 @@ import {
   AssignmentExpression,
   BaseNode,
   BinaryExpression,
+  CommaExpression,
   CompoundStatement,
   ConditionalExpression,
   ConstantExpression,
@@ -187,12 +188,14 @@ function getComponentType(t: TokenType): TokenType | undefined {
     : getVectorElementType(t) || getScalarType(t)
 }
 
+type TypeAndValue = { type: NormalizedType; value: any }
+
 function evaluateBinaryOp(
   op: TokenType,
   a: any,
   b: any,
   aType: TokenType,
-): { type: NormalizedType; value: any } {
+): TypeAndValue {
   function doOp(op: TokenType, a: any, b: any) {
     switch (op) {
       case TOKEN.PLUS:
@@ -315,314 +318,296 @@ function doMatrixMult(a: Matrix, b: Matrix): Matrix {
   }
   return result
 }
-
-export function evaluateConstantExpression(n: Node):
-  | {
-      type: NormalizedType
-      value: any
-    }
-  | undefined {
-  function evalIntConstant(s: string) {
-    return s.length >= 2 && s[0] === "0" && s[1] !== "x"
-      ? parseInt(s, 8)
-      : Number(s)
-  }
-
-  switch (n.type) {
-    case "constantExpression":
-      switch (n._const.tokenType) {
-        case TOKEN.FLOATCONSTANT:
-          return {
-            type: BasicType.FLOAT,
-            value: +n._const.image,
-          }
-        case TOKEN.BOOLCONSTANT:
-          return {
-            type: BasicType.BOOL,
-            value: n._const.image === "true",
-          }
-        case TOKEN.INTCONSTANT:
-          return {
-            type: BasicType.INT,
-            value: evalIntConstant(n._const.image),
-          }
-        case TOKEN.UINTCONSTANT:
-          return {
-            type: BasicType.UINT,
-            value: evalIntConstant(
-              n._const.image.substring(0, n._const.image.length - 1),
-            ),
-          }
-        default:
-          throw new Error()
-      }
-    case "unaryExpression": {
-      const on = evaluateConstantExpression(n.on)
-      if (!on) {
-        return undefined
-      }
-      if (on.type.kind !== "basic") {
-        throw new Error()
-      }
-      const compType = getComponentType(on.type.type)!
-      const opp = (op: TokenType, on: number, t: TokenType) => {
-        switch (op) {
-          case TOKEN.TILDE:
-            return norm(t, ~on)
-          case TOKEN.BANG:
-            return norm(t, !on)
-          case TOKEN.DASH:
-            return norm(t, -on)
-          default:
-            assertNever()
-        }
-      }
-      let value
-      if (getScalarType(on.type.type)) {
-        value = opp(n.op.tokenType, on.value, compType)
-      } else {
-        value = (on.value as any[]).map((e) => opp(n.op.tokenType, e, compType))
-        Object.assign(value, pick(on.value, "rows"))
-      }
-      return { type: on.type, value }
-    }
-    case "binaryExpression": {
-      const l = evaluateConstantExpression(n.lhs)
-      const r = evaluateConstantExpression(n.rhs)
-      if (!l || !r) {
-        return undefined
-      }
-      const lType = l.type
-      if (lType.kind === "basic" && getScalarType(lType.type)) {
-        if (typeNotEquals(lType, lType)) {
-          throw new Error("types don't match")
-        } else {
-          const lv = l.value
-          const rv = r.value
-          return evaluateBinaryOp(n.op.tokenType, lv, rv, lType.type)
-        }
-      } else if (isVectorType(lType)) {
-        if (isVectorType(r.type)) {
-          // two vectors
-          return {
-            type: lType,
-            value: (l.value as any[]).map((lv, i) =>
-              evaluateBinaryOp(
-                n.op.tokenType,
-                lv,
-                (r.value as any[])[i],
-                lType.type,
-              ),
-            ),
-          }
-        } else {
-          // vector + scalar
-          return {
-            type: lType,
-            value: (l.value as any[]).map((lv) =>
-              evaluateBinaryOp(n.op.tokenType, lv, r, lType.type),
-            ),
-          }
-        }
-      } else if (
-        n.op.tokenType === TOKEN.STAR &&
-        (isMatrixType(lType) || isMatrixType(r.type))
-      ) {
-        const ll = isVectorType(lType)
-          ? Object.assign([], l.value, { rows: 1 })
-          : l.value
-        const rr = isVectorType(r.type)
-          ? Object.assign([], r.value, { rows: r.value.size })
-          : r.value
-
-        const type = VALID_BINARY_OPERATIONS.find(
-          ([op, lhs, rhs, _result]) =>
-            op === n.op.tokenType &&
-            lhs === (lType as BasicType).type &&
-            rhs === (r.type as BasicType).type,
-        )
-        const value = doMatrixMult(ll, rr)
-        return { type, value }
-      }
-      throw new Error("???")
-    }
-    case "arrayAccess": {
-      const on = evaluateConstantExpression(n.on)
-      if (!on) {
-        return undefined
-      }
-      const index = evaluateConstantExpression(n.index)
-      if (!index) {
-        return undefined
-      }
-      const value1 = index.value as number
-      if (on.type.kind === "array") {
-        const ofType = on.type.of
-        return (
-          index &&
-          ofType && { type: ofType, value: (on.value as any[])[value1] }
-        )
-      } else if (on.type.kind === "basic") {
-        if (getVectorSize(on.type.type)) {
-          return {
-            type: { kind: "basic", type: getComponentType(on.type.type)! },
-            value: (on.value as any[])[value1],
-          }
-        } else if (getMatrixDimensions(on.type.type)) {
-          const [, rows] = getMatrixDimensions(on.type.type)!
-          return {
-            type: { kind: "basic", type: getVectorType(TOKEN.FLOAT, rows)! },
-            value: (on.value as any[]).slice(
-              value1 * rows,
-              (value1 + 1) * rows,
-            ),
-          }
-        }
-      }
-      throw new Error()
-    }
-
-    case "functionCall": {
-      const args = n.args.map(evaluateConstantExpression)
-      if (!allDefined(args)) {
-        return undefined
-      }
-      if (n.binding) {
-        // function call
-        const type = findMatchingFunctionDefinition(
-          args.map((a) => a.type),
-          n.binding,
-        )!.result
-        const compType = getComponentType((type as BasicType).type)!
-        const value = ccorrect(
-          applyBuiltinFunction(
-            (n.what.typeSpecifierNonArray as Token).image,
-            args.map((a) => a.value),
-          ),
-          (x) => norm(compType, x),
-        )
-        return { type, value }
-      } else if (n.constructorType) {
-        // constructor
-
-        const cType = n.constructorType
-        if (cType.kind === "array") {
-          // array constructor
-          if (cType.size === args.length) {
-            return {
-              type: cType,
-              value: args.map((a) => a.value),
-            }
-          } else {
-            return undefined
-          }
-        } else if (cType.kind === "struct") {
-          const value: Record<string, unknown> = {}
-          const fields = Object.keys(cType.fields)
-          for (let i = 0; i < fields.length; i++) {
-            value[fields[i]] = args[i].value
-          }
-          return { type: cType, value }
-        } else {
-          // basic type constructor call
-
-          const matDims = getMatrixDimensions(cType.type)
-          if (matDims && args.length === 1 && isMatrixType(args[0].type)) {
-            // this is the matXxY(matZxW) case
-            const [cols, rows] = matDims
-            const o = args[0].value as number[]
-            const [oCols, oRows] = getMatrixDimensions(args[0].type.type)!
-            const value = Object.assign(Array(cols * rows), { rows })
-            for (let c = 0; c < cols; c++) {
-              for (let r = 0; r < rows; r++) {
-                value[c * rows + r] =
-                  c < oCols && r < oRows ? o[c * oRows + r] : +(c === r)
-              }
-            }
-            return { type: { kind: "basic", type: cType.type }, value }
-          }
-          const neededSize = getComponentCount(cType.type)
-          const neededType = getComponentType(cType.type)!
-          let result = args
-            .map((arg) => arg.value)
-            .flatMap<any>((arg) => (Array.isArray(arg) ? arg : [arg]))
-            .slice(0, neededSize)
-            .map((e) => norm(neededType, e))
-          if (result.length === 1) {
-            if (getVectorSize(cType.type)) {
-              result = Array(neededSize).fill(result[0])
-            } else if (matDims) {
-              const [cols, rows] = matDims
-              const mat = Object.assign(Array(cols * rows).fill(0), { rows })
-              for (let i = 0; i < Math.min(cols, rows); i++) {
-                mat[i * rows + i] = result[0]
-              }
-              result = mat
-            }
-          }
-          if (matDims) {
-            Object.assign(result, { rows: matDims[1] })
-          }
-          return {
-            type: { kind: "basic", type: cType.type },
-            value: neededSize === 1 ? result[0] : result,
-          }
-        }
-      }
-      throw new Error()
-    }
-    case "commaExpression":
-      return undefined
-    case "methodCall": {
-      const oType = CHECKER_VISITOR.visit(n.on)
-      if (oType?.kind === "array") {
-        return { type: BasicType.INT, value: oType.size }
-      }
-      return undefined
-    }
-    case "variableExpression":
-      return (
-        n.binding?.dl?.fsType.typeQualifier?.storageQualifier?.CONST &&
-        n.binding.d?.init &&
-        evaluateConstantExpression(n.binding.d?.init)
-      )
-    case "fieldAccess": {
-      const on = evaluateConstantExpression(n.on)
-      if (!on) {
-        return
-      }
-      const f = n.field.image
-      if (isVectorType(on.type)) {
-        const swizzle = f.split("").map((e) => {
-          const vectorFieldIndex = "xyzwrgbastpq".indexOf(e) % 4
-          return (on.value as any[])[vectorFieldIndex]
-        })
-        const value = swizzle.length === 1 ? swizzle[0] : swizzle
-        return {
-          type: {
-            kind: "basic",
-            type: getVectorType(
-              getComponentType(on.type.type)!,
-              swizzle.length,
-            )!,
-          },
-          value,
-        }
-      } else if (on.type.kind === "struct") {
-        const fieldType = on.type.fields[f].type
-        return (
-          fieldType && {
-            type: fieldType,
-            value: (on.value as Record<string, unknown>)[f],
-          }
-        )
-      }
-      throw new Error()
-    }
-    default:
-      throw new Error("???")
-  }
+function evalIntConstant(s: string) {
+  return s.length >= 2 && s[0] === "0" && s[1] !== "x"
+    ? parseInt(s, 8)
+    : Number(s)
 }
+
+export function evaluateConstantExpression(n: Node): TypeAndValue | undefined {
+  return CONSTANT_VISITOR.visit(n)
+}
+
+const CONSTANT_VISITOR = new (class extends AbstractVisitor<
+  TypeAndValue | undefined
+> {
+  constantExpression(n: ConstantExpression): TypeAndValue | undefined {
+    switch (n._const.tokenType) {
+      case TOKEN.FLOATCONSTANT:
+        return {
+          type: BasicType.FLOAT,
+          value: +n._const.image,
+        }
+      case TOKEN.BOOLCONSTANT:
+        return {
+          type: BasicType.BOOL,
+          value: n._const.image === "true",
+        }
+      case TOKEN.INTCONSTANT:
+        return {
+          type: BasicType.INT,
+          value: evalIntConstant(n._const.image),
+        }
+      case TOKEN.UINTCONSTANT:
+        return {
+          type: BasicType.UINT,
+          value: evalIntConstant(
+            n._const.image.substring(0, n._const.image.length - 1),
+          ),
+        }
+      default:
+        throw new Error()
+    }
+  }
+  unaryExpression(n: UnaryExpression): TypeAndValue | undefined {
+    const on = this.visit(n.on)
+    if (!on) {
+      return undefined
+    }
+    if (on.type.kind !== "basic") {
+      throw new Error()
+    }
+    const compType = getComponentType(on.type.type)!
+    const opp = (op: TokenType, on: number, t: TokenType) => {
+      switch (op) {
+        case TOKEN.TILDE:
+          return norm(t, ~on)
+        case TOKEN.BANG:
+          return norm(t, !on)
+        case TOKEN.DASH:
+          return norm(t, -on)
+        default:
+          assertNever()
+      }
+    }
+    let value
+    if (getScalarType(on.type.type)) {
+      value = opp(n.op.tokenType, on.value, compType)
+    } else {
+      value = (on.value as any[]).map((e) => opp(n.op.tokenType, e, compType))
+      Object.assign(value, pick(on.value, "rows"))
+    }
+    return { type: on.type, value }
+  }
+  binaryExpression(n: BinaryExpression): TypeAndValue | undefined {
+    const l = this.visit(n.lhs)
+    const r = this.visit(n.rhs)
+    if (l?.type.kind !== "basic" || r?.type.kind !== "basic") {
+      return undefined
+    }
+    const lType = l.type.type
+    const rType = r.type.type
+    if (getScalarType(lType) && getScalarType(rType)) {
+      const lv = l.value
+      const rv = r.value
+      return evaluateBinaryOp(n.op.tokenType, lv, rv, lType)
+    } else if (getVectorSize(lType) && getVectorSize(rType)) {
+      // two vectors
+      return {
+        type: l.type,
+        value: (l.value as any[]).map((lv, i) =>
+          evaluateBinaryOp(n.op.tokenType, lv, (r.value as any[])[i], lType),
+        ),
+      }
+    } else if (getVectorSize(lType) && getScalarType(rType)) {
+      // vector + scalar
+      return {
+        type: l.type,
+        value: (l.value as any[]).map((lv) =>
+          evaluateBinaryOp(n.op.tokenType, lv, r, lType),
+        ),
+      }
+    } else if (
+      n.op.tokenType === TOKEN.STAR &&
+      (isMatrixType(l.type) || isMatrixType(r.type))
+    ) {
+      const ll = isVectorType(l.type)
+        ? Object.assign([], l.value, { rows: 1 })
+        : l.value
+      const rr = isVectorType(r.type)
+        ? Object.assign([], r.value, { rows: (r.value as number[]).length })
+        : r.value
+
+      const type: BasicType = {
+        kind: "basic",
+        type: VALID_BINARY_OPERATIONS.find(
+          ([op, lhs, rhs, _result]) =>
+            op === n.op.tokenType && lhs === lType && rhs === rType,
+        )![3],
+      }
+      const value = doMatrixMult(ll, rr)
+      return { type, value }
+    }
+    throw new Error("???")
+  }
+  arrayAccess(n: ArrayAccess): TypeAndValue | undefined {
+    const on = this.visit(n.on)
+    if (!on) {
+      return undefined
+    }
+    const index = this.visit(n.index)
+    if (!index) {
+      return undefined
+    }
+    const value1 = index.value as number
+    if (on.type.kind === "array") {
+      const ofType = on.type.of
+      return (
+        index && ofType && { type: ofType, value: (on.value as any[])[value1] }
+      )
+    } else if (on.type.kind === "basic") {
+      if (getVectorSize(on.type.type)) {
+        return {
+          type: { kind: "basic", type: getComponentType(on.type.type)! },
+          value: (on.value as any[])[value1],
+        }
+      } else if (getMatrixDimensions(on.type.type)) {
+        const [, rows] = getMatrixDimensions(on.type.type)!
+        return {
+          type: { kind: "basic", type: getVectorType(TOKEN.FLOAT, rows)! },
+          value: (on.value as any[]).slice(value1 * rows, (value1 + 1) * rows),
+        }
+      }
+    }
+    throw new Error()
+  }
+  functionCall(n: FunctionCall): TypeAndValue | undefined {
+    const args = n.args.map((a) => this.visit(a))
+    if (!allDefined(args)) {
+      return undefined
+    }
+    if (n.binding) {
+      // function call
+      const type = findMatchingFunctionDefinition(
+        args.map((a) => a.type),
+        n.binding,
+      )!.result
+      const compType = getComponentType((type as BasicType).type)!
+      const value = ccorrect(
+        applyBuiltinFunction(
+          (n.what.typeSpecifierNonArray as Token).image,
+          args.map((a) => a.value),
+        ),
+        (x) => norm(compType, x),
+      )
+      return { type, value }
+    } else if (n.constructorType) {
+      // constructor
+
+      const cType = n.constructorType
+      if (cType.kind === "array") {
+        // array constructor
+        if (cType.size === args.length) {
+          return {
+            type: cType,
+            value: args.map((a) => a.value),
+          }
+        } else {
+          return undefined
+        }
+      } else if (cType.kind === "struct") {
+        const value: Record<string, unknown> = {}
+        const fields = Object.keys(cType.fields)
+        for (let i = 0; i < fields.length; i++) {
+          value[fields[i]] = args[i].value
+        }
+        return { type: cType, value }
+      } else {
+        // basic type constructor call
+
+        const matDims = getMatrixDimensions(cType.type)
+        if (matDims && args.length === 1 && isMatrixType(args[0].type)) {
+          // this is the matXxY(matZxW) case
+          const [cols, rows] = matDims
+          const o = args[0].value as number[]
+          const [oCols, oRows] = getMatrixDimensions(args[0].type.type)!
+          const value = Object.assign(Array(cols * rows), { rows })
+          for (let c = 0; c < cols; c++) {
+            for (let r = 0; r < rows; r++) {
+              value[c * rows + r] =
+                c < oCols && r < oRows ? o[c * oRows + r] : +(c === r)
+            }
+          }
+          return { type: { kind: "basic", type: cType.type }, value }
+        }
+        const neededSize = getComponentCount(cType.type)
+        const neededType = getComponentType(cType.type)!
+        let result = args
+          .map((arg) => arg.value)
+          .flatMap<any>((arg) => (Array.isArray(arg) ? arg : [arg]))
+          .slice(0, neededSize)
+          .map((e) => norm(neededType, e))
+        if (result.length === 1) {
+          if (getVectorSize(cType.type)) {
+            result = Array(neededSize).fill(result[0])
+          } else if (matDims) {
+            const [cols, rows] = matDims
+            const mat = Object.assign(Array(cols * rows).fill(0), { rows })
+            for (let i = 0; i < Math.min(cols, rows); i++) {
+              mat[i * rows + i] = result[0]
+            }
+            result = mat
+          }
+        }
+        if (matDims) {
+          Object.assign(result, { rows: matDims[1] })
+        }
+        return {
+          type: { kind: "basic", type: cType.type },
+          value: neededSize === 1 ? result[0] : result,
+        }
+      }
+    }
+    throw new Error()
+  }
+  commaExpression(n: CommaExpression): TypeAndValue | undefined {
+    return undefined
+  }
+  methodCall(n: MethodCall): TypeAndValue | undefined {
+    const oType = CHECKER_VISITOR.visit(n.on)
+    if (oType?.kind === "array") {
+      return { type: BasicType.INT, value: oType.size }
+    }
+    return undefined
+  }
+  variableExpression(n: VariableExpression): TypeAndValue | undefined {
+    return (
+      n.binding?.dl?.fsType.typeQualifier?.storageQualifier?.CONST &&
+      n.binding.d?.init &&
+      this.visit(n.binding.d?.init)
+    )
+  }
+  fieldAccess(n: FieldAccess): TypeAndValue | undefined {
+    const on = this.visit(n.on)
+    if (!on) {
+      return
+    }
+    const f = n.field.image
+    if (isVectorType(on.type)) {
+      const swizzle = f.split("").map((e) => {
+        const vectorFieldIndex = "xyzwrgbastpq".indexOf(e) % 4
+        return (on.value as any[])[vectorFieldIndex]
+      })
+      const value = swizzle.length === 1 ? swizzle[0] : swizzle
+      return {
+        type: {
+          kind: "basic",
+          type: getVectorType(getComponentType(on.type.type)!, swizzle.length)!,
+        },
+        value,
+      }
+    } else if (on.type.kind === "struct") {
+      const fieldType = on.type.fields[f].type
+      return (
+        fieldType && {
+          type: fieldType,
+          value: (on.value as Record<string, unknown>)[f],
+        }
+      )
+    }
+    throw new Error()
+  }
+})()
 
 // function isConstantExpression(n: Node): boolean {
 //   function isBuiltInFunctionCall(n: FunctionCall): boolean {
@@ -1087,9 +1072,7 @@ class BinderVisitor extends AbstractVisitor<any> {
       for (const as of [typeSpecifier.arraySpecifier, arraySpecifier]) {
         if (as) {
           const size =
-            as.size === undefined
-              ? -1
-              : +(evaluateConstantExpression(as.size)?.value ?? 0)
+            as.size === undefined ? -1 : +(this.visit(as.size)?.value ?? 0)
           result = { kind: "array", of: result, size }
         }
       }
@@ -1201,6 +1184,18 @@ const VALID_BINARY_OPERATIONS: T4[] = [
   ),
   // MAT_COLS_X_ROWS
   // columns of lhs === rows of rhs
+  [TOKEN.STAR, TOKEN.VEC2, TOKEN.MAT2X2, TOKEN.VEC2],
+  [TOKEN.STAR, TOKEN.VEC3, TOKEN.MAT2X3, TOKEN.VEC2],
+  [TOKEN.STAR, TOKEN.VEC4, TOKEN.MAT2X4, TOKEN.VEC2],
+
+  [TOKEN.STAR, TOKEN.VEC2, TOKEN.MAT3X2, TOKEN.VEC3],
+  [TOKEN.STAR, TOKEN.VEC3, TOKEN.MAT3X3, TOKEN.VEC3],
+  [TOKEN.STAR, TOKEN.VEC4, TOKEN.MAT3X4, TOKEN.VEC3],
+
+  [TOKEN.STAR, TOKEN.VEC2, TOKEN.MAT4X2, TOKEN.VEC4],
+  [TOKEN.STAR, TOKEN.VEC3, TOKEN.MAT4X3, TOKEN.VEC4],
+  [TOKEN.STAR, TOKEN.VEC4, TOKEN.MAT4X4, TOKEN.VEC4],
+
   [TOKEN.STAR, TOKEN.MAT2X2, TOKEN.MAT2X2, TOKEN.MAT2X2],
   [TOKEN.STAR, TOKEN.MAT2X2, TOKEN.MAT3X2, TOKEN.MAT2X3],
   [TOKEN.STAR, TOKEN.MAT2X2, TOKEN.MAT4X2, TOKEN.MAT2X4],

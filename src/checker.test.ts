@@ -208,6 +208,9 @@ describe("/*constant expressions", () => {
     test("1+3", isInt(4))
     test("1.2+1.4", isFloat(2.6))
     test("2u-3u", isUint(0xffff_ffff))
+
+    test("mat2(2,2,2,2) * mat2(3)", isMat([6, 6], [6, 6]))
+    test("vec3(1,2,3) * mat2x3(7,9,11, 8,10,12)", isFloat([58, 139]))
   })
 
   describe("array access*/", () => {
@@ -280,7 +283,6 @@ describe("/*constant expressions", () => {
     )
 
     test("matrixCompMult(mat2(2,2,2,2), mat2(3))", isMat([6, 0], [0, 6]))
-    test("mat2(2,2,2,2) * mat2(3)", isMat([6, 6], [6, 6]))
 
     test("transpose(mat2x3(1,2,3, 4,5,6))", isMat([1, 2, 3], [4, 5, 6]))
     test(
