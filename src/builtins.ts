@@ -104,16 +104,20 @@ const GEOMETRIC = {
     const l = Math.hypot(...x)
     return x.map((xi) => xi / l)
   },
-  faceforward: (N: number[], I: number[], Nref: number[]): number[] =>
-    dot(Nref, I) < 0 ? N : N.map((e) => -e),
+
+  faceforward: (N: number[], I: number[], Nref: number[]): number[] => {
+    return dot(Nref, I) < 0 ? N : N.map((e) => -e)
+  },
+
   reflect: (I: number[], N: number[]): number[] => {
     const f = 2 * dot(N, I)
     return I.map((Ii, i) => Ii - f * N[i])
   },
-  refract: (N: number[], I: number[], eta: number): number[] => {
+
+  refract: (I: number[], N: number[], eta: number): number[] => {
     const k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I))
     if (k < 0.0) {
-      return N.map(() => 0.0)
+      return I.map(() => 0.0)
     } else {
       const f = eta * dot(N, I) + Math.sqrt(k)
       return I.map((Ii, i) => eta * Ii - f * N[i])

@@ -430,10 +430,10 @@ export function evaluateConstantExpression(n: Node):
       ) {
         const ll = isVectorType(lType)
           ? Object.assign([], l.value, { rows: 1 })
-          : l
+          : l.value
         const rr = isVectorType(r.type)
           ? Object.assign([], r.value, { rows: r.value.size })
-          : r
+          : r.value
 
         const type = VALID_BINARY_OPERATIONS.find(
           ([op, lhs, rhs, _result]) =>
