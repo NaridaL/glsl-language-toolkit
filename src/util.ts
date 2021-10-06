@@ -3,6 +3,12 @@ import { Many } from "lodash"
 
 export const DEV = process.env.NODE_ENV !== "production"
 
+export function invariant(x: unknown): void {
+  if (DEV && !x) {
+    throw new Error()
+  }
+}
+
 export function underline(
   str: string,
   start: number,

@@ -1,5 +1,6 @@
 import { clamp } from "lodash"
 import { inverse2, inverse3, inverse4 } from "./matinverse"
+import { invariant } from "./util"
 
 const COMPONENT_FUNCTIONS = {
   radians: (degrees: number): number => (Math.PI / 180) * degrees,
@@ -154,9 +155,7 @@ const MATRIX = {
   },
 
   transpose: (m: Matrix) => {
-    if (!m.rows) {
-      throw new Error()
-    }
+    invariant(m.rows)
     const mCols = m.length / m.rows
     const result = Matrix(m.rows, mCols)
     for (let ci = 0; ci < m.rows; ci++) {
@@ -167,9 +166,7 @@ const MATRIX = {
     return result
   },
   inverse: (m: Matrix) => {
-    if (!m.rows) {
-      throw new Error()
-    }
+    invariant(m.rows)
     if (m.length === 16) {
       return inverse4(m)
     }
@@ -179,7 +176,7 @@ const MATRIX = {
     if (m.length === 4) {
       return inverse2(m)
     }
-    throw new Error()
+    invariant(false)
   },
 }
 
@@ -208,6 +205,7 @@ const AS_WHOLE: Record<string, (...args: any[]) => any> = Object.assign(
   VECTOR_RELATIONAL,
   FRAGMENT_PROCESSING,
   MATRIX,
+  PACKING,
 )
 const COMPONENT_WISE: Record<string, (...args: any[]) => any> = Object.assign(
   {},

@@ -797,7 +797,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     return s
   }
 
-  structSpecifier(n: StructSpecifier): any {
+  protected structSpecifier(n: StructSpecifier): any {
     const fields: StructType["fields"] = {}
     for (const declaration of n.declarations) {
       declaration.type
@@ -887,7 +887,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
   }
 
-  initDeclaratorListDeclaration(n: InitDeclaratorListDeclaration) {
+  public initDeclaratorListDeclaration(n: InitDeclaratorListDeclaration) {
     this.visit(n.fsType)
     for (const d of n.declarators) {
       // Bind array specifier and initializer first.
@@ -907,7 +907,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
   }
 
-  translationUnit(n: TranslationUnit) {
+  public translationUnit(n: TranslationUnit) {
     if (this.BUILTIN_SCOPE) {
       this.scopes = [this.BUILTIN_SCOPE]
     }
@@ -941,7 +941,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     return this.functionDefinition(n)
   }
 
-  functionDefinition(n: FunctionDefinition | FunctionPrototype) {
+  public functionDefinition(n: FunctionDefinition | FunctionPrototype) {
     this.visit(n.returnType)
     this.pushScope()
     if (this.currentFunctionPrototypeParams) {
@@ -1056,8 +1056,8 @@ class BinderVisitor extends AbstractVisitor<any> {
       typeSpecifier = typeSpecifier.typeSpecifier
     }
     const typeSpecifierNonArray = typeSpecifier.typeSpecifierNonArray
+    let result: NormalizedType | undefined
     if (isToken(typeSpecifierNonArray)) {
-      let result: NormalizedType | undefined
       if (typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER) {
         // refers to a struct
         const binding = this.resolve(typeSpecifierNonArray.image)
@@ -1076,8 +1076,19 @@ class BinderVisitor extends AbstractVisitor<any> {
           result = { kind: "array", of: result, size }
         }
       }
-      return result
+    } else {
+      if (typeSpecifierNonArray.name) {
+        const binding = this.resolve(typeSpecifierNonArray.name.image)
+        if (binding?.kind === "struct") {
+          result = binding.type
+        }
+      }
     }
+    return result
+  }
+
+  public bind(u: TranslationUnit): void {
+    super.visit(u)
   }
 }
 
@@ -1304,7 +1315,11 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   private currentFunctionPrototypeReturnType: NormalizedType | undefined =
     undefined
 
-  assignmentExpression(n: AssignmentExpression) {
+  public check(u: TranslationUnit): void {
+    super.visit(u)
+  }
+
+  protected assignmentExpression(n: AssignmentExpression) {
     // We parse conditionExpressions on the LHS, but only unaryExpressions are allowed.
 
     if (!isLValue(n.lhs)) {
@@ -1320,7 +1335,9 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return lType
   }
 
-  selectionStatement(n: SelectionStatement): NormalizedType | undefined {
+  protected selectionStatement(
+    n: SelectionStatement,
+  ): NormalizedType | undefined {
     const cType = this.visit(n.condition)
     this.visit(n.yes)
     this.visit(n.no)
@@ -1330,7 +1347,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return
   }
 
-  forStatement(n: ForStatement): NormalizedType | undefined {
+  protected forStatement(n: ForStatement): NormalizedType | undefined {
     this.visit(n.initExpression)
     const cType = this.visit(n.conditionExpression)
     this.visit(n.loopExpression)
@@ -1341,7 +1358,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return
   }
 
-  whileStatement(n: WhileStatement): NormalizedType | undefined {
+  protected whileStatement(n: WhileStatement): NormalizedType | undefined {
     const cType = this.visit(n.conditionExpression)
     this.visit(n.statement)
     if (typeNotEquals(cType, BasicType.BOOL)) {
@@ -1350,7 +1367,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return
   }
 
-  doWhileStatement(n: DoWhileStatement): NormalizedType | undefined {
+  protected doWhileStatement(n: DoWhileStatement): NormalizedType | undefined {
     this.visit(n.statement)
     const cType = this.visit(n.conditionExpression)
     if (typeNotEquals(cType, BasicType.BOOL)) {
@@ -1359,7 +1376,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return
   }
 
-  switchStatement(n: SwitchStatement): NormalizedType | undefined {
+  protected switchStatement(n: SwitchStatement): NormalizedType | undefined {
     const iType = this.visit(n.initExpression)
     if (
       typeNotEquals(iType, BasicType.INT) &&
@@ -1371,7 +1388,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return super.switchStatement(n)
   }
 
-  arrayAccess(n: ArrayAccess): NormalizedType | undefined {
+  protected arrayAccess(n: ArrayAccess): NormalizedType | undefined {
     const iType = this.visit(n.index)
     if (
       typeNotEquals(iType, BasicType.INT) &&
@@ -1398,13 +1415,15 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     }
   }
 
-  variableExpression(n: VariableExpression): NormalizedType | undefined {
+  protected variableExpression(
+    n: VariableExpression,
+  ): NormalizedType | undefined {
     const binding: VariableBinding | undefined = n.binding
 
     return binding?.type
   }
 
-  fieldAccess(n: FieldAccess): NormalizedType | undefined {
+  protected fieldAccess(n: FieldAccess): NormalizedType | undefined {
     const oType = this.visit(n.on)
     if (isVectorType(oType)) {
       const f = n.field.image
@@ -1450,7 +1469,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     }
   }
 
-  binaryExpression(n: BinaryExpression): NormalizedType | undefined {
+  protected binaryExpression(n: BinaryExpression): NormalizedType | undefined {
     const lType = this.visit(n.lhs)
     const rType = this.visit(n.rhs)
 
@@ -1487,7 +1506,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return
   }
 
-  unaryExpression(n: UnaryExpression): NormalizedType | undefined {
+  protected unaryExpression(n: UnaryExpression): NormalizedType | undefined {
     // The arithmetic unary operators negate (-), post- and pre-increment and decrement (-- and ++) operate
     // on integer or floating-point values (including vectors and matrices).  All unary operators work
     // component-wise on their operands.  These result with the same type they operated on.  For post- and
@@ -1556,7 +1575,9 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     }
   }
 
-  conditionalExpression(n: ConditionalExpression): NormalizedType | undefined {
+  protected conditionalExpression(
+    n: ConditionalExpression,
+  ): NormalizedType | undefined {
     const cType = this.visit(n.condition)
     const yType = this.visit(n.yes)
     const nType = this.visit(n.no)
@@ -1570,7 +1591,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return yType
   }
 
-  returnStatement(n: ReturnStatement): NormalizedType | undefined {
+  protected returnStatement(n: ReturnStatement): NormalizedType | undefined {
     if (!this.currentFunctionPrototypeReturnType) {
       throw new Error()
     }
@@ -1591,14 +1612,18 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return super.returnStatement(n)
   }
 
-  functionPrototype(n: FunctionPrototype): NormalizedType | undefined {
+  protected functionPrototype(
+    n: FunctionPrototype,
+  ): NormalizedType | undefined {
     this.currentFunctionPrototypeReturnType = undefined
     super.functionPrototype(n)
     this.currentFunctionPrototypeReturnType = undefined
     return
   }
 
-  public functionDefinition(n: FunctionDefinition): NormalizedType | undefined {
+  protected functionDefinition(
+    n: FunctionDefinition,
+  ): NormalizedType | undefined {
     if (this.currentFunctionPrototypeReturnType) {
       throw new Error()
     }
@@ -1609,7 +1634,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return
   }
 
-  public functionCall(n: FunctionCall): NormalizedType | undefined {
+  protected functionCall(n: FunctionCall): NormalizedType | undefined {
     const aTypes: (NormalizedType | undefined)[] = n.args.map((a) =>
       this.visit(a),
     )
@@ -1742,7 +1767,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     }
   }
 
-  public methodCall(n: MethodCall): NormalizedType | undefined {
+  protected methodCall(n: MethodCall): NormalizedType | undefined {
     // there is only one method: array.length()
 
     const onType = this.visit(n.on)
@@ -1762,7 +1787,9 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return BasicType.INT
   }
 
-  constantExpression(n: ConstantExpression): NormalizedType | undefined {
+  protected constantExpression(
+    n: ConstantExpression,
+  ): NormalizedType | undefined {
     function getConstantType(t: TokenType): TokenType {
       switch (t) {
         case TOKEN.INTCONSTANT:
@@ -1798,8 +1825,8 @@ loadBuiltins()
 
 export function check(u: TranslationUnit): CError[] {
   const result = errors
-  BINDER_VISITOR.visit(u)
-  CHECKER_VISITOR.visit(u)
+  BINDER_VISITOR.bind(u)
+  CHECKER_VISITOR.check(u)
   errors = []
   return result
 }

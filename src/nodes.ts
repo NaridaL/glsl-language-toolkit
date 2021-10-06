@@ -322,170 +322,170 @@ export type Node =
   | TypeSpecifier
 
 export class AbstractVisitor<R> {
-  visit(n: Node | undefined): R | undefined {
+  protected visit(n: Node | undefined): R | undefined {
     return n && this[n.type](n as any)
   }
-  arraySpecifier(n: ArraySpecifier): R | undefined {
+  protected arraySpecifier(n: ArraySpecifier): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  binaryExpression(n: BinaryExpression): R | undefined {
+  protected binaryExpression(n: BinaryExpression): R | undefined {
     this.visit(n.lhs)
     this.visit(n.rhs)
     return
   }
-  methodCall(n: MethodCall): R | undefined {
+  protected methodCall(n: MethodCall): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  functionCall(n: FunctionCall): R | undefined {
+  protected functionCall(n: FunctionCall): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  arrayAccess(n: ArrayAccess): R | undefined {
+  protected arrayAccess(n: ArrayAccess): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  translationUnit(n: TranslationUnit): R | undefined {
+  protected translationUnit(n: TranslationUnit): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  assignmentExpression(n: AssignmentExpression): R | undefined {
+  protected assignmentExpression(n: AssignmentExpression): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  fieldAccess(n: FieldAccess): R | undefined {
+  protected fieldAccess(n: FieldAccess): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  conditionalExpression(n: ConditionalExpression): R | undefined {
+  protected conditionalExpression(n: ConditionalExpression): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  postfixExpression(n: PostfixExpression): R | undefined {
+  protected postfixExpression(n: PostfixExpression): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  commaExpression(n: CommaExpression): R | undefined {
+  protected commaExpression(n: CommaExpression): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  unaryExpression(n: UnaryExpression): R | undefined {
+  protected unaryExpression(n: UnaryExpression): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  functionDefinition(n: FunctionDefinition): R | undefined {
+  protected functionDefinition(n: FunctionDefinition): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  functionPrototype(n: FunctionPrototype): R | undefined {
+  protected functionPrototype(n: FunctionPrototype): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  parameterDeclaration(n: ParameterDeclaration): R | undefined {
+  protected parameterDeclaration(n: ParameterDeclaration): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  typeSpecifier(n: TypeSpecifier): R | undefined {
+  protected typeSpecifier(n: TypeSpecifier): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  compoundStatement(n: CompoundStatement): R | undefined {
+  protected compoundStatement(n: CompoundStatement): R | undefined {
     n.statements.forEach((n) => this.visit(n))
     return
   }
-  returnStatement(n: ReturnStatement): R | undefined {
+  protected returnStatement(n: ReturnStatement): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  continueStatement(n: ContinueStatement): R | undefined {
+  protected continueStatement(n: ContinueStatement): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  breakStatement(n: BreakStatement): R | undefined {
+  protected breakStatement(n: BreakStatement): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  discardStatement(n: DiscardStatement): R | undefined {
+  protected discardStatement(n: DiscardStatement): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  declarator(n: Declarator): R | undefined {
+  protected declarator(n: Declarator): R | undefined {
     this.visit(n.arraySpecifier)
     this.visit(n.init)
     return
   }
-  doWhileStatement(n: DoWhileStatement): R | undefined {
+  protected doWhileStatement(n: DoWhileStatement): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  whileStatement(n: WhileStatement): R | undefined {
+  protected whileStatement(n: WhileStatement): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  forStatement(n: ForStatement): R | undefined {
+  protected forStatement(n: ForStatement): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  expressionStatement(n: ExpressionStatement): R | undefined {
+  protected expressionStatement(n: ExpressionStatement): R | undefined {
     this.visit(n.expression)
     return
   }
-  initDeclaratorListDeclaration(
+  protected initDeclaratorListDeclaration(
     n: InitDeclaratorListDeclaration,
   ): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  precisionDeclaration(n: PrecisionDeclaration): R | undefined {
+  protected precisionDeclaration(n: PrecisionDeclaration): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  selectionStatement(n: SelectionStatement): R | undefined {
+  protected selectionStatement(n: SelectionStatement): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  storageQualifier(n: StorageQualifier): R | undefined {
+  protected storageQualifier(n: StorageQualifier): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  switchStatement(n: SwitchStatement): R | undefined {
+  protected switchStatement(n: SwitchStatement): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  caseLabel(n: CaseLabel): R | undefined {
+  protected caseLabel(n: CaseLabel): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  fullySpecifiedType(n: FullySpecifiedType): R | undefined {
+  protected fullySpecifiedType(n: FullySpecifiedType): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  typeQualifier(n: TypeQualifier): R | undefined {
+  protected typeQualifier(n: TypeQualifier): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  structSpecifier(n: StructSpecifier): R | undefined {
+  protected structSpecifier(n: StructSpecifier): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  layoutQualifier(n: LayoutQualifier): R | undefined {
+  protected layoutQualifier(n: LayoutQualifier): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  invariantDeclaration(n: InvariantDeclaration): R | undefined {
+  protected invariantDeclaration(n: InvariantDeclaration): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  structDeclaration(n: StructDeclaration): R | undefined {
+  protected structDeclaration(n: StructDeclaration): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  variableExpression(n: VariableExpression): R | undefined {
+  protected variableExpression(n: VariableExpression): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }
-  constantExpression(n: ConstantExpression): R | undefined {
+  protected constantExpression(n: ConstantExpression): R | undefined {
     n.children?.forEach((n) => this.visit(n))
     return
   }

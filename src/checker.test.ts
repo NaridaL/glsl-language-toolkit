@@ -12,7 +12,7 @@ function bla(p: string) {
   return check(parsed)
 }
 
-function ttt(p: string, ...expectedErrors: string[]) {
+function sl(p: string, ...expectedErrors: string[]) {
   p = p.replace(/'/g, "")
   p = p.replace(/\[\[/g, "")
   p = p.replace(/]]/g, "")
@@ -22,55 +22,59 @@ function ttt(p: string, ...expectedErrors: string[]) {
   return errs
 }
 
-function tttexpr(expr: string, ...expectedErrors: string[]): void {
-  ttt(`void main() { ${expr}; }`, ...expectedErrors)
+function slexpr(expr: string, ...expectedErrors: string[]): void {
+  sl(`void main() { ${expr}; }`, ...expectedErrors)
 }
 test("checks shader.glsl", () => {
   const c = readFileSync(__dirname + "/../fixtures/shader.glsl", {
     encoding: "utf8",
   })
-  ttt(c)
+  sl(c)
 })
 test("S0001: type mismatch", () => {
-  ttt("void main() { 1 '+' 1.0; }", "S0001")
+  sl("void main() { 1 '+' 1.0; }", "S0001")
 })
 test("S0003: if has bool as condition", () => {
-  ttt("void main() { if ('1'); }", "S0003")
+  sl("void main() { if ('1'); }", "S0003")
 })
 test("S0003: while has bool as condition", () => {
-  ttt("void main() { while ('1.'); }", "S0003")
+  sl("void main() { while ('1.'); }", "S0003")
 })
 test("S0003: do-while has bool as condition", () => {
-  ttt("void main() { do {} while ('vec3(1.)'); }", "S0003")
+  sl("void main() { do {} while ('vec3(1.)'); }", "S0003")
 })
 test("S0003: for has bool as condition", () => {
-  ttt("void main() { for (; 1u; ); }", "S0003")
+  sl("void main() { for (; 1u; ); }", "S0003")
 })
 test("S0004: binary operator not supported for operand types", () => {
-  ttt("void main() { 1 + 1.; }", "S0004")
-  ttt("void main() { 1. + float[2](1., 2.); }", "S0004")
+  sl("void main() { 1 + 1.; }", "S0004")
+  sl("void main() { 1. + float[2](1., 2.); }", "S0004")
 })
 test("S0004: unary operator not supported for operand types", () => {
-  ttt("void main() { float[2] a; -a; }", "S0004")
+  sl("void main() { float[2] a; -a; }", "S0004")
 })
 test("S0022: redefinition of variable in same scope", () => {
-  ttt("void main() { int a; float [[a]]; }", "S0022")
+  sl("void main() { int a; float [[a]]; }", "S0022")
 })
 test("S0024: redefinition of variable in same scope", () => {
-  ttt("struct a { int i; }; void a() {}", "S0024")
+  sl("struct a { int i; }; void a() {}", "S0024")
 })
 test("S0025: cannot mix .xyzw and .rgba", () => {
-  ttt("void main() { vec3 a; a.xr; }", "S0025")
+  sl("void main() { vec3 a; a.xr; }", "S0025")
 })
 test("S0026: can swizzle at most 4 fields", () => {
-  ttt("void main() { vec3 a; a.xxyyzz; }", "S0026")
+  sl("void main() { vec3 a; a.xxyyzz; }", "S0026")
 })
 test("S0027: TODO", () => {
-  ttt("void main() { 1++; }", "S0027")
+  sl("void main() { 1++; }", "S0027")
 })
 
 test("too many args to builtin", () => {
-  tttexpr("min(.2, .3, .5)", "no matching overload for params")
+  slexpr("min(.2, .3, .5)", "no matching overload for params")
+})
+
+test("struct decl in func return type", () => {
+  sl("struct G { int i; } foo() { return G(1); }")
 })
 
 function mat(...rs: number[][]): number[] {
