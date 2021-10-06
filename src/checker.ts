@@ -325,7 +325,7 @@ function evalIntConstant(s: string) {
 }
 
 export function evaluateConstantExpression(n: Node): TypeAndValue | undefined {
-  return CONSTANT_VISITOR.visit(n)
+  return CONSTANT_VISITOR.eval(n)
 }
 
 const CONSTANT_VISITOR = new (class extends AbstractVisitor<
@@ -611,6 +611,10 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     }
     throw new Error()
   }
+
+  public eval(n: Node): TypeAndValue | undefined {
+    return super.visit(n)
+  }
 })()
 
 // function isConstantExpression(n: Node): boolean {
@@ -727,13 +731,6 @@ function isTokenType(type: TokenType | StructSpecifier): type is TokenType {
 
 function assertNever(_x?: never): never {
   throw new Error()
-}
-
-function assert(x: boolean): x is true {
-  if (!x) {
-    throw new Error()
-  }
-  return true
 }
 
 function typeEquals(
