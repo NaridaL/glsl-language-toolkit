@@ -331,7 +331,9 @@ export function evaluateConstantExpression(n: Node): TypeAndValue | undefined {
 const CONSTANT_VISITOR = new (class extends AbstractVisitor<
   TypeAndValue | undefined
 > {
-  constantExpression(n: ConstantExpression): TypeAndValue | undefined {
+  protected constantExpression(
+    n: ConstantExpression,
+  ): TypeAndValue | undefined {
     switch (n._const.tokenType) {
       case TOKEN.FLOATCONSTANT:
         return {
@@ -359,7 +361,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
         throw new Error()
     }
   }
-  unaryExpression(n: UnaryExpression): TypeAndValue | undefined {
+  protected unaryExpression(n: UnaryExpression): TypeAndValue | undefined {
     const on = this.visit(n.on)
     if (!on) {
       return undefined
@@ -389,7 +391,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     }
     return { type: on.type, value }
   }
-  binaryExpression(n: BinaryExpression): TypeAndValue | undefined {
+  protected binaryExpression(n: BinaryExpression): TypeAndValue | undefined {
     const l = this.visit(n.lhs)
     const r = this.visit(n.rhs)
     if (l?.type.kind !== "basic" || r?.type.kind !== "basic") {
@@ -440,7 +442,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     }
     throw new Error("???")
   }
-  arrayAccess(n: ArrayAccess): TypeAndValue | undefined {
+  protected arrayAccess(n: ArrayAccess): TypeAndValue | undefined {
     const on = this.visit(n.on)
     if (!on) {
       return undefined
@@ -471,7 +473,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     }
     throw new Error()
   }
-  functionCall(n: FunctionCall): TypeAndValue | undefined {
+  protected functionCall(n: FunctionCall): TypeAndValue | undefined {
     const args = n.args.map((a) => this.visit(a))
     if (!allDefined(args)) {
       return undefined
@@ -560,24 +562,26 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     }
     throw new Error()
   }
-  commaExpression(n: CommaExpression): TypeAndValue | undefined {
+  protected commaExpression(n: CommaExpression): TypeAndValue | undefined {
     return undefined
   }
-  methodCall(n: MethodCall): TypeAndValue | undefined {
+  protected methodCall(n: MethodCall): TypeAndValue | undefined {
     const oType = CHECKER_VISITOR.visit(n.on)
     if (oType?.kind === "array") {
       return { type: BasicType.INT, value: oType.size }
     }
     return undefined
   }
-  variableExpression(n: VariableExpression): TypeAndValue | undefined {
+  protected variableExpression(
+    n: VariableExpression,
+  ): TypeAndValue | undefined {
     return (
       n.binding?.dl?.fsType.typeQualifier?.storageQualifier?.CONST &&
       n.binding.d?.init &&
       this.visit(n.binding.d?.init)
     )
   }
-  fieldAccess(n: FieldAccess): TypeAndValue | undefined {
+  protected fieldAccess(n: FieldAccess): TypeAndValue | undefined {
     const on = this.visit(n.on)
     if (!on) {
       return
@@ -840,7 +844,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
   }
 
-  variableExpression(n: VariableExpression) {
+  protected variableExpression(n: VariableExpression) {
     const binding = this.resolve(n.var.image)
     if (binding) {
       if (binding.kind === "variable") {
@@ -853,12 +857,12 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
   }
 
-  public methodCall(n: MethodCall): any {
+  protected methodCall(n: MethodCall): any {
     this.visit(n.on)
     // the function call can only be ".length()" so there is nothing to bind
   }
 
-  public functionCall(n: FunctionCall): any {
+  protected functionCall(n: FunctionCall): any {
     super.functionCall(n)
     const ts = n.what
     if (isToken(ts.typeSpecifierNonArray)) {
@@ -887,7 +891,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
   }
 
-  public initDeclaratorListDeclaration(n: InitDeclaratorListDeclaration) {
+  protected initDeclaratorListDeclaration(n: InitDeclaratorListDeclaration) {
     this.visit(n.fsType)
     for (const d of n.declarators) {
       // Bind array specifier and initializer first.
@@ -907,7 +911,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
   }
 
-  public translationUnit(n: TranslationUnit) {
+  protected translationUnit(n: TranslationUnit) {
     if (this.BUILTIN_SCOPE) {
       this.scopes = [this.BUILTIN_SCOPE]
     }
@@ -937,11 +941,11 @@ class BinderVisitor extends AbstractVisitor<any> {
     this.popScope()
   }
 
-  public functionPrototype(n: FunctionPrototype): any {
+  protected functionPrototype(n: FunctionPrototype): any {
     return this.functionDefinition(n)
   }
 
-  public functionDefinition(n: FunctionDefinition | FunctionPrototype) {
+  protected functionDefinition(n: FunctionDefinition | FunctionPrototype) {
     this.visit(n.returnType)
     this.pushScope()
     if (this.currentFunctionPrototypeParams) {
@@ -1034,7 +1038,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     this.popScope()
   }
 
-  public builtins(n: TranslationUnit): void {
+  protected builtins(n: TranslationUnit): void {
     this.doingBuiltins = true
     this.translationUnit(n)
     this.doingBuiltins = false
