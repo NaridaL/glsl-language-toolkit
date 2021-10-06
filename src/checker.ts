@@ -91,13 +91,13 @@ function markError(
 }
 
 function isLValue(l: Node): boolean {
-  if (l.type === "variableExpression") {
+  if (l.kind === "variableExpression") {
     return true
   }
-  if (l.type === "fieldAccess") {
+  if (l.kind === "fieldAccess") {
     return isLValue(l.on)
   }
-  if (l.type === "arrayAccess") {
+  if (l.kind === "arrayAccess") {
     return isLValue(l.on)
   }
   // if (l.type === "parenExpression")
@@ -318,6 +318,7 @@ function doMatrixMult(a: Matrix, b: Matrix): Matrix {
   }
   return result
 }
+
 function evalIntConstant(s: string) {
   return s.length >= 2 && s[0] === "0" && s[1] !== "x"
     ? parseInt(s, 8)
@@ -331,6 +332,10 @@ export function evaluateConstantExpression(n: Node): TypeAndValue | undefined {
 const CONSTANT_VISITOR = new (class extends AbstractVisitor<
   TypeAndValue | undefined
 > {
+  public eval(n: Node): TypeAndValue | undefined {
+    return super.visit(n)
+  }
+
   protected constantExpression(
     n: ConstantExpression,
   ): TypeAndValue | undefined {
@@ -361,6 +366,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
         throw new Error()
     }
   }
+
   protected unaryExpression(n: UnaryExpression): TypeAndValue | undefined {
     const on = this.visit(n.on)
     if (!on) {
@@ -391,6 +397,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     }
     return { type: on.type, value }
   }
+
   protected binaryExpression(n: BinaryExpression): TypeAndValue | undefined {
     const l = this.visit(n.lhs)
     const r = this.visit(n.rhs)
@@ -442,6 +449,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     }
     throw new Error("???")
   }
+
   protected arrayAccess(n: ArrayAccess): TypeAndValue | undefined {
     const on = this.visit(n.on)
     if (!on) {
@@ -473,6 +481,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     }
     throw new Error()
   }
+
   protected functionCall(n: FunctionCall): TypeAndValue | undefined {
     const args = n.args.map((a) => this.visit(a))
     if (!allDefined(args)) {
@@ -562,16 +571,19 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     }
     throw new Error()
   }
-  protected commaExpression(n: CommaExpression): TypeAndValue | undefined {
+
+  protected commaExpression(_n: CommaExpression): TypeAndValue | undefined {
     return undefined
   }
+
   protected methodCall(n: MethodCall): TypeAndValue | undefined {
-    const oType = CHECKER_VISITOR.visit(n.on)
+    const oType = CHECKER_VISITOR.check(n.on)
     if (oType?.kind === "array") {
       return { type: BasicType.INT, value: oType.size }
     }
     return undefined
   }
+
   protected variableExpression(
     n: VariableExpression,
   ): TypeAndValue | undefined {
@@ -581,6 +593,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
       this.visit(n.binding.d?.init)
     )
   }
+
   protected fieldAccess(n: FieldAccess): TypeAndValue | undefined {
     const on = this.visit(n.on)
     if (!on) {
@@ -610,10 +623,6 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
       )
     }
     throw new Error()
-  }
-
-  public eval(n: Node): TypeAndValue | undefined {
-    return super.visit(n)
   }
 })()
 
@@ -706,11 +715,11 @@ declare module "./nodes" {
   }
 
   export interface FunctionDefinition extends BaseNode {
-    resolvedReturnType?: NormalizedType
+    returnTypeResolved?: NormalizedType
   }
 
   export interface FunctionPrototype extends BaseNode {
-    resolvedReturnType?: NormalizedType
+    returnTypeResolved?: NormalizedType
   }
 }
 
@@ -784,10 +793,13 @@ function getGenTypes(ts: TypeSpecifier): TokenType[] | undefined {
 
 class BinderVisitor extends AbstractVisitor<any> {
   protected scopes: Scope[] = []
+
   private BUILTIN_SCOPE: Scope | undefined = undefined
+
   private currentFunctionPrototypeParams:
     | (NormalizedType | undefined)[]
     | undefined = undefined
+
   private doingBuiltins = false
 
   protected get scope() {
@@ -798,10 +810,20 @@ class BinderVisitor extends AbstractVisitor<any> {
     return s
   }
 
+  public builtins(n: TranslationUnit): void {
+    this.doingBuiltins = true
+    this.translationUnit(n)
+    this.doingBuiltins = false
+  }
+
+  public bind(u: TranslationUnit): void {
+    super.visit(u)
+  }
+
   protected structSpecifier(n: StructSpecifier): any {
     const fields: StructType["fields"] = {}
     for (const declaration of n.declarations) {
-      declaration.type
+      declaration.kind
       for (const declarator of declaration.declarators) {
         // Bind array specifier and initializer first.
         this.declarator(declarator)
@@ -830,7 +852,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
   }
 
-  resolve(symbol: string): Binding | undefined {
+  protected resolve(symbol: string): Binding | undefined {
     let scope: Scope | undefined = this.scope
     while (scope) {
       const x = scope.defs[symbol]
@@ -1008,7 +1030,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
   }
 
-  parameterDeclaration(n: ParameterDeclaration) {
+  protected parameterDeclaration(n: ParameterDeclaration) {
     super.parameterDeclaration(n)
 
     const type = this.figure(n.typeSpecifier, n.arraySpecifier)
@@ -1029,16 +1051,10 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
   }
 
-  compoundStatement(n: CompoundStatement) {
+  protected compoundStatement(n: CompoundStatement) {
     this.pushScope()
     super.compoundStatement(n)
     this.popScope()
-  }
-
-  protected builtins(n: TranslationUnit): void {
-    this.doingBuiltins = true
-    this.translationUnit(n)
-    this.doingBuiltins = false
   }
 
   protected pushScope() {
@@ -1053,7 +1069,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     typeSpecifier: FullySpecifiedType | TypeSpecifier,
     arraySpecifier: ArraySpecifier | undefined,
   ): NormalizedType | undefined {
-    if (typeSpecifier.type === "fullySpecifiedType") {
+    if (typeSpecifier.kind === "fullySpecifiedType") {
       typeSpecifier = typeSpecifier.typeSpecifier
     }
     const typeSpecifierNonArray = typeSpecifier.typeSpecifierNonArray
@@ -1073,7 +1089,9 @@ class BinderVisitor extends AbstractVisitor<any> {
       for (const as of [typeSpecifier.arraySpecifier, arraySpecifier]) {
         if (as) {
           const size =
-            as.size === undefined ? -1 : +(this.visit(as.size)?.value ?? 0)
+            as.size === undefined
+              ? -1
+              : +(evaluateConstantExpression(as.size)?.value ?? 0)
           result = { kind: "array", of: result, size }
         }
       }
@@ -1086,10 +1104,6 @@ class BinderVisitor extends AbstractVisitor<any> {
       }
     }
     return result
-  }
-
-  public bind(u: TranslationUnit): void {
-    super.visit(u)
   }
 }
 
@@ -1316,8 +1330,8 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   private currentFunctionPrototypeReturnType: NormalizedType | undefined =
     undefined
 
-  public check(u: TranslationUnit): void {
-    super.visit(u)
+  public check(u: Node): NormalizedType | undefined {
+    return super.visit(u)
   }
 
   protected assignmentExpression(n: AssignmentExpression) {

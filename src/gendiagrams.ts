@@ -33,7 +33,7 @@ console.timeEnd("parsing")
 function shortDesc(node: Node | IToken) {
   return isToken(node)
     ? `${node.tokenType.name}(${node.image}) ${node.startOffset}-${node.endOffset}`
-    : `${node.type} ${(node as any).firstToken.startOffset}-${
+    : `${node.kind} ${(node as any).firstToken.startOffset}-${
         (node as any).lastToken.endOffset
       }`
 }

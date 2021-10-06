@@ -3,95 +3,96 @@ import { IToken } from "chevrotain"
 export type Token = IToken
 
 export interface BaseNode {
+  kind: string
   children?: Node[]
   firstToken?: Token
   lastToken?: Token
 }
 
 export interface ArraySpecifier extends BaseNode {
-  type: "arraySpecifier"
+  kind: "arraySpecifier"
   size: Expression | undefined
 }
 
 export interface BinaryExpression extends BaseNode {
-  type: "binaryExpression"
+  kind: "binaryExpression"
   lhs: Expression
   rhs: Expression
   op: Token
 }
 
 export interface MethodCall extends BaseNode {
-  type: "methodCall"
+  kind: "methodCall"
   on: Expression
   functionCall: FunctionCall
 }
 
 export interface FunctionCall extends BaseNode {
-  type: "functionCall"
+  kind: "functionCall"
   what: TypeSpecifier
   args: Expression[]
 }
 
 export interface ArrayAccess extends BaseNode {
-  type: "arrayAccess"
+  kind: "arrayAccess"
   on: Expression
   index: Expression
 }
 
 export interface TranslationUnit extends BaseNode {
-  type: "translationUnit"
+  kind: "translationUnit"
   declarations: Declaration[]
   comments?: Token[]
 }
 
 export interface AssignmentExpression extends BaseNode {
-  type: "assignmentExpression"
+  kind: "assignmentExpression"
   op: Token
   lhs: Expression
   rhs: Expression
 }
 
 export interface FieldAccess extends BaseNode {
-  type: "fieldAccess"
+  kind: "fieldAccess"
   on: Expression
   field: Token
 }
 
 export interface ConditionalExpression extends BaseNode {
-  type: "conditionalExpression"
+  kind: "conditionalExpression"
   condition: Expression
   yes: Expression
   no: Expression
 }
 
 export interface PostfixExpression extends BaseNode {
-  type: "postfixExpression"
+  kind: "postfixExpression"
   on: Expression
   op: Token
 }
 export interface VariableExpression extends BaseNode {
-  type: "variableExpression"
+  kind: "variableExpression"
   var: Token
 }
 export interface ConstantExpression extends BaseNode {
-  type: "constantExpression"
+  kind: "constantExpression"
   _const: Token
 }
 
 export interface CommaExpression extends BaseNode {
-  type: "commaExpression"
+  kind: "commaExpression"
   lhs: Expression
   rhs: Expression
 }
 
 export interface UnaryExpression extends BaseNode {
-  type: "unaryExpression"
+  kind: "unaryExpression"
   on: Expression
   op: Token
 }
 
 export interface FunctionDefinition extends BaseNode {
-  type: "functionDefinition"
+  kind: "functionDefinition"
   name: Token
   returnType: FullySpecifiedType
   params: ParameterDeclaration[]
@@ -99,14 +100,14 @@ export interface FunctionDefinition extends BaseNode {
 }
 
 export interface FunctionPrototype extends BaseNode {
-  type: "functionPrototype"
+  kind: "functionPrototype"
   name: Token
   returnType: FullySpecifiedType
   params: ParameterDeclaration[]
 }
 
 export interface ParameterDeclaration extends BaseNode {
-  type: "parameterDeclaration"
+  kind: "parameterDeclaration"
   parameterTypeQualifier: Token | undefined
   pName: Token | undefined
   arraySpecifier: ArraySpecifier | undefined
@@ -115,44 +116,44 @@ export interface ParameterDeclaration extends BaseNode {
 }
 
 export interface TypeSpecifier extends BaseNode {
-  type: "typeSpecifier"
+  kind: "typeSpecifier"
   precisionQualifier: Token | undefined
   typeSpecifierNonArray: Token | StructSpecifier
   arraySpecifier: ArraySpecifier | undefined
 }
 
 export interface CompoundStatement extends BaseNode {
-  type: "compoundStatement"
+  kind: "compoundStatement"
   statements: Statement[]
   newScope: boolean
 }
 
 export interface ReturnStatement extends BaseNode {
-  type: "returnStatement"
+  kind: "returnStatement"
   what: Expression | undefined
 }
 
 export interface ContinueStatement extends BaseNode {
-  type: "continueStatement"
+  kind: "continueStatement"
 }
 
 export interface BreakStatement extends BaseNode {
-  type: "breakStatement"
+  kind: "breakStatement"
 }
 
 export interface DiscardStatement extends BaseNode {
-  type: "discardStatement"
+  kind: "discardStatement"
 }
 
 export interface Declarator extends BaseNode {
-  type: "declarator"
+  kind: "declarator"
   name: Token
   arraySpecifier: ArraySpecifier | undefined
   init: Expression | undefined
 }
 
 export interface DoWhileStatement extends BaseNode {
-  type: "doWhileStatement"
+  kind: "doWhileStatement"
   DO: Token
   WHILE: Token
   LEFT_PAREN: Token
@@ -163,7 +164,7 @@ export interface DoWhileStatement extends BaseNode {
 }
 
 export interface WhileStatement extends BaseNode {
-  type: "whileStatement"
+  kind: "whileStatement"
   WHILE: Token
   LEFT_PAREN: Token
   RIGHT_PAREN: Token
@@ -172,7 +173,7 @@ export interface WhileStatement extends BaseNode {
 }
 
 export interface ForStatement extends BaseNode {
-  type: "forStatement"
+  kind: "forStatement"
   FOR: Token
   LEFT_PAREN: Token
   initExpression: Expression | undefined
@@ -185,7 +186,7 @@ export interface ForStatement extends BaseNode {
 }
 
 export interface ExpressionStatement extends BaseNode {
-  type: "expressionStatement"
+  kind: "expressionStatement"
   expression: Expression
 }
 
@@ -204,26 +205,26 @@ export type Expression =
   | VariableExpression
 
 export interface InitDeclaratorListDeclaration extends BaseNode {
-  type: "initDeclaratorListDeclaration"
+  kind: "initDeclaratorListDeclaration"
   fsType: FullySpecifiedType
   declarators: Declarator[]
 }
 
 export interface PrecisionDeclaration extends BaseNode {
-  type: "precisionDeclaration"
+  kind: "precisionDeclaration"
   precisionQualifier: Token
   typeSpecifierNoPrec: TypeSpecifier
 }
 
 export interface SelectionStatement extends BaseNode {
-  type: "selectionStatement"
+  kind: "selectionStatement"
   condition: Expression
   yes: Statement
   no: Statement | undefined
 }
 
 export interface StorageQualifier extends BaseNode {
-  type: "storageQualifier"
+  kind: "storageQualifier"
   CENTROID: Token | undefined
   IN: Token | undefined
   OUT: Token | undefined
@@ -232,7 +233,7 @@ export interface StorageQualifier extends BaseNode {
 }
 
 export interface SwitchStatement extends BaseNode {
-  type: "switchStatement"
+  kind: "switchStatement"
   SWITCH: Token
   LEFT_PAREN: Token
   RIGHT_PAREN: Token
@@ -241,18 +242,18 @@ export interface SwitchStatement extends BaseNode {
 }
 
 export interface CaseLabel extends BaseNode {
-  type: "caseLabel"
+  kind: "caseLabel"
   _case: Expression | undefined
 }
 
 export interface FullySpecifiedType extends BaseNode {
-  type: "fullySpecifiedType"
+  kind: "fullySpecifiedType"
   typeQualifier: TypeQualifier | undefined
   typeSpecifier: TypeSpecifier
 }
 
 export interface TypeQualifier extends BaseNode {
-  type: "typeQualifier"
+  kind: "typeQualifier"
   storageQualifier: StorageQualifier | undefined
   layoutQualifier: LayoutQualifier | undefined
   interpolationQualifier: Token | undefined
@@ -260,24 +261,24 @@ export interface TypeQualifier extends BaseNode {
 }
 
 export interface StructSpecifier extends BaseNode {
-  type: "structSpecifier"
+  kind: "structSpecifier"
   name: Token | undefined
   declarations: StructDeclaration[]
 }
 
 export interface LayoutQualifier extends BaseNode {
-  type: "layoutQualifier"
+  kind: "layoutQualifier"
   layoutQualifierIds: { IDENTIFIER: Token; init: Token | undefined }[]
 }
 
 export interface InvariantDeclaration extends BaseNode {
-  type: "invariantDeclaration"
+  kind: "invariantDeclaration"
   INVARIANT: Token
   IDENTIFIER: Token
 }
 
 export interface StructDeclaration extends BaseNode {
-  type: "structDeclaration"
+  kind: "structDeclaration"
   fsType: FullySpecifiedType
   declarators: Declarator[]
 }
@@ -312,6 +313,7 @@ export type Node =
   | Declarator
   | Expression
   | FullySpecifiedType
+  | LayoutQualifier
   | ParameterDeclaration
   | Statement
   | StorageQualifier
@@ -323,7 +325,7 @@ export type Node =
 
 export class AbstractVisitor<R> {
   protected visit(n: Node | undefined): R | undefined {
-    return n && this[n.type](n as any)
+    return n && this[n.kind](n as any)
   }
   protected arraySpecifier(n: ArraySpecifier): R | undefined {
     n.children?.forEach((n) => this.visit(n))

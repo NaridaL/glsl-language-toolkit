@@ -123,7 +123,7 @@ describe("/*constant expressions", () => {
   const isFloat = c,
     isUint = c,
     isInt = c,
-    isMat = (...rs: number[][]) => c(mat(...rs)),
+    isMat = (...rowArrays: number[][]) => c(mat(...rowArrays)),
     isBool = c
 
   describe("constants*/", () => {

@@ -62,7 +62,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
       const p = <N extends Node, S extends keyof N>(_: N, s: S) =>
         path.call(print, s)
       try {
-        switch (n.type) {
+        switch (n.kind) {
           ////////// DECLARATIONS
           case "translationUnit":
             return join(hardline, path.map(print, "declarations"))
@@ -122,7 +122,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                 softline,
                 ")",
               ]),
-              n.type === "functionPrototype" ? ";" : [" ", p(n, "body")],
+              n.kind === "functionPrototype" ? ";" : [" ", p(n, "body")],
             ]
           case "parameterDeclaration":
             return [
@@ -257,7 +257,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           default:
             throw new Error(
               "unexpected n type " +
-                n.type +
+                n.kind +
                 "\n" +
                 JSON.stringify(n).substr(0, 100),
             )
