@@ -65,6 +65,9 @@ test("S0025: cannot mix .xyzw and .rgba", () => {
 test("S0026: can swizzle at most 4 fields", () => {
   sl("void main() { vec3 a; a.xxyyzz; }", "S0026")
 })
+test("redefining builtin", () => {
+  sl("void min(int i) {}", "redefining builtin")
+})
 test("S0027: TODO", () => {
   sl("void main() { 1++; }", "S0027")
 })
@@ -91,7 +94,7 @@ function mat(...rs: number[][]): number[] {
 
 type V = number | boolean | Record<string, unknown>
 describe("/*constant expressions", () => {
-  function c(expectedValue: Many<V>): ProvidesCallback {
+  function is(expectedValue: Many<V>): ProvidesCallback {
     const cfround = (x: V): V =>
       typeof x === "number" && x % 1 !== 0 ? Math.fround(x) : x
     const rows = expectedValue.rows
@@ -120,11 +123,11 @@ describe("/*constant expressions", () => {
     }
   }
 
-  const isFloat = c,
-    isUint = c,
-    isInt = c,
-    isMat = (...rowArrays: number[][]) => c(mat(...rowArrays)),
-    isBool = c
+  const isFloat = is,
+    isUint = is,
+    isInt = is,
+    isMat = (...rowArrays: number[][]) => is(mat(...rowArrays)),
+    isBool = is
 
   describe("constants*/", () => {
     test("1", isInt(1))
@@ -155,10 +158,10 @@ describe("/*constant expressions", () => {
     test("uint(-1)", isUint(0xffff_ffff))
     test("uint(-2)", isUint(0xffff_fffe))
 
-    test("vec2(1., 2.)", c([1, 2]))
+    test("vec2(1., 2.)", is([1, 2]))
     test("vec4(1., 2, 3u, false)", isFloat([1, 2, 3, 0]))
-    test("vec4(vec2(1), bvec2(0))", c([1, 1, 0, 0]))
-    test("bvec4(2.)", c([true, true, true, true]))
+    test("vec4(vec2(1), bvec2(0))", is([1, 1, 0, 0]))
+    test("bvec4(2.)", is([true, true, true, true]))
 
     test("mat2(2)", isMat([2, 0], [0, 2]))
     test(
@@ -173,13 +176,13 @@ describe("/*constant expressions", () => {
     test("-1u", isUint(0xffff_ffff))
     test("-1.2", isFloat(-1.2))
 
-    test("-vec2(1)", c([-1, -1]))
-    test("-ivec2(1)", c([-1, -1]))
-    test("-uvec2(1)", c([0xffff_ffff, 0xffff_ffff]))
+    test("-vec2(1)", is([-1, -1]))
+    test("-ivec2(1)", is([-1, -1]))
+    test("-uvec2(1)", is([0xffff_ffff, 0xffff_ffff]))
 
     test(
       "-mat4(.2)",
-      c(
+      is(
         mat(
           [-0.2, -0, -0, -0],
           [-0, -0.2, -0, -0],
@@ -194,18 +197,18 @@ describe("/*constant expressions", () => {
     test("~ivec2(1)", isInt([-2, -2]))
     test("~uvec2(1, 2)", isUint([0xffff_fffe, 0xffff_fffd]))
 
-    test("!true", c(false))
-    test("!false", c(true))
+    test("!true", is(false))
+    test("!false", is(true))
   })
 
   describe("structs constructors*/", () => {
-    test("struct S { float f; }; S(2.0)", c({ f: 2 }))
-    test("struct S { float f; int i; }; S(2.0, 1)", c({ f: 2, i: 1 }))
+    test("struct S { float f; }; S(2.0)", is({ f: 2 }))
+    test("struct S { float f; int i; }; S(2.0, 1)", is({ f: 2, i: 1 }))
   })
 
   describe("array constructors*/", () => {
-    test("float[](2., 3.)", c([2, 3]))
-    test("float[2](2., 3.)", c([2, 3]))
+    test("float[](2., 3.)", is([2, 3]))
+    test("float[2](2., 3.)", is([2, 3]))
   })
 
   describe("binary operations*/", () => {
@@ -213,8 +216,23 @@ describe("/*constant expressions", () => {
     test("1.2+1.4", isFloat(2.6))
     test("2u-3u", isUint(0xffff_ffff))
 
+    test("vec2(1,2) + 1.", isFloat([2, 4]))
+    test("ivec2(1,2) + 1", isInt([2, 4]))
+    test("uvec2(1,2) + 1u", isUint([2, 4]))
+    test("1. + vec2(1,2)", isFloat([2, 4]))
+    test("1 + ivec2(1,2)", isInt([2, 4]))
+    test("1u + uvec2(1,2)", isUint([2, 4]))
+
+    test("mat2(1,2, 3,4) + 1.", isMat([2, 4], [3, 5]))
+    test("mat2(1,2, 3,4) - 1.", isMat([0, 2], [1, 3]))
+    test("mat2(1,2, 3,4) * 2.", isMat([2, 6], [4, 8]))
+    test("mat2(1,2, 3,4) / .5", isMat([2, 6], [4, 8]))
+    test("1. + mat2(1,2, 3,4)", isMat([2, 4], [3, 5]))
+    test("1. - mat2(1,2, 3,4)", isMat([0, -2], [-1, -3]))
+    test("12. / mat2(1,2, 3,4)", isMat([12, 4], [6, 3]))
     test("mat2(2,2,2,2) * mat2(3)", isMat([6, 6], [6, 6]))
-    test("vec3(1,2,3) * mat2x3(7,9,11, 8,10,12)", isFloat([58, 139]))
+    test("vec3(1,2,3) * mat2x3(7,9,11, 8,10,12)", isFloat([58, 64]))
+    test("mat3x2(7,9, 11,8, 10,12) * vec3(1,2,3)", isFloat([59, 61]))
   })
 
   describe("array access*/", () => {
@@ -261,8 +279,8 @@ describe("/*constant expressions", () => {
     test("step(.5, vec2(.4, .6))", isFloat([0, 1]))
     test("smoothstep(.2, .3, .1)", isFloat(0))
     test("smoothstep(.2, .3, vec2(.1, .25))", isFloat([0, 0.5]))
-    test("isnan(sqrt(-1.))", c(true))
-    test("isinf(-1./0.)", c(true))
+    test("isnan(sqrt(-1.))", is(true))
+    test("isinf(-1./0.)", is(true))
     test("floatBitsToInt(vec2(0, -3.25))", isInt([0, -0x3fb00000]))
     test("floatBitsToUint(vec2(0, -3.25))", isUint([0, 0xc0500000]))
     test("intBitsToFloat(ivec2(0, 0xc0500000))", isFloat([0, -3.25]))
@@ -293,6 +311,10 @@ describe("/*constant expressions", () => {
       "outerProduct(vec3(1,2,3), vec2(4,5))",
       isMat([4, 5], [8, 10], [12, 15]),
     )
+    test("determinant(mat2(0,1, 0,2))", isFloat(0))
+    test("determinant(mat2(0,1, 1,1))", isFloat(-1))
+    test("determinant(mat3(0,1,1, 1,1,1, 1,2,3))", isFloat(-1))
+    test("determinant(mat4(1,5,9,4, 2,6,1,5, 3,7,2,6, 4,8,3,8))", isFloat(-36))
     test("inverse(mat2(0,1, 1,1))", isMat([-1, 1], [1, -0]))
     test("inverse(mat2(4,2, 7,6))", isMat([0.6, -0.7], [-0.2, 0.4]))
     test(
@@ -301,27 +323,27 @@ describe("/*constant expressions", () => {
     )
     test(
       "inverse(mat4(1,5,9,4, 2,6,1,5, 3,7,2,6, 4,8,3,8))",
-      c(
+      is(
         mat(
           [-0.138888889, 0.027777778, 0.11111111, -0],
-          [-1.72222222, -0.05555555555555555, -0.22222222, 1],
+          [-1.72222222, -0.0555555555, -0.22222222, 1],
           [1.8611111111111112, 1.0277777777777777, 0.1111111111111111, -2],
           [-0.25, -0.75, -0, 1],
         ),
       ),
     )
 
-    test("lessThan(vec3(2, 1, 0),vec3(1))", c([false, false, true]))
-    test("lessThanEqual(vec3(2, 1, 0),vec3(1))", c([false, true, true]))
-    test("greaterThan(vec3(2, 1, 0),vec3(1))", c([true, false, false]))
-    test("greaterThanEqual(vec3(2, 1, 0),vec3(1))", c([true, true, false]))
+    test("lessThan(vec3(2, 1, 0),vec3(1))", is([false, false, true]))
+    test("lessThanEqual(vec3(2, 1, 0),vec3(1))", is([false, true, true]))
+    test("greaterThan(vec3(2, 1, 0),vec3(1))", is([true, false, false]))
+    test("greaterThanEqual(vec3(2, 1, 0),vec3(1))", is([true, true, false]))
 
-    test("equal(vec2(1.), vec2(2.))", c([false, false]))
-    test("notEqual(uvec3(3), uvec3(3))", c([false, false, false]))
+    test("equal(vec2(1.), vec2(2.))", is([false, false]))
+    test("notEqual(uvec3(3), uvec3(3))", is([false, false, false]))
 
-    test("not(bvec3(0, 1, 1))", c([true, false, false]))
-    test("all(bvec3(0, 1, 1))", c(false))
-    test("any(bvec3(0, 1, 1))", c(true))
+    test("not(bvec3(0, 1, 1))", is([true, false, false]))
+    test("all(bvec3(0, 1, 1))", is(false))
+    test("any(bvec3(0, 1, 1))", is(true))
 
     test("dFdx(vec2(3.2))", isFloat(0))
     test("dFdy(vec2(3.2))", isFloat(0))

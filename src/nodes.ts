@@ -174,14 +174,9 @@ export interface WhileStatement extends BaseNode {
 
 export interface ForStatement extends BaseNode {
   kind: "forStatement"
-  FOR: Token
-  LEFT_PAREN: Token
   initExpression: Expression | undefined
-  SEMICOLON1: Token | undefined
   conditionExpression: Expression | InitDeclaratorListDeclaration
-  SEMICOLON2: Token
   loopExpression: Expression
-  RIGHT_PAREN: Token
   statement: Statement
 }
 

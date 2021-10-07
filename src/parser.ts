@@ -1044,9 +1044,9 @@ class GLSLParser extends EmbeddedActionsParser {
         },
         {
           ALT: (): ForStatement => {
-            const FOR = this.CONSUME3(TOKEN.FOR)
-            const LEFT_PAREN = this.CONSUME3(TOKEN.LEFT_PAREN)
-            let initExpression, SEMICOLON1
+            this.CONSUME3(TOKEN.FOR)
+            this.CONSUME3(TOKEN.LEFT_PAREN)
+            let initExpression
             this.OR3([
               {
                 GATE: this.BACKTRACK(this.singleDeclaration),
@@ -1058,29 +1058,24 @@ class GLSLParser extends EmbeddedActionsParser {
               {
                 ALT: () => {
                   initExpression = this.SUBRULE3(this.expression)
-                  SEMICOLON1 = this.CONSUME3(TOKEN.SEMICOLON)
+                  this.CONSUME3(TOKEN.SEMICOLON)
                 },
               },
             ])
             const conditionExpression = this.OPTION3(() =>
               this.SUBRULE3(this.condition),
             )
-            const SEMICOLON2 = this.CONSUME4(TOKEN.SEMICOLON)
+            this.CONSUME4(TOKEN.SEMICOLON)
             const loopExpression = this.OPTION4(() =>
               this.SUBRULE4(this.expression),
             )
-            const RIGHT_PAREN = this.CONSUME3(TOKEN.RIGHT_PAREN)
+            this.CONSUME3(TOKEN.RIGHT_PAREN)
             const statement = this.SUBRULE3(this.statement)
             return {
               kind: "forStatement",
-              FOR,
-              LEFT_PAREN,
               initExpression,
-              SEMICOLON1,
               conditionExpression,
-              SEMICOLON2,
               loopExpression,
-              RIGHT_PAREN,
               statement,
             }
           },

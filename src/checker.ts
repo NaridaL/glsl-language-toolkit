@@ -190,62 +190,62 @@ function getComponentType(t: TokenType): TokenType | undefined {
 
 type TypeAndValue = { type: NormalizedType; value: any }
 
+function doOp(op: TokenType, a: any, b: any) {
+  switch (op) {
+    case TOKEN.PLUS:
+      return a + b
+    case TOKEN.DASH:
+      return a - b
+
+    case TOKEN.STAR:
+      return a * b
+    case TOKEN.PERCENT:
+      return a % b
+    case TOKEN.SLASH:
+      return a / b
+
+    case TOKEN.LEFT_OP:
+      return a << b
+    case TOKEN.RIGHT_OP:
+      return a >> b
+
+    case TOKEN.EQ_OP:
+      return a === b
+    case TOKEN.NE_OP:
+      return a !== b
+    case TOKEN.LE_OP:
+      return a <= b
+    case TOKEN.GE_OP:
+      return a >= b
+    case TOKEN.LEFT_ANGLE:
+      return a < b
+    case TOKEN.RIGHT_ANGLE:
+      return a > b
+
+    case TOKEN.XOR_OP:
+      return a !== b
+    case TOKEN.AND_OP:
+      return a && b
+    case TOKEN.OR_OP:
+      return a || b
+
+    case TOKEN.AMPERSAND:
+      return a & b
+    case TOKEN.CARET:
+      return a ^ b
+    case TOKEN.VERTICAL_BAR:
+      return a | b
+    default:
+      throw new Error()
+  }
+}
+
 function evaluateBinaryOp(
   op: TokenType,
   a: any,
   b: any,
   aType: TokenType,
 ): TypeAndValue {
-  function doOp(op: TokenType, a: any, b: any) {
-    switch (op) {
-      case TOKEN.PLUS:
-        return a + b
-      case TOKEN.DASH:
-        return a - b
-
-      case TOKEN.STAR:
-        return a * b
-      case TOKEN.PERCENT:
-        return a % b
-      case TOKEN.SLASH:
-        return a / b
-
-      case TOKEN.LEFT_OP:
-        return a << b
-      case TOKEN.RIGHT_OP:
-        return a >> b
-
-      case TOKEN.EQ_OP:
-        return a === b
-      case TOKEN.NE_OP:
-        return a !== b
-      case TOKEN.LE_OP:
-        return a <= b
-      case TOKEN.GE_OP:
-        return a >= b
-      case TOKEN.LEFT_ANGLE:
-        return a < b
-      case TOKEN.RIGHT_ANGLE:
-        return a > b
-
-      case TOKEN.XOR_OP:
-        return a !== b
-      case TOKEN.AND_OP:
-        return a && b
-      case TOKEN.OR_OP:
-        return a || b
-
-      case TOKEN.AMPERSAND:
-        return a & b
-      case TOKEN.CARET:
-        return a ^ b
-      case TOKEN.VERTICAL_BAR:
-        return a | b
-      default:
-        throw new Error()
-    }
-  }
-
   const value = doOp(op, a, b)
   if (typeof value === "boolean") {
     return {
@@ -311,7 +311,7 @@ function doMatrixMult(a: Matrix, b: Matrix): Matrix {
     for (let r = 0; r < rows; r++) {
       let v = 0
       for (let i = 0; i < b.rows; i++) {
-        v += a[i * a.rows + r] * b[r * b.rows + i]
+        v += a[i * a.rows + r] * b[c * b.rows + i]
       }
       result[c * rows + r] = v
     }
@@ -406,48 +406,63 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     }
     const lType = l.type.type
     const rType = r.type.type
+    const op = n.op.tokenType
+    const type: BasicType = {
+      kind: "basic",
+      type: VALID_BINARY_OPERATIONS.find(
+        ([op, lhs, rhs, _result]) =>
+          op === op && lhs === lType && rhs === rType,
+      )![3],
+    }
+    let value
     if (getScalarType(lType) && getScalarType(rType)) {
-      const lv = l.value
-      const rv = r.value
-      return evaluateBinaryOp(n.op.tokenType, lv, rv, lType)
+      value = norm(lType, doOp(op, l.value, r.value))
     } else if (getVectorSize(lType) && getVectorSize(rType)) {
       // two vectors
-      return {
-        type: l.type,
-        value: (l.value as any[]).map((lv, i) =>
-          evaluateBinaryOp(n.op.tokenType, lv, (r.value as any[])[i], lType),
-        ),
-      }
+      value = (l.value as any[]).map((lv, i) =>
+        norm(getComponentType(lType)!, doOp(op, lv, (r.value as any[])[i])),
+      )
     } else if (getVectorSize(lType) && getScalarType(rType)) {
-      // vector + scalar
-      return {
-        type: l.type,
-        value: (l.value as any[]).map((lv) =>
-          evaluateBinaryOp(n.op.tokenType, lv, r, lType),
-        ),
+      value = (l.value as any[]).map((lv) => norm(rType, doOp(op, lv, r)))
+    } else if (getMatrixDimensions(lType) && getScalarType(rType)) {
+      const a = l.value as Matrix
+      value = Matrix(a.length / a.rows, a.rows)
+      for (let i = 0; i < a.length; i++) {
+        value[i] = Math.fround(doOp(op, a[i], r.value))
       }
-    } else if (
-      n.op.tokenType === TOKEN.STAR &&
-      (isMatrixType(l.type) || isMatrixType(r.type))
-    ) {
-      const ll = isVectorType(l.type)
-        ? Object.assign([], l.value, { rows: 1 })
-        : l.value
-      const rr = isVectorType(r.type)
-        ? Object.assign([], r.value, { rows: (r.value as number[]).length })
-        : r.value
+    } else if (getScalarType(lType) && getMatrixDimensions(rType)) {
+      const b = r.value as Matrix
+      value = Matrix(b.length / b.rows, b.rows)
+      for (let i = 0; i < b.length; i++) {
+        value[i] = Math.fround(doOp(op, l.value, b[i]))
+      }
+    } else if (getScalarType(lType) && getVectorSize(rType)) {
+      value = (r.value as any[]).map((rv) => norm(lType, doOp(op, l, rv)))
+    } else if (isMatrixType(l.type) || isMatrixType(r.type)) {
+      if (op === TOKEN.STAR) {
+        const ll = isVectorType(l.type)
+          ? Object.assign([], l.value, { rows: 1 })
+          : l.value
+        const rr = isVectorType(r.type)
+          ? Object.assign([], r.value, { rows: (r.value as number[]).length })
+          : r.value
 
-      const type: BasicType = {
-        kind: "basic",
-        type: VALID_BINARY_OPERATIONS.find(
-          ([op, lhs, rhs, _result]) =>
-            op === n.op.tokenType && lhs === lType && rhs === rType,
-        )![3],
+        value = doMatrixMult(ll, rr)
+        if (!getMatrixDimensions(type.type)) {
+          delete (value as any).rows
+        }
+      } else {
+        // component wise operation on two matrices
+        const a = l.value as Matrix
+        value = Matrix(a.length / a.rows, a.rows)
+        for (let i = 0; i < a.length; i++) {
+          value[i] = Math.fround(doOp(op, a[i], (r.value as Matrix)[i]))
+        }
       }
-      const value = doMatrixMult(ll, rr)
-      return { type, value }
+    } else {
+      throw new Error()
     }
-    throw new Error("???")
+    return { type, value }
   }
 
   protected arrayAccess(n: ArrayAccess): TypeAndValue | undefined {
@@ -1221,6 +1236,18 @@ const VALID_BINARY_OPERATIONS: T4[] = [
   [TOKEN.STAR, TOKEN.VEC2, TOKEN.MAT4X2, TOKEN.VEC4],
   [TOKEN.STAR, TOKEN.VEC3, TOKEN.MAT4X3, TOKEN.VEC4],
   [TOKEN.STAR, TOKEN.VEC4, TOKEN.MAT4X4, TOKEN.VEC4],
+
+  [TOKEN.STAR, TOKEN.MAT2X2, TOKEN.VEC2, TOKEN.VEC2],
+  [TOKEN.STAR, TOKEN.MAT3X2, TOKEN.VEC3, TOKEN.VEC2],
+  [TOKEN.STAR, TOKEN.MAT4X2, TOKEN.VEC4, TOKEN.VEC2],
+
+  [TOKEN.STAR, TOKEN.MAT2X3, TOKEN.VEC2, TOKEN.VEC3],
+  [TOKEN.STAR, TOKEN.MAT3X3, TOKEN.VEC3, TOKEN.VEC3],
+  [TOKEN.STAR, TOKEN.MAT4X3, TOKEN.VEC4, TOKEN.VEC3],
+
+  [TOKEN.STAR, TOKEN.MAT2X4, TOKEN.VEC2, TOKEN.VEC4],
+  [TOKEN.STAR, TOKEN.MAT3X4, TOKEN.VEC3, TOKEN.VEC4],
+  [TOKEN.STAR, TOKEN.MAT4X4, TOKEN.VEC4, TOKEN.VEC4],
 
   [TOKEN.STAR, TOKEN.MAT2X2, TOKEN.MAT2X2, TOKEN.MAT2X2],
   [TOKEN.STAR, TOKEN.MAT2X2, TOKEN.MAT3X2, TOKEN.MAT2X3],

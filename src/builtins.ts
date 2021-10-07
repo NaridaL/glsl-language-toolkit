@@ -1,5 +1,12 @@
 import { clamp } from "lodash"
-import { inverse2, inverse3, inverse4 } from "./matinverse"
+import {
+  determinant2,
+  determinant3,
+  determinant4,
+  inverse2,
+  inverse3,
+  inverse4,
+} from "./matinverse"
 import { invariant } from "./util"
 
 const COMPONENT_FUNCTIONS = {
@@ -164,6 +171,19 @@ const MATRIX = {
       }
     }
     return result
+  },
+  determinant: (m: Matrix) => {
+    invariant(m.rows)
+    if (m.length === 16) {
+      return determinant4(m)
+    }
+    if (m.length === 9) {
+      return determinant3(m)
+    }
+    if (m.length === 4) {
+      return determinant2(m)
+    }
+    invariant(false)
   },
   inverse: (m: Matrix) => {
     invariant(m.rows)
