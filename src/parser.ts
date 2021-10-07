@@ -518,7 +518,7 @@ class GLSLParser extends EmbeddedActionsParser {
   //SPEC// parameterTypeSpecifier:
   //SPEC//     FIELD_SELECTION
   public functionCall = this.RR("functionCall", (): FunctionCall => {
-    const what = this.SUBRULE(this.typeSpecifierNoPrec)
+    const callee = this.SUBRULE(this.typeSpecifierNoPrec)
     this.CONSUME(TOKEN.LEFT_PAREN)
     const args: Expression[] = []
     this.MANY_SEP({
@@ -526,7 +526,7 @@ class GLSLParser extends EmbeddedActionsParser {
       SEP: TOKEN.COMMA,
     })
     this.CONSUME(TOKEN.RIGHT_PAREN)
-    return { kind: "functionCall", what, args }
+    return { kind: "functionCall", callee, args }
   })
 
   //SPEC// initDeclaratorList:
@@ -1021,32 +1021,31 @@ class GLSLParser extends EmbeddedActionsParser {
     (): IterationStatement =>
       this.OR([
         {
-          ALT: (): WhileStatement => ({
-            kind: "whileStatement",
-            WHILE: this.CONSUME(TOKEN.WHILE),
-            LEFT_PAREN: this.CONSUME(TOKEN.LEFT_PAREN),
-            conditionExpression: this.SUBRULE(this.condition),
-            RIGHT_PAREN: this.CONSUME(TOKEN.RIGHT_PAREN),
-            statement: this.SUBRULE(this.statement),
-          }),
+          ALT: (): WhileStatement => {
+            this.CONSUME(TOKEN.WHILE)
+            this.CONSUME(TOKEN.LEFT_PAREN)
+            const conditionExpression = this.SUBRULE(this.condition)
+            this.CONSUME(TOKEN.RIGHT_PAREN)
+            const statement = this.SUBRULE(this.statement)
+            return { kind: "whileStatement", conditionExpression, statement }
+          },
         },
         {
-          ALT: (): DoWhileStatement => ({
-            kind: "doWhileStatement",
-            DO: this.CONSUME2(TOKEN.DO),
-            statement: this.SUBRULE2(this.statement, { ARGS: [true] }),
-            WHILE: this.CONSUME2(TOKEN.WHILE),
-            LEFT_PAREN: this.CONSUME2(TOKEN.LEFT_PAREN),
-            conditionExpression: this.SUBRULE2(this.expression),
-            RIGHT_PAREN: this.CONSUME2(TOKEN.RIGHT_PAREN),
-            SEMICOLON: this.CONSUME2(TOKEN.SEMICOLON),
-          }),
+          ALT: (): DoWhileStatement => {
+            this.CONSUME2(TOKEN.DO)
+            const statement = this.SUBRULE2(this.statement, { ARGS: [true] })
+            this.CONSUME2(TOKEN.LEFT_PAREN)
+            const conditionExpression = this.SUBRULE2(this.expression)
+            this.CONSUME2(TOKEN.RIGHT_PAREN)
+            this.CONSUME2(TOKEN.SEMICOLON)
+            return { kind: "doWhileStatement", statement, conditionExpression }
+          },
         },
         {
           ALT: (): ForStatement => {
-            const FOR = this.CONSUME3(TOKEN.FOR)
-            const LEFT_PAREN = this.CONSUME3(TOKEN.LEFT_PAREN)
-            let initExpression, SEMICOLON1
+            this.CONSUME3(TOKEN.FOR)
+            this.CONSUME3(TOKEN.LEFT_PAREN)
+            let initExpression
             this.OR3([
               {
                 GATE: this.BACKTRACK(this.singleDeclaration),
@@ -1058,29 +1057,24 @@ class GLSLParser extends EmbeddedActionsParser {
               {
                 ALT: () => {
                   initExpression = this.SUBRULE3(this.expression)
-                  SEMICOLON1 = this.CONSUME3(TOKEN.SEMICOLON)
+                  this.CONSUME3(TOKEN.SEMICOLON)
                 },
               },
             ])
             const conditionExpression = this.OPTION3(() =>
               this.SUBRULE3(this.condition),
             )
-            const SEMICOLON2 = this.CONSUME4(TOKEN.SEMICOLON)
+            this.CONSUME4(TOKEN.SEMICOLON)
             const loopExpression = this.OPTION4(() =>
               this.SUBRULE4(this.expression),
             )
-            const RIGHT_PAREN = this.CONSUME3(TOKEN.RIGHT_PAREN)
+            this.CONSUME3(TOKEN.RIGHT_PAREN)
             const statement = this.SUBRULE3(this.statement)
             return {
               kind: "forStatement",
-              FOR,
-              LEFT_PAREN,
               initExpression,
-              SEMICOLON1,
               conditionExpression,
-              SEMICOLON2,
               loopExpression,
-              RIGHT_PAREN,
               statement,
             }
           },

@@ -81,3 +81,7 @@ export function substrContext(
   // }
   // return input.substr(start, end)
 }
+
+export function allDefined<T>(ts: (T | undefined)[]): ts is T[] {
+  return ts.every(Boolean)
+}
