@@ -228,7 +228,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           ////////// EXPRESSIONS
           case "functionCall":
             return group([
-              p(n, "what"),
+              p(n, "callee"),
               "(",
               indent([softline, join([",", line], path.map(print, "args"))]),
               softline,

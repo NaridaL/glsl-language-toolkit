@@ -29,7 +29,7 @@ export interface MethodCall extends BaseNode {
 
 export interface FunctionCall extends BaseNode {
   kind: "functionCall"
-  what: TypeSpecifier
+  callee: TypeSpecifier
   args: Expression[]
 }
 
@@ -154,20 +154,12 @@ export interface Declarator extends BaseNode {
 
 export interface DoWhileStatement extends BaseNode {
   kind: "doWhileStatement"
-  DO: Token
-  WHILE: Token
-  LEFT_PAREN: Token
-  RIGHT_PAREN: Token
   conditionExpression: Expression
   statement: Statement
-  SEMICOLON: Token
 }
 
 export interface WhileStatement extends BaseNode {
   kind: "whileStatement"
-  WHILE: Token
-  LEFT_PAREN: Token
-  RIGHT_PAREN: Token
   conditionExpression: Expression | InitDeclaratorListDeclaration
   statement: Statement
 }

@@ -42,7 +42,7 @@ import {
 import { TOKEN } from "./lexer"
 import { applyBuiltinFunction, Matrix } from "./builtins"
 import { parseInput } from "./parser"
-import { ccorrect } from "./util"
+import { allDefined, ccorrect } from "./util"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
 type ArrayType = Readonly<{
@@ -511,7 +511,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
       const compType = getComponentType((type as BasicType).type)!
       const value = ccorrect(
         applyBuiltinFunction(
-          (n.what.typeSpecifierNonArray as Token).image,
+          (n.callee.typeSpecifierNonArray as Token).image,
           args.map((a) => a.value),
         ),
         (x) => norm(compType, x),
@@ -749,6 +749,7 @@ export function isToken(x: Token | Node): x is Token {
   return "tokenType" in x
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function isTokenType(type: TokenType | StructSpecifier): type is TokenType {
   return typeof type.name === "string"
 }
@@ -898,7 +899,7 @@ class BinderVisitor extends AbstractVisitor<any> {
 
   protected functionCall(n: FunctionCall): any {
     super.functionCall(n)
-    const ts = n.what
+    const ts = n.callee
     if (isToken(ts.typeSpecifierNonArray)) {
       if (
         ts.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER &&
@@ -1106,7 +1107,7 @@ class BinderVisitor extends AbstractVisitor<any> {
           const size =
             as.size === undefined
               ? -1
-              : +(evaluateConstantExpression(as.size)?.value ?? 0)
+              : +(CONSTANT_VISITOR.eval(as.size)?.value ?? 0)
           result = { kind: "array", of: result, size }
         }
       }
@@ -1345,10 +1346,6 @@ const VALID_BINARY_OPERATIONS: T4[] = [
 // console.table(VALID_BINARY_OPERATIONS.map((x) => x.map((y) => y.PATTERN)))
 console.log("VALID_BINARY_OPERATIONS.length", VALID_BINARY_OPERATIONS.length)
 
-function allDefined<T>(ts: (T | undefined)[]): ts is T[] {
-  return ts.every(Boolean)
-}
-
 function typesEquals(as: NormalizedType[], bs: NormalizedType[]): boolean {
   return as.length === bs.length && as.every((a, i) => typeEquals(a, bs[i]))
 }
@@ -1357,7 +1354,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   private currentFunctionPrototypeReturnType: NormalizedType | undefined =
     undefined
 
-  public check(u: Node): NormalizedType | undefined {
+  public check(u: Node | undefined): NormalizedType | undefined {
     return super.visit(u)
   }
 
@@ -1442,6 +1439,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     const oType = this.visit(n.on)
     if (oType?.kind === "array") {
       // array access
+      const x = evaluateConstantExpression(n.index)
       return oType.of
       // TODO: if constant expression, check array access size
     } else if (oType?.kind === "basic") {
@@ -1669,7 +1667,6 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     if (this.currentFunctionPrototypeReturnType) {
       throw new Error()
     }
-    // TODO figure out function return type
     this.currentFunctionPrototypeReturnType = n.returnTypeResolved
     super.functionDefinition(n)
     this.currentFunctionPrototypeReturnType = undefined
@@ -1741,7 +1738,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
           }
           if (provided !== 1 && provided < needed) {
             markError(
-              n.what,
+              n.callee,
               "S0009",
               `Need ${needed} but only got ${provided}`,
             )
@@ -1792,7 +1789,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
       } else if (n.constructorType.kind === "array") {
         if (n.constructorType.size !== n.args.length) {
           markError(
-            n.what,
+            n.callee,
             "Wrong number of arguments, expected",
             n.constructorType.size,
             "but was ",
@@ -1801,7 +1798,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
         }
         for (let i = 0; i < n.args.length; i++) {
           if (typeNotEquals(aTypes[i], n.constructorType.of)) {
-            markError(n.what, "Types do not match")
+            markError(n.callee, "Types do not match")
           }
         }
       }
@@ -1817,11 +1814,11 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
       markError(n.on, "method call only valid on arrays")
     }
 
-    if (!isToken(n.functionCall.what.typeSpecifierNonArray)) {
+    if (!isToken(n.functionCall.callee.typeSpecifierNonArray)) {
       throw new Error()
     }
-    if (n.functionCall.what.typeSpecifierNonArray.image !== "length") {
-      markError(n.functionCall.what, "only method is .length()")
+    if (n.functionCall.callee.typeSpecifierNonArray.image !== "length") {
+      markError(n.functionCall.callee, "only method is .length()")
     }
     for (const a of n.functionCall.args) {
       markError(a, "No arguments to .length()")
