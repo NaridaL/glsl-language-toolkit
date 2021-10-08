@@ -32,7 +32,7 @@ test("checks shader.glsl", () => {
   sl(c)
 })
 test("S0001: type mismatch", () => {
-  sl("void main() { 1 '+' 1.0; }", "S0001")
+  sl("voi" + "" + "" + "d main() { 1 '+' 1.0; }", "S0001")
 })
 test("S0003: if has bool as condition", () => {
   sl("void main() { if ('1'); }", "S0003")
