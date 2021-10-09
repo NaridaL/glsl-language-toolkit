@@ -109,9 +109,9 @@ export interface FunctionPrototype extends BaseNode {
 export interface ParameterDeclaration extends BaseNode {
   kind: "parameterDeclaration"
   parameterTypeQualifier: Token | undefined
+  parameterQualifier: Token | undefined
   pName: Token | undefined
   arraySpecifier: ArraySpecifier | undefined
-  parameterQualifier: Token | undefined
   typeSpecifier: TypeSpecifier
 }
 
@@ -221,9 +221,6 @@ export interface StorageQualifier extends BaseNode {
 
 export interface SwitchStatement extends BaseNode {
   kind: "switchStatement"
-  SWITCH: Token
-  LEFT_PAREN: Token
-  RIGHT_PAREN: Token
   initExpression: Expression
   body: CompoundStatement
 }
@@ -315,7 +312,7 @@ export class AbstractVisitor<R> {
     return n && this[n.kind](n as any)
   }
   protected arraySpecifier(n: ArraySpecifier): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.size)
     return
   }
   protected binaryExpression(n: BinaryExpression): R | undefined {
@@ -324,11 +321,13 @@ export class AbstractVisitor<R> {
     return
   }
   protected methodCall(n: MethodCall): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.on)
+    this.visit(n.functionCall)
     return
   }
   protected functionCall(n: FunctionCall): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.callee)
+    n.args.forEach((a) => this.visit(a))
     return
   }
   protected arrayAccess(n: ArrayAccess): R | undefined {
@@ -337,7 +336,7 @@ export class AbstractVisitor<R> {
     return
   }
   protected translationUnit(n: TranslationUnit): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    n.declarations?.forEach((n) => this.visit(n))
     return
   }
   protected assignmentExpression(n: AssignmentExpression): R | undefined {
@@ -350,27 +349,33 @@ export class AbstractVisitor<R> {
     return
   }
   protected conditionalExpression(n: ConditionalExpression): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.condition)
+    this.visit(n.yes)
+    this.visit(n.no)
     return
   }
   protected postfixExpression(n: PostfixExpression): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.on)
     return
   }
   protected commaExpression(n: CommaExpression): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.lhs)
+    this.visit(n.rhs)
     return
   }
   protected unaryExpression(n: UnaryExpression): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.on)
     return
   }
   protected functionDefinition(n: FunctionDefinition): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.returnType)
+    n.params.forEach((p) => this.visit(p))
+    this.visit(n.body)
     return
   }
   protected functionPrototype(n: FunctionPrototype): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.returnType)
+    n.params.forEach((p) => this.visit(p))
     return
   }
   protected parameterDeclaration(n: ParameterDeclaration): R | undefined {
@@ -414,7 +419,10 @@ export class AbstractVisitor<R> {
     return
   }
   protected forStatement(n: ForStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.initExpression)
+    this.visit(n.conditionExpression)
+    this.visit(n.loopExpression)
+    this.visit(n.statement)
     return
   }
   protected expressionStatement(n: ExpressionStatement): R | undefined {
@@ -429,19 +437,21 @@ export class AbstractVisitor<R> {
     return
   }
   protected precisionDeclaration(n: PrecisionDeclaration): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.typeSpecifierNoPrec)
     return
   }
   protected selectionStatement(n: SelectionStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.condition)
+    this.visit(n.yes)
+    this.visit(n.no)
     return
   }
-  protected storageQualifier(n: StorageQualifier): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+  protected storageQualifier(_n: StorageQualifier): R | undefined {
     return
   }
   protected switchStatement(n: SwitchStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.initExpression)
+    this.visit(n.body)
     return
   }
   protected caseLabel(n: CaseLabel): R | undefined {
@@ -449,35 +459,34 @@ export class AbstractVisitor<R> {
     return
   }
   protected fullySpecifiedType(n: FullySpecifiedType): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.typeQualifier)
+    this.visit(n.typeSpecifier)
     return
   }
   protected typeQualifier(n: TypeQualifier): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.storageQualifier)
+    this.visit(n.layoutQualifier)
     return
   }
   protected structSpecifier(n: StructSpecifier): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    n.declarations.forEach((d) => this.visit(d))
     return
   }
-  protected layoutQualifier(n: LayoutQualifier): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+  protected layoutQualifier(_n: LayoutQualifier): R | undefined {
     return
   }
-  protected invariantDeclaration(n: InvariantDeclaration): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+  protected invariantDeclaration(_n: InvariantDeclaration): R | undefined {
     return
   }
   protected structDeclaration(n: StructDeclaration): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.fsType)
+    n.declarators.forEach((d) => this.visit(d))
     return
   }
-  protected variableExpression(n: VariableExpression): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+  protected variableExpression(_n: VariableExpression): R | undefined {
     return
   }
-  protected constantExpression(n: ConstantExpression): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+  protected constantExpression(_n: ConstantExpression): R | undefined {
     return
   }
 }

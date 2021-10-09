@@ -1,1583 +1,658 @@
-//7 Built-in Variables
-// Implementation dependent constants.  The example values below
-// are the minimum values allowed for these maximums.
-const mediump int
-  gl_MaxVertexAttribs = 16;
-const mediump int
-  gl_MaxVertexUniformVectors = 256;
-const mediump int
-  gl_MaxVertexOutputVectors = 16;
-const mediump int
-  gl_MaxFragmentInputVectors = 15;
-const mediump int
-  gl_MaxVertexTextureImageUnits = 16;
-const mediump int
-  gl_MaxCombinedTextureImageUnits = 32;
-const mediump int
-  gl_MaxTextureImageUnits = 16;
-const mediump int
-  gl_MaxFragmentUniformVectors = 224;
-const mediump int gl_MaxDrawBuffers = 4;
-const mediump int
-  gl_MinProgramTexelOffset = -8;
-const mediump int
-  gl_MaxProgramTexelOffset = 7;
-/**
- * The variable gl_FragCoord is
- * available as an input variable from
- * within fragment shaders and it holds
- * the window relative coordinates (x,
- * y, z, 1/w) values for the fragment.
- * If multi-sampling, this value can be
- * for any location within the pixel,
- * or one of the fragment samples. The
- * use of centroid does not further
- * restrict this value to be inside the
- * current primitive. This value is the
- * result of the fixed functionality
- * that interpolates primitives after
- * vertex processing to generate
- * fragments. The z component is the
- * depth value that would be used for
- * the fragment’s depth if no shader
- * contained any writes to
- * gl_FragDepth. This is useful for
- * invariance if a shader conditionally
- * computes gl_FragDepth but otherwise
- * wants the fixed functionality
- * fragment depth.
- * 
- */
-in highp vec4 gl_FragCoord;
-/**
- * Fragment shaders have access to the
- * input built-in variable
- * gl_FrontFacing, whose value is true
- * if the fragment belongs to a
- * front-facing primitive. One use of
- * this is to emulate two-sided
- * lighting by selecting one of two
- * colors calculated by a vertex
- * shader.
- * 
- */
-in bool gl_FrontFacing;
-/**
- * Writing to gl_FragDepth will
- * establish the depth value for the
- * fragment being processed. If depth
- * buffering is enabled, and no shader
- * writes gl_FragDepth, then the fixed
- * function value for depth will be
- * used as the fragment’s depth value.
- * If a shader statically assigns a
- * value to gl_FragDepth, and there is
- * an execution path through the shader
- * that does not set gl_FragDepth, then
- * the value of the fragment’s depth
- * may be undefined for executions of
- * the shader that take that path. That
- * is, if the set of linked fragment
- * shaders statically contain a write
- * to gl_FragDepth, then it is
- * responsible for always writing it.
- * 
- */
-out highp float gl_FragDepth;
-/**
- * The values in gl_PointCoord are
- * two-dimensional coordinates
- * indicating where within a point
- * primitive the current fragment is
- * located, when point sprites are
- * enabled. They range from 0.0 to 1.0
- * across the point. If the current
- * primitive is not a point, or if
- * point sprites are not enabled, then
- * the values read from gl_PointCoord
- * are undefined
- * 
- */
-in mediump vec2 gl_PointCoord;
-/**
- * True if the fragment shader
- * invocation is considered a “helper”
- * invocation and false otherwise. A
- * helper invocation is a fragment
- * shader invocation that is created
- * solely for the purposes of
- * evaluating derivatives for the
- * built-in functions texture()
- * (section 8.9 “Texture Functions”),
- * dFdx(), dFdy(), and fwidth() for
- * other non-helper fragment shader
- * invocations
- * 
- * ragment shader helper invocations
- * execute the same shader code as
- * non-helper invocations, but will not
- * have side effects that modify the
- * framebuffer or other
- * shader-accessible memory. In
- * particular:
- * 
- * - Fragments corresponding to helper
- *   invocations are discarded when
- *   shader execution is complete,
- *   without updating the framebuffer.
- * - Stores to image and buffer
- *   variables performed by helper
- *   invocations have no effect on the
- *   underlying image or buffer memory.
- * - Atomic operations to image,
- *   buffer, or atomic counter
- *   variables performed by helper
- *   invocations have no effect on the
- *   underlying image or buffer memory.
- *   The values returned by such atomic
- *   operations are undefined. Helper
- *   invocations may be generated for
- *   pixels not covered by a primitive
- *   being rendered. While fragment
- *   shader inputs qualified with
- *   "centroid" are normally required
- *   to be sampled in the intersection
- *   of the pixel and the primitive,
- *   the requirement is ignored for
- *   such pixels since there is no
- *   intersection between the pixel and
- *   primitive. Helper invocations may
- *   also be generated for fragments
- *   that are covered by a primitive
- *   being rendered when the fragment
- *   is killed by early fragment tests
- *   (using the early_fragment_tests
- *   qualifier) or where the
- *   implementation is able to
- *   determine that executing the
- *   fragment shader would have no
- *   effect other than assisting in
- *   computing derivatives for other
- *   fragment shader invocations. The
- *   set of helper invocations
- *   generated when processing any set
- *   of primitives is implementation-
- *   dependent
- * 
- */
-in bool gl_HelperInvocation;
-/**
- * ==== Built-in Functions
- * 
- * The OpenGL ES Shading Language
- * defines an assortment of built-in
- * convenience functions for scalar and
- * vector operations. Many of these
- * built-in functions can be used in
- * more than one type of shader, but
- * some are intended to provide a
- * direct mapping to hardware and so
- * are available only for a specific
- * type of shader. The built-in
- * functions basically fall into three
- * categories:
- * 
- * - They expose some necessary
- *   hardware functionality in a
- *   convenient way such as accessing a
- *   texture map. There is no way in
- *   the language for these functions
- *   to be emulated by a shader.
- * 
- * - They represent a trivial operation
- *   (clamp, mix, etc.) that is very
- *   simple for the user to write, but
- *   they are very common and may have
- *   direct hardware support. It is a
- *   very hard problem for the compiler
- *   to map expressions to complex
- *   assembler instructions.
- * 
- * - They represent an operation
- *   graphics hardware is likely to
- *   accelerate at some point. The
- *   trigonometry functions fall into
- *   this category.
- * 
- * Many of the functions are similar to
- * the same named ones in common C
- * libraries, but they support vector
- * input as well as the more
- * traditional scalar input.
- * Applications should be encouraged to
- * use the built-in functions rather
- * than do the equivalent computations
- * in their own shader code since the
- * built-in functions are assumed to be
- * optimal (e.g., perhaps supported
- * directly in hardware). When the
- * built-in functions are specified
- * below, where the input arguments
- * (and corresponding output) can be
- * float, vec2, vec3, or vec4, genType
- * is used as the argument. Where the
- * input arguments (and corresponding
- * output) can be int, ivec2, ivec3, or
- * ivec4, genIType is used as the
- * argument. Where the input arguments
- * (and corresponding output) can be
- * uint, uvec2, uvec3, or uvec4,
- * genUType is used as the argument.
- * Where the input arguments (or
- * corresponding output) can be bool,
- * bvec2, bvec3, or bvec4, genBType is
- * used as the argument. For any
- * specific use of a function, the
- * actual types substituted for
- * genType, genIType, genUType, or
- * genBType have to have the same
- * number of components for all
- * arguments and for the return type.
- * Similarly for mat, which can be any
- * matrix basic type. The precision of
- * built-in functions is dependent on
- * the function and arguments. There
- * are three categories:
- * 
- * - Some functions have predefined
- *   precisions. The precision is
- *   specified e.g.
- *   `highp ivec2 textureSize (gsampler2D sampler, int lod)`
- * 
- * - For the texture sampling
- *   functions, the precision of the
- *   return type matches the precision
- *   of the sampler type.
- * 
- *   ```
- *   uniform lowp sampler2D sampler;
- *   highp vec2 coord;
- *   // ...
- *   lowp vec4 col = texture (sampler, coord); // texture() returns lowp
- *   ```
- * 
- * - For other built-in functions, a
- *   call will return a precision
- *   qualification matching the highest
- *   precision qualification of the
- *   call's input arguments. See
- *   Section 4.5.2 “Precision
- *   Qualifiers” for more detail.
- * 
- * The built-in functions are assumed
- * to be implemented according to the
- * equations specified in the following
- * sections. The precision at which the
- * calculations are performed follows
- * the general rules for precision of
- * operations as specified in section
- * 4.5.3 “Precision Qualifiers“.
- * 
- * Example: normalize((x, y, z)) = (1 /
- * sqrt(x² + y² + z²)) \* (x, y, z)
- * 
- * If the input vector is lowp, the
- * entire calculation is performed at
- * lowp. For some inputs, this will
- * cause the calculation to overflow,
- * even when the correct result is
- * within the range of lowp.
- * 
- * Angle and Trigonometry Functions
- * 
- * Function parameters specified as
- * angle are assumed to be in units of
- * radians. In no case will any of
- * these functions result in a divide
- * by zero error. If the divisor of a
- * ratio is 0, then results will be
- * undefined. These all operate
- * component-wise. The description is
- * per component.
- * 
- */
-// Converts degrees to radians, i.e., PI/180*degrees
-genType radians(genType degrees);
-// Converts radians to degrees, i.e., 180/PI*radians
-genType degrees(genType radians);
-//The standard trigonometric sine function.
-genType sin(genType angle);
-//The standard trigonometric cosine function.
-genType cos(genType angle);
-//The standard trigonometric tangent.
-genType tan(genType angle);
-//Arc sine. Returns an angle whose sine is x. The range of values returned by this function is [-PI/2, PI/2].
-//Results are undefined if |x|<1.
-genType asin(genType x);
-//Arc cosine. Returns an angle whose cosine is x. The
-//range of values returned by this function is [0, p].
-//Results are undefined if |x|<1.
-genType acos(genType x);
-//Arc tangent. Returns an angle whose tangent is y/x. The
-//signs of x and y are used to determine what quadrant the
-//angle is in. The range of values returned by this
-//function is [-π , π]. Results are undefined if x and y
-//are both 0.
-genType atan(genType y, genType x);
-//Arc tangent. Returns an angle whose tangent is
-//y_over_x. The range of values returned by this function is [-PI/2, PI/2].
-genType atan(genType y_over_x);
-//Returns the hyperbolic sine function (pow(e, x) - pow(e, -x))/2.
-genType sinh(genType x);
-//Returns the hyperbolic cosine function (pow(e, x) + pow(e, -x))/2.
-genType cosh(genType x);
-//Returns the hyperbolic tangent function sinh(x)/cosh(x).
-genType tanh(genType x);
-//Arc hyperbolic sine; returns the inverse of sinh.
-genType asinh(genType x);
-//Arc hyperbolic cosine; returns the non-negative inverse
-//of cosh. Results are undefined if x < 1.
-genType acosh(genType x);
-//Arc hyperbolic tangent; returns the inverse of tanh.
-//Results are undefined if |x|≥1.
-genType atanh(genType x);
-//////////////////////////
-//Exponential Functions
-//////////////////////////
-//These all operate component-wise. The description is per component.
-//Returns x raised to the y power, i.e., x^y.
-//Results are undefined if x < 0.
-//Results are undefined if x = 0 and y <= 0.
-genType pow(genType x, genType y);
-//Returns the natural exponentiation of x, i.e., e^x.
-genType exp(genType x);
-//Returns the natural logarithm of x, i.e., returns the value
-//y which satisfies the equation x = ey.
-//Results are undefined if x <= 0.
-genType log(genType x);
-//Returns 2 raised to the x power, i.e., 2^x.
-genType exp2(genType x);
-//Returns the base 2 logarithm of x, i.e., returns the value
-//y which satisfies the equation x= 2^y
-//Results are undefined if x <= 0.
-genType log2(genType x);
-//Returns √x.
-//Results are undefined if x < 0.
-genType sqrt(genType x);
-//Returns 1/(√x)
-//Results are undefined if x <= 0.
-genType inversesqrt(genType x);
-////////////////
-//Common Functions
-/////////////
-//These all operate component-wise. The description is per component.
-//Returns x if x >= 0, otherwise it returns -x.
-genType abs(genType x);
-genIType abs(genIType x);
-//Returns 1.0 if x > 0, 0.0 if x = 0, or -1.0 if x < 0.
-genType sign(genType x);
-genIType sign(genIType x);
-//Returns a value equal to the nearest integer that is less
-//than or equal to x.
-genType floor(genType x);
-//Returns a value equal to the nearest integer to x whose
-//absolute value is not larger than the absolute value of x.
-genType trunc(genType x);
-//Returns a value equal to the nearest integer to x. The
-//fraction 0.5 will round in a direction chosen by the
-//implementation, presumably the direction that is fastest.
-//This includes the possibility that round(x) returns the
-//same value as roundEven(x) for all values of x.
-genType round(genType x);
-//Returns a value equal to the nearest integer to x. A
-//fractional part of 0.5 will round toward the nearest even
-//integer. (Both 3.5 and 4.5 for x will return 4.0.)
-genType roundEven(genType x);
-//Returns a value equal to the nearest integer that is
-//greater than or equal to x.
-genType ceil(genType x);
-//Returns x - floor (x).
-genType fract(genType x);
-//Modulus. Returns x - y * floor (x/y).
-genType mod(genType x, float y);
-genType mod(genType x, genType y);
-//Returns the fractional part of x and sets i to the integer
-//part (as a whole number floating point value). Both the
-//return value and the output parameter will have the same
-//sign as x.
-//If x has the value +/- INF, the return value should be
-//NaN and must be either NaN or 0.0.
-genType modf(genType x, genType i);
-//Returns y if y < x, otherwise it returns x.
-genType min(genType x, genType y);
-genType min(genType x, float y);
-genIType min(genIType x, genIType y);
-genIType min(genIType x, int y);
-genUType min(genUType x, genUType y);
-genUType min(genUType x, uint y);
-//Returns y if x < y, otherwise it returns x.
-genType max(genType x, genType y);
-genType max(genType x, float y);
-genIType max(genIType x, genIType y);
-genIType max(genIType x, int y);
-genUType max(genUType x, genUType y);
-genUType max(genUType x, uint y);
-//Returns min (max (x, minVal), maxVal).
-//Results are undefined if minVal > maxVal.
-genType clamp(
-  genType x,
-  genType minVal,
-  genType maxVal
-);
-genType clamp(
-  genType x,
-  float minVal,
-  float maxVal
-);
-genIType clamp(
-  genIType x,
-  genIType minVal,
-  genIType maxVal
-);
-genIType clamp(
-  genIType x,
-  int minVal,
-  int maxVal
-);
-genUType clamp(
-  genUType x,
-  genUType minVal,
-  genUType maxVal
-);
-genUType clamp(
-  genUType x,
-  uint minVal,
-  uint maxVal
-);
-//Returns the linear blend of x and y, i.e., x*(1-a)+y*a.
-genType mix(
-  genType x,
-  genType y,
-  genType a
-);
-genType mix(
-  genType x,
-  genType y,
-  float a
-);
-//Selects which vector each returned component comes
-//from. For a component of a that is false, the
-//corresponding component of x is returned. For a
-//component of a that is true, the corresponding
-//component of y is returned. Components of x and y that
-//are not selected are allowed to be invalid floating point
-//values and will have no effect on the results. Thus, this
-//provides different functionality than
-//genType mix(genType x, genType y, genType(a));
-//where a is a Boolean vector.
-genType mix(
-  genType x,
-  genType y,
-  genBType a
-);
-//Returns 0.0 if x < edge, otherwise it returns 1.0.
-genType step(genType edge, genType x);
-genType step(float edge, genType x);
-//Returns 0.0 if x <= edge0 and 1.0 if x >= edge1 and
-//performs smooth Hermite interpolation between 0 and 1
-//when edge0 < x < edge1. This is useful in cases where
-//you would want a threshold function with a smooth
-//transition. This is equivalent to:
-//genType t;
-//t = clamp ((x - edge0) / (edge1 - edge0), 0, 1);
-//return t * t * (3 - 2 * t);
-//Results are undefined if edge0 >= edge1.
-genType smoothstep(
-  genType edge0,
-  genType edge1,
-  genType x
-);
-genType smoothstep(
-  float edge0,
-  float edge1,
-  genType x
-);
-//Returns true if x holds a NaN. Returns false otherwise.
-genBType isnan(genType x);
-//Returns true if x holds a positive infinity or negative
-//infinity. Returns false otherwise.
-genBType isinf(genType x);
-//Returns a signed or unsigned highp integer value
-//representing the encoding of a floating-point value. For
-//highp floating point, the value's bit level representation
-//is preserved. For mediump and lowp, the value is first
-//converted to highp floating point and the encoding of
-//that value is returned.
-genIType floatBitsToInt(genType value);
-genUType floatBitsToUint(genType value);
-//Returns a highp floating-point value corresponding to a
-//signed or unsigned integer encoding of a floating-point
-//value. If an inf or NaN is passed in, it will not signal,
-//and the resulting floating point value is unspecified.
-//Otherwise, the bit-level representation is preserved. For
-//lowp and mediump, the value is first converted to the
-//corresponding signed or unsigned highp integer and then
-//reinterpreted as a highp floating point value as before.
-genType intBitsToFloat(genIType value);
-genType uintBitsToFloat(genUType value);
-///////////////////////////
-//Floating-Point Pack and Unpack Functions
-////////////////////////////////
-//These functions do not operate component-wise, rather as described in each case.
-//First, converts each component of the normalized
-//floating-point value v into 16-bit integer values. Then,
-//the results are packed into the returned 32-bit unsigned
-//integer.
-//The conversion for component c of v to fixed point is
-//done as follows:
-//packSnorm2x16: round(clamp(c, -1, +1) * 32767.0)
-//The first component of the vector will be written to the
-//least significant bits of the output; the last component
-//will be written to the most significant bits.
-highp uint packSnorm2x16(vec2 v);
-//First, unpacks a single 32-bit unsigned integer p into a
-//pair of 16-bit signed integers. Then, each component is
-//converted to a normalized floating-point value to
-//generate the returned two-component vector.
-//The conversion for unpacked fixed-point value f to
-//floating point is done as follows:
-//unpackSnorm2x16: clamp(f / 32767.0, -1,+1)
-//The first component of the returned vector will be
-//extracted from the least significant bits of the input; the
-//last component will be extracted from the most
-//significant bits.
-highp vec2 unpackSnorm2x16(
-  highp uint p
-);
-//First, converts each component of the normalized
-//floating-point value v into 16-bit integer values. Then,
-//the results are packed into the returned 32-bit unsigned
-//integer.
-//The conversion for component c of v to fixed point is
-//done as follows:
-//packUnorm2x16: round(clamp(c, 0, +1) * 65535.0)
-//The first component of the vector will be written to the
-//least significant bits of the output; the last component
-//will be written to the most significant bits.
-highp uint packUnorm2x16(vec2 v);
-//First, unpacks a single 32-bit unsigned integer p into a
-//pair of 16-bit unsigned integers. Then, each component
-//is converted to a normalized floating-point value to
-//generate the returned two-component vector.
-//The conversion for unpacked fixed-point value f to
-//floating point is done as follows:
-//unpackUnorm2x16: f / 65535.0
-//The first component of the returned vector will be
-//extracted from the least significant bits of the input; the
-//last component will be extracted from the most
-//significant bits.
-highp vec2 unpackUnorm2x16(
-  highp uint p
-);
-//Returns an unsigned integer obtained by converting the
-//components of a two-component floating-point vector to
-//the 16-bit floating-point representation found in the
-//OpenGL ES Specification, and then packing these two
-//16-bit integers into a 32-bit unsigned integer.
-//The first vector component specifies the 16 leastsignificant bits of the result; the second component
-//specifies the 16 most-significant bits.
-highp uint packHalf2x16(mediump vec2 v);
-//Returns a two-component floating-point vector with
-//components obtained by unpacking a 32-bit unsigned
-//integer into a pair of 16-bit values, interpreting those
-//values as 16-bit floating-point numbers according to the
-//OpenGL ES Specification, and converting them to 32-bit
-//floating-point values.
-//The first component of the vector is obtained from the
-//16 least-significant bits of v; the second component is
-//obtained from the 16 most-significant bits of v.
-mediump vec2 unpackHalf2x16(
-  highp uint v
-);
-//////////////////
-//Geometric Functions
-/////////////////////////
-//These operate on vectors as vectors, not component-wise.
-//Returns the length of vector x, i.e., sqrt(x[0]^2 + x[1]^2 + ...)
-float length(genType x);
-//Returns the distance between p0 and p1, i.e., length (p0 - p1)
-float distance(genType p0, genType p1);
-//Returns the dot product of x and y, i.e., x[0]*y[0] + x[1]*y[1] + ...
-float dot(genType x, genType y);
-//Returns the cross product of x and y, i.e.,
-//vec3(
-//  x[1]*y[2]- y[1]*x[2],
-//  x[2]*y[0]- y[2]*x[0],
-//  x[0]*y[1]- y[0]*x[1])
-vec3 cross(vec3 x, vec3 y);
-//Returns a vector in the same direction as x but with a length of 1 i.e.
-// x/length(x)
-genType normalize(genType x);
-// Orients a vector to point away from a surface as defined by its normal.
-//If dot(Nref, I) < 0 return N, otherwise return -N.
-genType faceforward(
-  genType N,
-  genType I,
-  genType Nref
-);
-//For the incident vector I and surface orientation N,
-//returns the reflection direction:
-//I - 2 * dot(N, I) * N
-//N must already be normalized in order to achieve the
-//desired result.
-genType reflect(genType I, genType N);
-//For the incident vector I and surface normal N, and the
-//ratio of indices of refraction eta, return the refraction
-//vector. The result is computed by
-//k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I))
-//if (k < 0.0)
-//return genType(0.0)
-//else
-//return eta * I - (eta * dot(N, I) + sqrt(k)) * N
-//The input parameters for the incident vector I and the
-//surface normal N must already be normalized to get the
-//desired results.
-genType refract(
-  genType I,
-  genType N,
-  float eta
-);
-//////////////////////
-//Matrix Functions
-///////////////////////////////
-//Multiply matrix x by matrix y component-wise, i.e.,
-//result[i][j] is the scalar product of x[i][j] and y[i][j].
-//Note: to get linear algebraic matrix multiplication, use
-//the multiply operator (*).
-mat matrixCompMult(mat x, mat y);
-//Treats the first parameter c as a column vector (matrix
-//with one column) and the second parameter r as a row
-//vector (matrix with one row) and does a linear algebraic
-//matrix multiply c * r, yielding a matrix whose number of
-//rows is the number of components in c and whose
-//number of columns is the number of components in r.
-mat2 outerProduct(vec2 c, vec2 r);
-mat3 outerProduct(vec3 c, vec3 r);
-mat4 outerProduct(vec4 c, vec4 r);
-mat2x3 outerProduct(vec3 c, vec2 r);
-mat3x2 outerProduct(vec2 c, vec3 r);
-mat2x4 outerProduct(vec4 c, vec2 r);
-mat4x2 outerProduct(vec2 c, vec4 r);
-mat3x4 outerProduct(vec4 c, vec3 r);
-mat4x3 outerProduct(vec3 c, vec4 r);
-//Returns a matrix that is the transpose of m. The input
-//matrix m is not modified.
-mat2 transpose(mat2 m);
-mat3 transpose(mat3 m);
-mat4 transpose(mat4 m);
-mat2x3 transpose(mat3x2 m);
-mat3x2 transpose(mat2x3 m);
-mat2x4 transpose(mat4x2 m);
-mat4x2 transpose(mat2x4 m);
-mat3x4 transpose(mat4x3 m);
-mat4x3 transpose(mat3x4 m);
-//Returns the determinant of m.
-float determinant(mat2 m);
-float determinant(mat3 m);
-float determinant(mat4 m);
-//Returns a matrix that is the inverse of m. The input
-//matrix m is not modified. The values in the returned
-//matrix are undefined if m is singular or poorlyconditioned (nearly singular).
-mat2 inverse(mat2 m);
-mat3 inverse(mat3 m);
-mat4 inverse(mat4 m);
-/////////////////////////
-//Vector Relational Functions
-////////////////////////////////
-//Relational and equality operators (<, <=, >, >=, ==, !=) are defined to produce scalar Boolean results. For
-//vector results, use the following built-in functions. Below, “bvec” is a placeholder for one of bvec2,
-//bvec3, or bvec4, “ivec” is a placeholder for one of ivec2, ivec3, or ivec4, “uvec” is a placeholder for
-//uvec2, uvec3, or uvec4, and “vec” is a placeholder for vec2, vec3, or vec4. In all cases, the sizes of the
-//input and return vectors for any particular call must match.
-//Returns the component-wise compare of x < y.
-bvec lessThan(vec x, vec y);
-bvec lessThan(ivec x, ivec y);
-bvec lessThan(uvec x, uvec y);
-//Returns the component-wise compare of x <= y.
-bvec lessThanEqual(vec x, vec y);
-bvec lessThanEqual(ivec x, ivec y);
-bvec lessThanEqual(uvec x, uvec y);
-//Returns the component-wise compare of x > y.
-bvec greaterThan(vec x, vec y);
-bvec greaterThan(ivec x, ivec y);
-bvec greaterThan(uvec x, uvec y);
-//Returns the component-wise compare of x >= y.
-bvec greaterThanEqual(vec x, vec y);
-bvec greaterThanEqual(ivec x, ivec y);
-bvec greaterThanEqual(uvec x, uvec y);
-//Returns the component-wise compare of x == y.
-bvec equal(vec x, vec y);
-bvec equal(ivec x, ivec y);
-bvec equal(uvec x, uvec y);
-bvec equal(bvec x, bvec y);
-//Returns the component-wise compare of x != y.
-bvec notEqual(vec x, vec y);
-bvec notEqual(ivec x, ivec y);
-bvec notEqual(uvec x, uvec y);
-bvec notEqual(bvec x, bvec y);
-//Returns true if any component of x is true.
-bool any(bvec x);
-//Returns true only if all components of x are true.
-bool all(bvec x);
-//Returns the component-wise logical complement of x.
-bvec not(bvec x);
-/**
- * TEXTURE LOOKUP FUNCTIONS
- * 
- * Texture lookup functions are
- * available to vertex and fragment
- * shaders. However, level of detail is
- * not implicitly computed for vertex
- * shaders. The functions in the table
- * below provide access to textures
- * through samplers, as set up through
- * the OpenGL ES API. Texture
- * properties such as size, pixel
- * format, number of dimensions,
- * filtering method, number of mip-map
- * levels, depth comparison, and so on
- * are also defined by OpenGL ES API
- * calls. Such properties are taken
- * into account as the texture is
- * accessed via the built-in functions
- * defined below.
- * 
- * Texture data can be stored by the GL
- * as floating point, unsigned
- * normalized integer, unsigned integer
- * or signed integer data. This is
- * determined by the type of the
- * internal format of the texture.
- * Texture lookups on unsigned
- * normalized integer data return
- * floating point values in the range
- * [0, 1].
- * 
- * Texture lookup functions are
- * provided that can return their
- * result as floating point, unsigned
- * integer or signed integer, depending
- * on the sampler type passed to the
- * lookup function. Care must be taken
- * to use the right sampler type for
- * texture access. The following table
- * lists the supported combinations of
- * sampler types and texture internal
- * formats. Blank entries are
- * unsupported. Doing a texture lookup
- * will return undefined values for
- * unsupported combinations.
- * 
- * Internal Texture Format | Floating
- * Point | Signed Integer | Unsigned
- * Integer | Sampler Types | Sampler
- * Types | Sampler Types
- * 
- * ---
- * 
- * Floating point | Supported | |
- * Normalized Integer | Supported | |
- * Signed Integer | | Supported |
- * Unsigned Integer | | | Supported
- * 
- * If an integer sampler type is used,
- * the result of a texture lookup is an
- * ivec4. If an unsigned integer
- * sampler type is used, the result of
- * a texture lookup is a uvec4. If a
- * floating point sampler type is used,
- * the result of a texture lookup is a
- * vec4.
- * 
- * In the prototypes below, the “g” in
- * the return type “gvec4” is used as a
- * placeholder for nothing, “i”, or “u”
- * making a return type of vec4, ivec4,
- * or uvec4. In these cases, the
- * sampler argument type also starts
- * with “g”, indicating the same
- * substitution done on the return
- * type; it is either a floating point,
- * signed integer, or unsigned integer
- * sampler, matching the basic type of
- * the return type, as described above.
- * 
- * For shadow forms (the sampler
- * parameter is a shadow-type), a depth
- * comparison lookup on the depth
- * texture bound to sampler is done as
- * described in section 3.8.16 “Texture
- * Comparison Modes” of the OpenGL ES
- * Graphics System Specification. See
- * the table below for which component
- * specifies Dref. The texture bound to
- * sampler must be a depth texture, or
- * results are undefined. If a
- * non-shadow texture call is made to a
- * sampler that represents a depth
- * texture with depth comparisons
- * turned on, then results are
- * undefined. If a shadow texture call
- * is made to a sampler that represents
- * a depth texture with depth
- * comparisons turned off, then results
- * are undefined. If a shadow texture
- * call is made to a sampler that does
- * not represent a depth texture, then
- * results are undefined.
- * 
- * In all functions below, the bias
- * parameter is optional for fragment
- * shaders. The bias parameter is not
- * accepted in a vertex shader. For a
- * fragment shader, if bias is present,
- * it is added to the implicit level of
- * detail prior to performing the
- * texture access operation.
- * 
- * The implicit level of detail is
- * selected as follows: For a texture
- * that is not mip-mapped, the texture
- * is used directly. If it is
- * mip-mapped and running in a fragment
- * shader, the LOD computed by the
- * implementation is used to do the
- * texture lookup. If it is mip-mapped
- * and running on the vertex shader,
- * then the base texture is used.
- * 
- * Some texture functions (non-“Lod”
- * and non-“Grad” versions) may require
- * implicit derivatives. Implicit
- * derivatives are undefined within
- * non-uniform control flow and for
- * vertex texture fetches. For Cube
- * forms, the direction of P is used to
- * select which face to do a
- * 2-dimensional texture lookup in, as
- * described in section 3.8.10 “Cube
- * Map Texture Selection” in the OpenGL
- * ES Graphics System Specification.
- * For Array forms, the array layer
- * used will be max (0,min (d -1,
- * floor(layer+0.5)))
- * 
- * where d is the depth of the texture
- * array and layer comes from the
- * component indicated in the tables
- * below.
- * 
- */
-//Returns the dimensions of
-//level lod for the texture bound
-//to sampler, as described in
-//section 2.11.9 “Shader
-//Execution” of the OpenGL ES
-//3.0 Graphics System
-//Specification, under “Texture
-//Size Query”.
-//
-//The components in the return
-//value are filled in, in order,
-//with the width, height, depth of
-//the texture.
-//
-//For the array forms, the last
-//component of the return value
-//is the number of layers in the
-//texture array.
-highp ivec2 textureSize(
-  gsampler2D sampler,
-  int lod
-);
-highp ivec3 textureSize(
-  gsampler3D sampler,
-  int lod
-);
-highp ivec2 textureSize(
-  gsamplerCube sampler,
-  int lod
-);
-highp ivec2 textureSize(
-  sampler2DShadow sampler,
-  int lod
-);
-highp ivec2 textureSize(
-  samplerCubeShadow sampler,
-  int lod
-);
-highp ivec3 textureSize(
-  gsampler2DArray sampler,
-  int lod
-);
-highp ivec3 textureSize(
-  sampler2DArrayShadow sampler,
-  int lod
-);
-//Use the texture coordinate P to
-//do a texture lookup in the
-//texture currently bound to
-//sampler. The last component
-//of P is used as Dref for the
-//shadow forms. For array
-//forms, the array layer comes
-//from the last component of P
-//in the non-shadow forms, and
-//the second to last component
-//of P in the shadow forms.
-gvec4 texture(
-  gsampler2D sampler,
-  vec2 P
-);
-gvec4 texture(
-  gsampler2D sampler,
-  vec2 P,
-  float bias
-);
-gvec4 texture(
-  gsampler3D sampler,
-  vec3 P
-);
-gvec4 texture(
-  gsampler3D sampler,
-  vec3 P,
-  float bias
-);
-gvec4 texture(
-  gsamplerCube sampler,
-  vec3 P
-);
-gvec4 texture(
-  gsamplerCube sampler,
-  vec3 P,
-  float bias
-);
-float texture(
-  sampler2DShadow sampler,
-  vec3 P
-);
-float texture(
-  sampler2DShadow sampler,
-  vec3 P,
-  float bias
-);
-float texture(
-  samplerCubeShadow sampler,
-  vec4 P
-);
-float texture(
-  samplerCubeShadow sampler,
-  vec4 P,
-  float bias
-);
-gvec4 texture(
-  gsampler2DArray sampler,
-  vec3 P
-);
-gvec4 texture(
-  gsampler2DArray sampler,
-  vec3 P,
-  float bias
-);
-float texture(
-  sampler2DArrayShadow sampler,
-  vec4 P
-);
-//Do a texture lookup with
-//projection. The texture
-//coordinates consumed from P,
-//not including the last
-//component of P, are divided by
-//the last component of P to
-//form projected coordinates P'.
-//The resulting third component
-//of P' in the shadow forms is
-//used as Dref. The third
-//component of P is ignored
-//when sampler has type
-//gsampler2D and P has type
-//vec4. After these values are
-//computed, texture lookup
-//proceeds as in texture.
-gvec4 textureProj(
-  gsampler2D sampler,
-  vec3 P
-);
-gvec4 textureProj(
-  gsampler2D sampler,
-  vec3 P,
-  float bias
-);
-gvec4 textureProj(
-  gsampler2D sampler,
-  vec4 P
-);
-gvec4 textureProj(
-  gsampler2D sampler,
-  vec4 P,
-  float bias
-);
-gvec4 textureProj(
-  gsampler3D sampler,
-  vec4 P
-);
-gvec4 textureProj(
-  gsampler3D sampler,
-  vec4 P,
-  float bias
-);
-float textureProj(
-  sampler2DShadow sampler,
-  vec4 P
-);
-float textureProj(
-  sampler2DShadow sampler,
-  vec4 P,
-  float bias
-);
-//Do a texture lookup as in
-//texture but with explicit LOD;
-//lod specifies λ_base and sets the
-//partial derivatives as follows.
-//(See section 3.8.9 “Texture
-//Minification” and equation
-//3.14 in the OpenGL ES 3.0
-//Graphics System
-//Specification.)
-//∂u/∂x=0 ∂v/∂x=0 ∂w/∂x=0
-//∂u/∂y=0 ∂v/∂y=0 ∂w/∂y=0
-gvec4 textureLod(
-  gsampler2D sampler,
-  vec2 P,
-  float lod
-);
-gvec4 textureLod(
-  gsampler3D sampler,
-  vec3 P,
-  float lod
-);
-gvec4 textureLod(
-  gsamplerCube sampler,
-  vec3 P,
-  float lod
-);
-float textureLod(
-  sampler2DShadow sampler,
-  vec3 P,
-  float lod
-);
-gvec4 textureLod(
-  gsampler2DArray sampler,
-  vec3 P,
-  float lod
-);
-//Do a texture lookup as in
-//texture but with offset added
-//to the (u,v,w) texel coordinates
-//before looking up each texel.
-//The offset value must be a
-//constant expression. A limited
-//range of offset values are
-//supported; the minimum and
-//maximum offset values are
-//implementation-dependent and
-//given by
-//MIN_PROGRAM_TEXEL_OFFSET and
-//MAX_PROGRAM_TEXEL_OFFSET,
-//respectively.
-//Note that offset does not apply
-//to the layer coordinate for
-//texture arrays. This is
-//explained in detail in section
-//3.8.9 “Texture Minification” of
-//the OpenGL ES Graphics
-//System Specification, where
-//offset is (𝛿_ , 𝛿_v ,𝛿_w). Note
-//that texel offsets are also not
-//supported for cube maps.
-gvec4 textureOffset(
-  gsampler2D sampler,
-  vec2 P,
-  ivec2 offset
-);
-gvec4 textureOffset(
-  gsampler2D sampler,
-  vec2 P,
-  ivec2 offset,
-  float bias
-);
-gvec4 textureOffset(
-  gsampler3D sampler,
-  vec3 P,
-  ivec3 offset
-);
-gvec4 textureOffset(
-  gsampler3D sampler,
-  vec3 P,
-  ivec3 offset,
-  float bias
-);
-float textureOffset(
-  sampler2DShadow sampler,
-  vec3 P,
-  ivec2 offset
-);
-float textureOffset(
-  sampler2DShadow sampler,
-  vec3 P,
-  ivec2 offset,
-  float bias
-);
-gvec4 textureOffset(
-  gsampler2DArray sampler,
-  vec3 P,
-  ivec2 offset
-);
-gvec4 textureOffset(
-  gsampler2DArray sampler,
-  vec3 P,
-  ivec2 offset,
-  float bias
-);
-//Use integer texture coordinate
-//P to lookup a single texel from
-//sampler. The array layer
-//comes from the last component
-//of P for the array forms. The
-//level-of-detail lod is as
-//described in sections 2.11.9
-//“Shader Execution” under
-//Texel Fetches and 3.8
-//“Texturing” of the OpenGL ES
-//3.0 Graphics System
-//Specification.
-gvec4 texelFetch(
-  gsampler2D sampler,
-  ivec2 P,
-  int lod
-);
-gvec4 texelFetch(
-  gsampler3D sampler,
-  ivec3 P,
-  int lod
-);
-gvec4 texelFetch(
-  gsampler2DArray sampler,
-  ivec3 P,
-  int lod
-);
-//Fetch a single texel as in
-//texelFetch offset by offset as
-//described in textureOffset.
-gvec4 texelFetchOffset(
-  gsampler2D sampler,
-  ivec2 P,
-  int lod,
-  ivec2 offset
-);
-gvec4 texelFetchOffset(
-  gsampler3D sampler,
-  ivec3 P,
-  int lod,
-  ivec3 offset
-);
-gvec4 texelFetchOffset(
-  gsampler2DArray sampler,
-  ivec3 P,
-  int lod,
-  ivec2 offset
-);
-//Do a projective texture lookup
-//as described in textureProj
-//offset by offset as described in
-//textureOffset.
-gvec4 textureProjOffset(
-  gsampler2D sampler,
-  vec3 P,
-  ivec2 offset
-);
-gvec4 textureProjOffset(
-  gsampler2D sampler,
-  vec3 P,
-  ivec2 offset,
-  float bias
-);
-gvec4 textureProjOffset(
-  gsampler2D sampler,
-  vec4 P,
-  ivec2 offset
-);
-gvec4 textureProjOffset(
-  gsampler2D sampler,
-  vec4 P,
-  ivec2 offset,
-  float bias
-);
-gvec4 textureProjOffset(
-  gsampler3D sampler,
-  vec4 P,
-  ivec3 offset
-);
-gvec4 textureProjOffset(
-  gsampler3D sampler,
-  vec4 P,
-  ivec3 offset,
-  float bias
-);
-float textureProjOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  ivec2 offset,
-  float bias
-);
-float textureProjOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  ivec2 offset,
-  float bias
-);
-//Do an offset texture lookup
-//with explicit LOD. See
-//textureLod and
-//textureOffset.
-gvec4 textureLodOffset(
-  gsampler2D sampler,
-  vec2 P,
-  float lod,
-  ivec2 offset
-);
-gvec4 textureLodOffset(
-  gsampler3D sampler,
-  vec3 P,
-  float lod,
-  ivec3 offset
-);
-float textureLodOffset(
-  sampler2DShadow sampler,
-  vec3 P,
-  float lod,
-  ivec2 offset
-);
-gvec4 textureLodOffset(
-  gsampler2DArray sampler,
-  vec3 P,
-  float lod,
-  ivec2 offset
-);
-//Do a projective texture lookup
-//with explicit LOD. See
-//textureProj and textureLod.
-gvec4 textureProjLod(
-  gsampler2D sampler,
-  vec3 P,
-  float lod
-);
-gvec4 textureProjLod(
-  gsampler2D sampler,
-  vec4 P,
-  float lod
-);
-gvec4 textureProjLod(
-  gsampler3D sampler,
-  vec4 P,
-  float lod
-);
-float textureProjLod(
-  sampler2DShadow sampler,
-  vec4 P,
-  float lod
-);
-//Do an offset projective texture
-//lookup with explicit LOD. See
-//textureProj, textureLod, and
-//textureOffset.
-gvec4 textureProjLodOffset(
-  gsampler2D sampler,
-  vec3 P,
-  float lod,
-  ivec2 offset
-);
-gvec4 textureProjLodOffset(
-  gsampler2D sampler,
-  vec4 P,
-  float lod,
-  ivec2 offset
-);
-gvec4 textureProjLodOffset(
-  gsampler3D sampler,
-  vec4 P,
-  float lod,
-  ivec3 offset
-);
-float textureProjLodOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  float lod,
-  ivec2 offset
-);
-// TODO FIX COMMENT
-//Do a texture lookup as in
-//texture but with explicit
-//gradients. The partial
-//derivatives of P are with
-//respect to window x and
-//window y. Set
-//∂s
-//∂x
-//∂s
-//∂y
-//∂t
-//∂x
-//∂t
-//∂y
-//∂r
-//∂x
-//∂r
-//∂y
-//=
-//=
-//=
-//=
-//=
-//=
-//∂P.s
-//∂x
-//∂P.s
-//∂y
-//∂P.t
-//∂x
-//∂P.t
-//∂y
-//∂P.p
-//cube
-//∂x
-//∂P.p
-//cube
-//∂y
-//For the cube version, the
-//partial derivatives of P are
-//assumed to be in the
-//coordinate system used before
-//texture coordinates are
-//projected onto the appropriate
-//cube face.
-gvec4 textureGrad(
-  gsampler2D sampler,
-  vec2 P,
-  vec2 dPdx,
-  vec2 dPdy
-);
-gvec4 textureGrad(
-  gsampler3D sampler,
-  vec3 P,
-  vec3 dPdx,
-  vec3 dPdy
-);
-gvec4 textureGrad(
-  gsamplerCube sampler,
-  vec3 P,
-  vec3 dPdx,
-  vec3 dPdy
-);
-float textureGrad(
-  sampler2DShadow sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy
-);
-float textureGrad(
-  samplerCubeShadow sampler,
-  vec4 P,
-  vec3 dPdx,
-  vec3 dPdy
-);
-gvec4 textureGrad(
-  gsampler2DArray sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy
-);
-float textureGrad(
-  sampler2DArrayShadow sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy
-);
-//Do a texture lookup with both
-//explicit gradient and offset, as
-//described in textureGrad and
-//textureOffset.
-gvec4 textureGradOffset(
-  gsampler2D sampler,
-  vec2 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
-);
-gvec4 textureGradOffset(
-  gsampler3D sampler,
-  vec3 P,
-  vec3 dPdx,
-  vec3 dPdy,
-  ivec3 offset
-);
-float textureGradOffset(
-  sampler2DShadow sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
-);
-gvec4 textureGradOffset(
-  gsampler2DArray sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
-);
-float textureGradOffset(
-  sampler2DArrayShadow sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
-);
-//Do a texture lookup both
-//projectively, as described in
-//textureProj, and with explicit
-//gradient as described in
-//textureGrad. The partial
-//derivatives dPdx and dPdy are
-//assumed to be already
-//projected.
-gvec4 textureProjGrad(
-  gsampler2D sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy
-);
-gvec4 textureProjGrad(
-  gsampler2D sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy
-);
-gvec4 textureProjGrad(
-  gsampler3D sampler,
-  vec4 P,
-  vec3 dPdx,
-  vec3 dPdy
-);
-float textureProjGrad(
-  sampler2DShadow sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy
-);
-//Do a texture lookup
-//projectively and with explicit
-//gradient as described in
-//textureProjGrad, as well as
-//with offset, as described in
-//textureOffset.
-gvec4 textureProjGradOffset(
-  gsampler2D sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
-);
-gvec4 textureProjGradOffset(
-  gsampler2D sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
-);
-gvec4 textureProjGradOffset(
-  gsampler3D sampler,
-  vec4 P,
-  vec3 dPdx,
-  vec3 dPdy,
-  ivec3 offset
-);
-float textureProjGradOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
-);
-// TODO FIX COMMENT
-/////////////////////////////
-//Fragment Processing Functions
-//////////////////////////////////
-//Fragment processing functions are only available in fragment shaders.
-//Derivatives may be computationally expensive and/or numerically unstable. Therefore, an OpenGL ES
-//implementation may approximate the true derivatives by using a fast but not entirely accurate derivative
-//computation. Derivatives are undefined within non-uniform control flow.
-//The expected behavior of a derivative is specified using forward/backward differencing.
-//Forward differencing:
-//F  xdx -F  x ~ dFdx  x⋅dx
-//dFdx  x ~
-//F  xdx -F  x
-//dx
-//1a
-//1b
-//Backward differencing:
-//F  x-dx -F  x ~ -dFdx x⋅dx
-//dFdx  x ~
-//F  x-F x-dx
-//dx
-//2a
-//2b
-//With single-sample rasterization, dx <= 1.0 in equations 1b and 2b. For multi-sample rasterization, dx <
-//2.0 in equations 1b and 2b.
-//dFdy is approximated similarly, with y replacing x.
-//An OpenGL ES implementation may use the above or other methods to perform the calculation, subject to
-//the following conditions:
-//1. The method may use piecewise linear approximations. Such linear approximations imply that higher
-//order derivatives, dFdx(dFdx(x)) and above, are undefined.
-//2. The method may assume that the function evaluated is continuous. Therefore derivatives within the
-//body of a non-uniform conditional are undefined.
-//3. The method may differ per fragment, subject to the constraint that the method may vary by window
-//coordinates, not screen coordinates. The invariance requirement described in section 3.2 “Invariance”
-//of the OpenGL ES Graphics System Specification, is relaxed for derivative calculations, because the
-//method may be a function of fragment location.
-//Other properties that are desirable, but not required, are:
-//4. Functions should be evaluated within the interior of a primitive (interpolated, not extrapolated).
-//5. Functions for dFdx should be evaluated while holding y constant. Functions for dFdy should be
-//evaluated while holding x constant. However, mixed higher order derivatives, like dFdx(dFdy(y))
-//and dFdy(dFdx(x)) are undefined.
-//6. Derivatives of constant arguments should be 0.
-//In some implementations, varying degrees of derivative accuracy may be obtained by providing GL hints
-//(section 5.3 “Hints” of the OpenGL ES 3.0 Graphics System Specification), allowing a user to make an
-//image quality versus speed trade off.
-//Returns the derivative in x using local differencing for
-//the input argument p.
-genType dFdx(genType p);
-//Returns the derivative in y using local differencing for
-//the input argument p.
-//These two functions are commonly used to estimate the
-//filter width used to anti-alias procedural textures. We
-//are assuming that the expression is being evaluated in
-//parallel on a SIMD array so that at any given point in
-//time the value of the function is known at the grid points
-//represented by the SIMD array. Local differencing
-//between SIMD array elements can therefore be used to
-//derive dFdx, dFdy, etc.
-genType dFdy(genType p);
-//Returns the sum of the absolute derivative in x and y
-//using local differencing for the input argument p, i.e.,
-//abs (dFdx (p)) + abs (dFdy (p));
-genType fwidth(genType p);
+// The MIT License
+// Copyright © 2013 Inigo Quilez
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+// https://www.youtube.com/c/InigoQuilez
+// https://iquilezles.org/
+// A list of useful distance function to simple primitives. All
+// these functions (except for ellipsoid) return an exact
+// euclidean distance, meaning they produce a better SDF than
+// what you'd get if you were constructing them from boolean
+// operations (such as cutting an infinite cylinder with two planes).
+// List of other 3D SDFs:
+//    https://www.shadertoy.com/playlist/43cXRl
+// and
+//    http://iquilezles.org/www/articles/distfunctions/distfunctions.htm
+//------------------------------------------------------------------
+float dot2(vec2 v) { return dot(v, v); }
+float dot2(vec3 v) { return dot(v, v); }
+float ndot(vec2 a, vec2 b) { return a.x * b.x - a.y * b.y; }
+float sdPlane(vec3 p) { return p.y; }
+float sdSphere(vec3 p, float s) { return length(p) - s; }
+float sdBox(vec3 p, vec3 b) {
+  vec3 d = abs(p) - b;
+  return min(max(d.x, max(d.y, d.z)), 0.0) + length(max(d, 0.0));
+}
+float sdBoundingBox(vec3 p, vec3 b, float e) {
+  p = abs(p) - b;
+  vec3 q = abs(p + e) - e;
+  return min(
+    min(
+      length(max(vec3(p.x, q.y, q.z), 0.0)) + min(max(p.x, max(q.y, q.z)), 0.0),
+      length(max(vec3(q.x, p.y, q.z), 0.0)) + min(max(q.x, max(p.y, q.z)), 0.0)
+    ),
+    length(max(vec3(q.x, q.y, p.z), 0.0)) + min(max(q.x, max(q.y, p.z)), 0.0)
+  );
+}
+float sdEllipsoid(
+  vec3 p,
+  vec3 r // approximated
+) {
+  float k0 = length(p / r);
+  float k1 = length(p / (r * r));
+  return k0 * (k0 - 1.0) / k1;
+}
+float sdTorus(vec3 p, vec2 t) {
+  return length(vec2(length(p.xz) - t.x, p.y)) - t.y;
+}
+float sdCappedTorus(vec3 p, vec2 sc, float ra, float rb) {
+  p.x = abs(p.x);
+  float k = sc.y * p.x > sc.x * p.y ? dot(p.xy, sc) : length(p.xy);
+  return sqrt(dot(p, p) + ra * ra - 2.0 * ra * k) - rb;
+}
+float sdHexPrism(vec3 p, vec2 h) {
+  vec3 q = abs(p);
+  const   vec3 k = vec3(-0.8660254, 0.5, 0.57735);
+  p = abs(p);
+  p.xy -= 2.0 * min(dot(k.xy, p.xy), 0.0) * k.xy;
+  vec2
+    d = vec2(
+      length(p.xy - vec2(clamp(p.x, -k.z * h.x, k.z * h.x), h.x)) *
+      sign(p.y - h.x),
+      p.z - h.y
+    );
+  return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+}
+float sdOctogonPrism(vec3 p, float r, float h) {
+  const   vec3
+    k = vec3(
+      -0.9238795325, // sqrt(2+sqrt(2))/2
+      0.3826834323, // sqrt(2-sqrt(2))/2
+      0.4142135623
+    ); // sqrt(2)-1
+  // reflections
+  p = abs(p);
+  p.xy -= 2.0 * min(dot(vec2(k.x, k.y), p.xy), 0.0) * vec2(k.x, k.y);
+  p.xy -= 2.0 * min(dot(vec2(-k.x, k.y), p.xy), 0.0) * vec2(-k.x, k.y);
+  // polygon side
+  p.xy -= vec2(clamp(p.x, -k.z * r, k.z * r), r);
+  vec2 d = vec2(length(p.xy) * sign(p.y), p.z - h);
+  return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+}
+float sdCapsule(vec3 p, vec3 a, vec3 b, float r) {
+  vec3 pa = p - a, ba = b - a;
+  float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+  return length(pa - ba * h) - r;
+}
+float sdRoundCone(vec3 p, float r1, float r2, float h) {
+  vec2 q = vec2(length(p.xz), p.y);
+  float b = (r1 - r2) / h;
+  float a = sqrt(1.0 - b * b);
+  float k = dot(q, vec2(-b, a));
+  if (k < 0.0) return length(q) - r1;
+  if (k > a * h) return length(q - vec2(0.0, h)) - r2;
+  return dot(q, vec2(a, b)) - r1;
+}
+float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2) {
+  // sampling independent computations (only depend on shape)
+  vec3 ba = b - a;
+  float l2 = dot(ba, ba);
+  float rr = r1 - r2;
+  float a2 = l2 - rr * rr;
+  float il2 = 1.0 / l2;
+  // sampling dependant computations
+  vec3 pa = p - a;
+  float y = dot(pa, ba);
+  float z = y - l2;
+  float x2 = dot2(pa * l2 - ba * y);
+  float y2 = y * y * l2;
+  float z2 = z * z * l2;
+  // single square root!
+  float k = sign(rr) * rr * rr * x2;
+  if (sign(z) * a2 * z2 > k) return sqrt(x2 + z2) * il2 - r2;
+  if (sign(y) * a2 * y2 < k) return sqrt(x2 + y2) * il2 - r1;
+  return (sqrt(x2 * a2 * il2) + y * rr) * il2 - r1;
+}
+float sdTriPrism(vec3 p, vec2 h) {
+  const   float k = sqrt(3.0);
+  h.x *= 0.5 * k;
+  p.xy /= h.x;
+  p.x = abs(p.x) - 1.0;
+  p.y = p.y + 1.0 / k;
+  if (p.x + k * p.y > 0.0) p.xy = vec2(p.x - k * p.y, -k * p.x - p.y) / 2.0;
+  p.x -= clamp(p.x, -2.0, 0.0);
+  float d1 = length(p.xy) * sign(-p.y) * h.x;
+  float d2 = abs(p.z) - h.y;
+  return length(max(vec2(d1, d2), 0.0)) + min(max(d1, d2), 0.);
+}
+// vertical
+float sdCylinder(vec3 p, vec2 h) {
+  vec2 d = abs(vec2(length(p.xz), p.y)) - h;
+  return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+}
+// arbitrary orientation
+float sdCylinder(vec3 p, vec3 a, vec3 b, float r) {
+  vec3 pa = p - a;
+  vec3 ba = b - a;
+  float baba = dot(ba, ba);
+  float paba = dot(pa, ba);
+  float x = length(pa * baba - ba * paba) - r * baba;
+  float y = abs(paba - baba * 0.5) - baba * 0.5;
+  float x2 = x * x;
+  float y2 = y * y * baba;
+  float
+    d = max(x, y) < 0.0
+      ? -min(x2, y2)
+      : (x > 0.0 ? x2 : 0.0) + (y > 0.0 ? y2 : 0.0);
+  return sign(d) * sqrt(abs(d)) / baba;
+}
+// vertical
+float sdCone(vec3 p, vec2 c, float h) {
+  vec2 q = h * vec2(c.x, -c.y) / c.y;
+  vec2 w = vec2(length(p.xz), p.y);
+  vec2 a = w - q * clamp(dot(w, q) / dot(q, q), 0.0, 1.0);
+  vec2 b = w - q * vec2(clamp(w.x / q.x, 0.0, 1.0), 1.0);
+  float k = sign(q.y);
+  float d = min(dot(a, a), dot(b, b));
+  float s = max(k * (w.x * q.y - w.y * q.x), k * (w.y - q.y));
+  return sqrt(d) * sign(s);
+}
+float sdCappedCone(vec3 p, float h, float r1, float r2) {
+  vec2 q = vec2(length(p.xz), p.y);
+  vec2 k1 = vec2(r2, h);
+  vec2 k2 = vec2(r2 - r1, 2.0 * h);
+  vec2 ca = vec2(q.x - min(q.x, q.y < 0.0 ? r1 : r2), abs(q.y) - h);
+  vec2 cb = q - k1 + k2 * clamp(dot(k1 - q, k2) / dot2(k2), 0.0, 1.0);
+  float s = cb.x < 0.0 && ca.y < 0.0 ? -1.0 : 1.0;
+  return s * sqrt(min(dot2(ca), dot2(cb)));
+}
+float sdCappedCone(vec3 p, vec3 a, vec3 b, float ra, float rb) {
+  float rba = rb - ra;
+  float baba = dot(b - a, b - a);
+  float papa = dot(p - a, p - a);
+  float paba = dot(p - a, b - a) / baba;
+  float x = sqrt(papa - paba * paba * baba);
+  float cax = max(0.0, x - (paba < 0.5 ? ra : rb));
+  float cay = abs(paba - 0.5) - 0.5;
+  float k = rba * rba + baba;
+  float f = clamp((rba * (x - ra) + paba * baba) / k, 0.0, 1.0);
+  float cbx = x - ra - f * rba;
+  float cby = paba - f;
+  float s = cbx < 0.0 && cay < 0.0 ? -1.0 : 1.0;
+  return s *
+  sqrt(min(cax * cax + cay * cay * baba, cbx * cbx + cby * cby * baba));
+}
+// c is the sin/cos of the desired cone angle
+float sdSolidAngle(vec3 pos, vec2 c, float ra) {
+  vec2 p = vec2(length(pos.xz), pos.y);
+  float l = length(p) - ra;
+  float m = length(p - c * clamp(dot(p, c), 0.0, ra));
+  return max(l, m * sign(c.y * p.x - c.x * p.y));
+}
+float sdOctahedron(vec3 p, float s) {
+  p = abs(p);
+  float m = p.x + p.y + p.z - s;
+  // exact distance
+  vec3 o = min(3.0 * p - m, 0.0);
+  o = max(6.0 * p - m * 2.0 - o * 3.0 + (o.x + o.y + o.z), 0.0);
+  return length(p - s * o / (o.x + o.y + o.z));
+  // exact distance
+  vec3 q;
+  if (3.0 * p.x < m) q = p.xyz;
+  else if (3.0 * p.y < m) q = p.yzx;
+  else if (3.0 * p.z < m) q = p.zxy;
+  else
+  return m * 0.57735027;
+  float k = clamp(0.5 * (q.z - q.y + s), 0.0, s);
+  return length(vec3(q.x, q.y - s + k, q.z - k));
+  // bound, not exact
+  return m * 0.57735027;
+}
+float sdPyramid(vec3 p, float h) {
+  float m2 = h * h + 0.25;
+  // symmetry
+  p.xz = abs(p.xz);
+  p.xz = p.z > p.x ? p.zx : p.xz;
+  p.xz -= 0.5;
+  // project into face plane (2D)
+  vec3 q = vec3(p.z, h * p.y - 0.5 * p.x, h * p.x + 0.5 * p.y);
+  float s = max(-q.x, 0.0);
+  float t = clamp((q.y - 0.5 * p.z) / (m2 + 0.25), 0.0, 1.0);
+  float a = m2 * (q.x + s) * (q.x + s) + q.y * q.y;
+  float
+    b = m2 * (q.x + 0.5 * t) * (q.x + 0.5 * t) +
+    (q.y - m2 * t) * (q.y - m2 * t);
+  float d2 = min(q.y, -q.x * m2 - q.y * 0.5) > 0.0 ? 0.0 : min(a, b);
+  // recover 3D and scale, and add sign
+  return sqrt((d2 + q.z * q.z) / m2) * sign(max(q.z, -p.y));
+  ;
+}
+// la,lb=semi axis, h=height, ra=corner
+float sdRhombus(vec3 p, float la, float lb, float h, float ra) {
+  p = abs(p);
+  vec2 b = vec2(la, lb);
+  float f = clamp(ndot(b, b - 2.0 * p.xz) / dot(b, b), -1.0, 1.0);
+  vec2
+    q = vec2(
+      length(p.xz - 0.5 * b * vec2(1.0 - f, 1.0 + f)) *
+      sign(p.x * b.y + p.z * b.x - b.x * b.y) -
+      ra,
+      p.y - h
+    );
+  return min(max(q.x, q.y), 0.0) + length(max(q, 0.0));
+}
+//------------------------------------------------------------------
+vec2 opU(vec2 d1, vec2 d2) { return d1.x < d2.x ? d1 : d2; }
+//------------------------------------------------------------------
+//------------------------------------------------------------------
+vec2 map(vec3 pos) {
+  vec2 res = vec2(1e10, 0.0);
+  { res = opU(res, vec2(sdSphere(pos - vec3(-2.0, 0.25, 0.0), 0.25), 26.9)); }
+  // bounding box
+  if (
+    sdBox(pos - vec3(0.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x
+  ) {
+    // more primitives
+    res =
+      opU(
+        res,
+        vec2(
+          sdBoundingBox(
+            pos - vec3(0.0, 0.25, 0.0),
+            vec3(0.3, 0.25, 0.2),
+            0.025
+          ),
+          16.9
+        )
+      );
+    res =
+      opU(
+        res,
+        vec2(sdTorus((pos - vec3(0.0, 0.30, 1.0)).xzy, vec2(0.25, 0.05)), 25.0)
+      );
+    res =
+      opU(
+        res,
+        vec2(sdCone(pos - vec3(0.0, 0.45, -1.0), vec2(0.6, 0.8), 0.45), 55.0)
+      );
+    res =
+      opU(
+        res,
+        vec2(sdCappedCone(pos - vec3(0.0, 0.25, -2.0), 0.25, 0.25, 0.1), 13.67)
+      );
+    res =
+      opU(
+        res,
+        vec2(
+          sdSolidAngle(pos - vec3(0.0, 0.00, -3.0), vec2(3, 4) / 5.0, 0.4),
+          49.13
+        )
+      );
+  }
+  // bounding box
+  if (
+    sdBox(pos - vec3(1.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x
+  ) {
+    // more primitives
+    res =
+      opU(
+        res,
+        vec2(
+          sdCappedTorus(
+            (pos - vec3(1.0, 0.30, 1.0)) * vec3(1, -1, 1),
+            vec2(0.866025, -0.5),
+            0.25,
+            0.05
+          ),
+          8.5
+        )
+      );
+    res =
+      opU(
+        res,
+        vec2(sdBox(pos - vec3(1.0, 0.25, 0.0), vec3(0.3, 0.25, 0.1)), 3.0)
+      );
+    res =
+      opU(
+        res,
+        vec2(
+          sdCapsule(
+            pos - vec3(1.0, 0.00, -1.0),
+            vec3(-0.1, 0.1, -0.1),
+            vec3(0.2, 0.4, 0.2),
+            0.1
+          ),
+          31.9
+        )
+      );
+    res =
+      opU(
+        res,
+        vec2(sdCylinder(pos - vec3(1.0, 0.25, -2.0), vec2(0.15, 0.25)), 8.0)
+      );
+    res =
+      opU(
+        res,
+        vec2(sdHexPrism(pos - vec3(1.0, 0.2, -3.0), vec2(0.2, 0.05)), 18.4)
+      );
+  }
+  // bounding box
+  if (
+    sdBox(pos - vec3(-1.0, 0.35, -1.0), vec3(0.35, 0.35, 2.5)) < res.x
+  ) {
+    // more primitives
+    res = opU(res, vec2(sdPyramid(pos - vec3(-1.0, -0.6, -3.0), 1.0), 13.56));
+    res =
+      opU(res, vec2(sdOctahedron(pos - vec3(-1.0, 0.15, -2.0), 0.35), 23.56));
+    res =
+      opU(
+        res,
+        vec2(sdTriPrism(pos - vec3(-1.0, 0.15, -1.0), vec2(0.3, 0.05)), 43.5)
+      );
+    res =
+      opU(
+        res,
+        vec2(
+          sdEllipsoid(pos - vec3(-1.0, 0.25, 0.0), vec3(0.2, 0.25, 0.05)),
+          43.17
+        )
+      );
+    res =
+      opU(
+        res,
+        vec2(
+          sdRhombus((pos - vec3(-1.0, 0.34, 1.0)).xzy, 0.15, 0.25, 0.04, 0.08),
+          17.0
+        )
+      );
+  }
+  // bounding box
+  if (
+    sdBox(pos - vec3(2.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x
+  ) {
+    // more primitives
+    res =
+      opU(
+        res,
+        vec2(sdOctogonPrism(pos - vec3(2.0, 0.2, -3.0), 0.2, 0.05), 51.8)
+      );
+    res =
+      opU(
+        res,
+        vec2(
+          sdCylinder(
+            pos - vec3(2.0, 0.15, -2.0),
+            vec3(0.1, -0.1, 0.0),
+            vec3(-0.2, 0.35, 0.1),
+            0.08
+          ),
+          31.2
+        )
+      );
+    res =
+      opU(
+        res,
+        vec2(
+          sdCappedCone(
+            pos - vec3(2.0, 0.10, -1.0),
+            vec3(0.1, 0.0, 0.0),
+            vec3(-0.2, 0.40, 0.1),
+            0.15,
+            0.05
+          ),
+          46.1
+        )
+      );
+    res =
+      opU(
+        res,
+        vec2(
+          sdRoundCone(
+            pos - vec3(2.0, 0.15, 0.0),
+            vec3(0.1, 0.0, 0.0),
+            vec3(-0.1, 0.35, 0.1),
+            0.15,
+            0.05
+          ),
+          51.7
+        )
+      );
+    res =
+      opU(
+        res,
+        vec2(sdRoundCone(pos - vec3(2.0, 0.20, 1.0), 0.2, 0.1, 0.3), 37.0)
+      );
+  }
+  return res;
+}
+// http://iquilezles.org/www/articles/boxfunctions/boxfunctions.htm
+vec2 iBox(vec3 ro, vec3 rd, vec3 rad) {
+  vec3 m = 1.0 / rd;
+  vec3 n = m * ro;
+  vec3 k = abs(m) * rad;
+  vec3 t1 = -n - k;
+  vec3 t2 = -n + k;
+  return vec2(max(max(t1.x, t1.y), t1.z), min(min(t2.x, t2.y), t2.z));
+}
+vec2 raycast(vec3 ro, vec3 rd) {
+  vec2 res = vec2(-1.0, -1.0);
+  float tmin = 1.0;
+  float tmax = 20.0;
+  // raytrace floor plane
+  float tp1 = (0.0 - ro.y) / rd.y;
+  if (
+    tp1 > 0.0
+  ) {
+    tmax = min(tmax, tp1);
+    res = vec2(tp1, 1.0);
+  }
+  //else return res;
+  // raymarch primitives
+  vec2 tb = iBox(ro - vec3(0.0, 0.4, -0.5), rd, vec3(2.5, 0.41, 3.0));
+  if (
+    tb.x < tb.y && tb.y > 0.0 && tb.x < tmax
+  ) {
+    //return vec2(tb.x,2.0);
+    tmin = max(tb.x, tmin);
+    tmax = min(tb.y, tmax);
+    float t = tmin;
+    for (int i = 0;i < 70 && t < tmax; i++)
+      {
+        vec2 h = map(ro + rd * t);
+        if (
+          abs(h.x) < 0.0001 * t
+        ) {
+          res = vec2(t, h.y);
+          break;
+        }
+        t += h.x;
+      }
+  }
+  return res;
+}
+// http://iquilezles.org/www/articles/rmshadows/rmshadows.htm
+float calcSoftshadow(vec3 ro, vec3 rd, float mint, float tmax) {
+  // bounding volume
+  float tp = (0.8 - ro.y) / rd.y;
+  if (tp > 0.0) tmax = min(tmax, tp);
+  float res = 1.0;
+  float t = mint;
+  for (int i = ZERO;i < 24; i++)
+    {
+      float h = map(ro + rd * t).x;
+      float s = clamp(8.0 * h / t, 0.0, 1.0);
+      res = min(res, s * s * (3.0 - 2.0 * s));
+      t += clamp(h, 0.02, 0.2);
+      if (res < 0.004 || t > tmax) break;
+    }
+  return clamp(res, 0.0, 1.0);
+}
+// http://iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
+vec3 calcNormal(vec3 pos) {
+  vec2 e = vec2(1.0, -1.0) * 0.5773 * 0.0005;
+  return normalize(
+    e.xyy * map(pos + e.xyy).x + e.yyx * map(pos + e.yyx).x +
+    e.yxy * map(pos + e.yxy).x +
+    e.xxx * map(pos + e.xxx).x
+  );
+  // inspired by tdhooper and klems - a way to prevent the compiler from inlining map() 4 times
+  vec3 n = vec3(0.0);
+  for (int i = ZERO;i < 4; i++)
+    {
+      vec3 e = 0.5773 * (2.0 * vec3(i + 3 >> 1 & 1, i >> 1 & 1, i & 1) - 1.0);
+      n += e * map(pos + 0.0005 * e).x;
+      //if( n.x+n.y+n.z>100.0 ) break;
+    }
+  return normalize(n);
+}
+float calcAO(vec3 pos, vec3 nor) {
+  float occ = 0.0;
+  float sca = 1.0;
+  for (int i = ZERO;i < 5; i++)
+    {
+      float h = 0.01 + 0.12 * float(i) / 4.0;
+      float d = map(pos + h * nor).x;
+      occ += (h - d) * sca;
+      sca *= 0.95;
+      if (occ > 0.35) break;
+    }
+  return clamp(1.0 - 3.0 * occ, 0.0, 1.0) * (0.5 + 0.5 * nor.y);
+}
+// http://iquilezles.org/www/articles/checkerfiltering/checkerfiltering.htm
+float checkersGradBox(vec2 p, vec2 dpdx, vec2 dpdy) {
+  // filter kernel
+  vec2 w = abs(dpdx) + abs(dpdy) + 0.001;
+  // analytical integral (box filter)
+  vec2
+    i = 2.0 *
+    (abs(fract((p - 0.5 * w) * 0.5) - 0.5) -
+    abs(fract((p + 0.5 * w) * 0.5) - 0.5)) /
+    w;
+  // xor pattern
+  return 0.5 - 0.5 * i.x * i.y;
+}
+vec3 render(vec3 ro, vec3 rd, vec3 rdx, vec3 rdy) {
+  // background
+  vec3 col = vec3(0.7, 0.7, 0.9) - max(rd.y, 0.0) * 0.3;
+  // raycast scene
+  vec2 res = raycast(ro, rd);
+  float t = res.x;
+  float m = res.y;
+  if (
+    m > -0.5
+  ) {
+    vec3 pos = ro + t * rd;
+    vec3 nor = m < 1.5 ? vec3(0.0, 1.0, 0.0) : calcNormal(pos);
+    vec3 ref = reflect(rd, nor);
+    // material
+    col = 0.2 + 0.2 * sin(m * 2.0 + vec3(0.0, 1.0, 2.0));
+    float ks = 1.0;
+    if (
+      m < 1.5
+    ) {
+      // project pixel footprint into the plane
+      vec3 dpdx = ro.y * (rd / rd.y - rdx / rdx.y);
+      vec3 dpdy = ro.y * (rd / rd.y - rdy / rdy.y);
+      float f = checkersGradBox(3.0 * pos.xz, 3.0 * dpdx.xz, 3.0 * dpdy.xz);
+      col = 0.15 + f * vec3(0.05);
+      ks = 0.4;
+    }
+    // lighting
+    float occ = calcAO(pos, nor);
+    vec3 lin = vec3(0.0);
+    // sun
+    {
+      vec3 lig = normalize(vec3(-0.5, 0.4, -0.6));
+      vec3 hal = normalize(lig - rd);
+      float dif = clamp(dot(nor, lig), 0.0, 1.0);
+      //if( dif>0.0001 )
+      dif *= calcSoftshadow(pos, lig, 0.02, 2.5);
+      float spe = pow(clamp(dot(nor, hal), 0.0, 1.0), 16.0);
+      spe *= dif;
+      spe *= 0.04 + 0.96 * pow(clamp(1.0 - dot(hal, lig), 0.0, 1.0), 5.0);
+      lin += col * 2.20 * dif * vec3(1.30, 1.00, 0.70);
+      lin += 5.00 * spe * vec3(1.30, 1.00, 0.70) * ks;
+    }
+    // sky
+    {
+      float dif = sqrt(clamp(0.5 + 0.5 * nor.y, 0.0, 1.0));
+      dif *= occ;
+      float spe = smoothstep(-0.2, 0.2, ref.y);
+      spe *= dif;
+      spe *= 0.04 + 0.96 * pow(clamp(1.0 + dot(nor, rd), 0.0, 1.0), 5.0);
+      //if( spe>0.001 )
+      spe *= calcSoftshadow(pos, ref, 0.02, 2.5);
+      lin += col * 0.60 * dif * vec3(0.40, 0.60, 1.15);
+      lin += 2.00 * spe * vec3(0.40, 0.60, 1.30) * ks;
+    }
+    // back
+    {
+      float
+        dif = clamp(dot(nor, normalize(vec3(0.5, 0.0, 0.6))), 0.0, 1.0) *
+        clamp(1.0 - pos.y, 0.0, 1.0);
+      dif *= occ;
+      lin += col * 0.55 * dif * vec3(0.25, 0.25, 0.25);
+    }
+    // sss
+    {
+      float dif = pow(clamp(1.0 + dot(nor, rd), 0.0, 1.0), 2.0);
+      dif *= occ;
+      lin += col * 0.25 * dif * vec3(1.00, 1.00, 1.00);
+    }
+    col = lin;
+    col = mix(col, vec3(0.7, 0.7, 0.9), 1.0 - exp(-0.0001 * t * t * t));
+  }
+  return vec3(clamp(col, 0.0, 1.0));
+}
+mat3 setCamera(vec3 ro, vec3 ta, float cr) {
+  vec3 cw = normalize(ta - ro);
+  vec3 cp = vec3(sin(cr), cos(cr), 0.0);
+  vec3 cu = normalize(cross(cw, cp));
+  vec3 cv = cross(cu, cw);
+  return mat3(cu, cv, cw);
+}
+void mainImage(out vec4 fragColor, vec2 fragCoord) {
+  vec2 mo = iMouse.xy / iResolution.xy;
+  float time = 32.0 + iTime * 1.5;
+  // camera
+  vec3 ta = vec3(0.5, -0.5, -0.6);
+  vec3
+    ro = ta +
+    vec3(
+      4.5 * cos(0.1 * time + 7.0 * mo.x),
+      1.3 + 2.0 * mo.y,
+      4.5 * sin(0.1 * time + 7.0 * mo.x)
+    );
+  // camera-to-world transformation
+  mat3 ca = setCamera(ro, ta, 0.0);
+  vec3 tot = vec3(0.0);
+  for (int m = ZERO;m < AA; m++)
+    for (int n = ZERO;n < AA; n++)
+      {
+        // pixel coordinates
+        vec2 o = vec2(float(m), float(n)) / float(AA) - 0.5;
+        vec2 p = (2.0 * (fragCoord + o) - iResolution.xy) / iResolution.y;
+        vec2 p = (2.0 * fragCoord - iResolution.xy) / iResolution.y;
+        // focal length
+        const   float fl = 2.5;
+        // ray direction
+        vec3 rd = ca * normalize(vec3(p, fl));
+        // ray differentials
+        vec2
+          px = (2.0 * (fragCoord + vec2(1.0, 0.0)) - iResolution.xy) /
+          iResolution.y;
+        vec2
+          py = (2.0 * (fragCoord + vec2(0.0, 1.0)) - iResolution.xy) /
+          iResolution.y;
+        vec3 rdx = ca * normalize(vec3(px, fl));
+        vec3 rdy = ca * normalize(vec3(py, fl));
+        // render
+        vec3 col = render(ro, rd, rdx, rdy);
+        // gain
+        // col = col*3.0/(2.5+col);
+        // gamma
+        col = pow(col, vec3(0.4545));
+        tot += col;
+      }
+  tot /= float(AA * AA);
+  fragColor = vec4(tot, 1.0);
+}
