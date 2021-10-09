@@ -1979,13 +1979,6 @@
               },
               {
                 "type": "Terminal",
-                "name": "WHILE",
-                "label": "'while'",
-                "idx": 2,
-                "pattern": "while"
-              },
-              {
-                "type": "Terminal",
                 "name": "LEFT_PAREN",
                 "label": "'('",
                 "idx": 2,
@@ -2209,6 +2202,25 @@
         "type": "Alternation",
         "idx": 0,
         "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "IDENTIFIER",
+                "label": "IDENTIFIER",
+                "idx": 0,
+                "pattern": "\\w[\\w\\d]*"
+              },
+              {
+                "type": "Terminal",
+                "name": "SEMICOLON",
+                "label": "';'",
+                "idx": 0,
+                "pattern": ";"
+              }
+            ]
+          },
           {
             "type": "Alternative",
             "definition": [

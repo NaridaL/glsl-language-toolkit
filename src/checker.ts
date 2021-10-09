@@ -28,6 +28,7 @@ import {
   MethodCall,
   Node,
   ParameterDeclaration,
+  PostfixExpression,
   ReturnStatement,
   SelectionStatement,
   StructSpecifier,
@@ -42,7 +43,8 @@ import {
 import { TOKEN } from "./lexer"
 import { applyBuiltinFunction, Matrix } from "./builtins"
 import { parseInput } from "./parser"
-import { allDefined, ccorrect } from "./util"
+import { allDefined, ccorrect, ExpandedLocation } from "./util"
+import { ERRORS } from "./errors"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
 type ArrayType = Readonly<{
@@ -79,29 +81,62 @@ namespace BasicType {
   export const UINT: NormalizedType = { kind: "basic", type: TOKEN.UINT }
 }
 
-export type CError = { where: Token | Node; err: string; error: Error }
-let errors: CError[] = []
+export interface CheckError {
+  where: Token | Node
+  loc: ExpandedLocation
+  code: string
+  message: string
+  error: Error
+}
+
+let errors: CheckError[] = []
+
+function mapExpandedLocation(n: Token | Node): ExpandedLocation {
+  if (isToken(n)) {
+    return n as ExpandedLocation
+  } else {
+    if (!n.firstToken) {
+      throw new Error(n.kind)
+    }
+    return {
+      startLine: n.firstToken.startLine!,
+      startColumn: n.firstToken.startColumn!,
+      endLine: n.lastToken!.endLine!,
+      endColumn: n.lastToken!.endColumn!,
+    }
+  }
+}
 
 function markError(
   where: Token | Node,
-  err: string,
+  code: string,
   ...args: (NormalizedType[] | NormalizedType | string | number | undefined)[]
 ) {
-  errors.push({ where, err, error: new Error(err + args.join(" ")) })
+  const message = code + ": " + ERRORS[code] + args.join(" ")
+  errors.push({
+    loc: mapExpandedLocation(where),
+    where,
+    code,
+    message,
+    error: new Error(message),
+  })
 }
 
-function isLValue(l: Node): boolean {
-  if (l.kind === "variableExpression") {
-    return true
+function isLValue(n: Node): boolean {
+  switch (n.kind) {
+    case "variableExpression":
+      // true if binding wasn't resolved to avoid bogus errors
+      return (
+        !n.binding ||
+        !!n.binding?.dl?.fsType.typeQualifier?.storageQualifier?.CONST
+      )
+    case "fieldAccess":
+      return isLValue(n.on)
+    case "arrayAccess":
+      return isLValue(n.on)
+    default:
+      return false
   }
-  if (l.kind === "fieldAccess") {
-    return isLValue(l.on)
-  }
-  if (l.kind === "arrayAccess") {
-    return isLValue(l.on)
-  }
-  // if (l.type === "parenExpression")
-  return false
 }
 
 function getVectorSize(t: TokenType): number {
@@ -423,7 +458,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
         norm(getComponentType(lType)!, doOp(op, lv, (r.value as any[])[i])),
       )
     } else if (getVectorSize(lType) && getScalarType(rType)) {
-      value = (l.value as any[]).map((lv) => norm(rType, doOp(op, lv, r)))
+      value = (l.value as any[]).map((lv) => norm(rType, doOp(op, lv, r.value)))
     } else if (getMatrixDimensions(lType) && getScalarType(rType)) {
       const a = l.value as Matrix
       value = Matrix(a.length / a.rows, a.rows)
@@ -437,7 +472,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
         value[i] = Math.fround(doOp(op, l.value, b[i]))
       }
     } else if (getScalarType(lType) && getVectorSize(rType)) {
-      value = (r.value as any[]).map((rv) => norm(lType, doOp(op, l, rv)))
+      value = (r.value as any[]).map((rv) => norm(lType, doOp(op, l.value, rv)))
     } else if (isMatrixType(l.type) || isMatrixType(r.type)) {
       if (op === TOKEN.STAR) {
         const ll = isVectorType(l.type)
@@ -641,60 +676,6 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
   }
 })()
 
-// function isConstantExpression(n: Node): boolean {
-//   function isBuiltInFunctionCall(n: FunctionCall): boolean {
-//     // TODO
-//     return n.what.type === "typeSpecifier"
-//   }
-//
-//   // a constant expression is one of
-//   switch (n.type) {
-//     // a literal value (e.g. 5 or true)
-//     case "constantExpression":
-//       return true
-//
-//     // a global or local variable qualified as const (i.e., not including function parameters)
-//     case "variableExpression": {
-//       const binding: VariableBinding | undefined = n.binding
-//       return !!binding?.dl?.fsType.typeQualifier.storageQualifier?.CONST
-//     }
-//
-//     // an expression formed by an operator on operands that are all constant expressions, including getting an
-//     // element of a constant array, or a field of a constant structure, or components of a constant vector.
-//     // However, the sequence operator ( , ) and the assignment operators ( =, +=, ...)  are not included in the
-//     // operators that can create a constant expression
-//     case "binaryExpression":
-//       return isConstantExpression(n.lhs) && isConstantExpression(n.rhs)
-//     case "unaryExpression":
-//     case "postfixExpression":
-//       return isConstantExpression(n.on)
-//
-//     // the length() methode on an array, whether or not the object itself is constant
-//     case "methodCall": {
-//       const what = n.functionCall.what
-//       return (
-//         what.arraySpecifier === undefined &&
-//         isToken(what.typeSpecifierNonArray) &&
-//         what.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER &&
-//         what.typeSpecifierNonArray.image === "length"
-//       )
-//     }
-//
-//     case "functionCall": {
-//       const ts = n.what.typeSpecifierNonArray as Token
-//       if (ts.tokenType === TOKEN.IDENTIFIER) {
-//         n.what.binding
-//       }
-//       return (
-//         (isConstructorCall(n) || isBuiltInFunctionCall(n)) &&
-//         n.args.every(isConstantExpression)
-//       )
-//     }
-//     default:
-//       return false
-//   }
-// }
-
 interface FunctionBinding {
   kind: "function"
   overloads: {
@@ -702,6 +683,7 @@ interface FunctionBinding {
     result: NormalizedType
     def: FunctionDefinition | FunctionPrototype
   }[]
+  builtin: boolean
 }
 
 interface StructBinding {
@@ -996,6 +978,12 @@ class BinderVisitor extends AbstractVisitor<any> {
       this.visit(n.body)
     }
     this.popScope()
+    if (!this.doingBuiltins) {
+      const b = this.resolve(n.name.image)
+      if (b?.kind === "function" && b.builtin) {
+        markError(n.name, "S0054")
+      }
+    }
     const existingDef = this.scope.defs[n.name.image]
     let def: FunctionBinding
     if (existingDef) {
@@ -1008,7 +996,11 @@ class BinderVisitor extends AbstractVisitor<any> {
       }
       def = existingDef
     } else {
-      def = this.scope.defs[n.name.image] = { kind: "function", overloads: [] }
+      def = this.scope.defs[n.name.image] = {
+        kind: "function",
+        overloads: [],
+        builtin: this.doingBuiltins,
+      }
     }
 
     if (this.doingBuiltins) {
@@ -1052,10 +1044,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     const type = this.figure(n.typeSpecifier, n.arraySpecifier)
     this.currentFunctionPrototypeParams!.push(type)
     if (!isToken(n.typeSpecifier.typeSpecifierNonArray)) {
-      markError(
-        n.typeSpecifier.typeSpecifierNonArray,
-        "no struct specifier as parameter type",
-      )
+      markError(n.typeSpecifier.typeSpecifierNonArray, "C0001")
     }
     if (n.pName) {
       const existingDef = this.scope.defs[n.pName.image]
@@ -1546,6 +1535,17 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return
   }
 
+  protected postfixExpression(
+    n: PostfixExpression,
+  ): NormalizedType | undefined {
+    if (n.op.tokenType === TOKEN.INC_OP || n.op.tokenType === TOKEN.DEC_OP) {
+      if (!isLValue(n.on)) {
+        markError(n.on, "S0027")
+      }
+    }
+    return this.visit(n.on)
+  }
+
   protected unaryExpression(n: UnaryExpression): NormalizedType | undefined {
     // The arithmetic unary operators negate (-), post- and pre-increment and decrement (-- and ++) operate
     // on integer or floating-point values (including vectors and matrices).  All unary operators work
@@ -1862,7 +1862,7 @@ function loadBuiltins() {
 
 loadBuiltins()
 
-export function check(u: TranslationUnit): CError[] {
+export function check(u: TranslationUnit): CheckError[] {
   const result = errors
   BINDER_VISITOR.bind(u)
   CHECKER_VISITOR.check(u)

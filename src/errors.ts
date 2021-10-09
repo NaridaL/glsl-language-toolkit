@@ -3,7 +3,7 @@
 report all grammatical errors are compile time but otherwise, it is implementation-dependent whether an
 error is reported at compile time or link time and there is no guarantee of consistency.
     The error string returned is implementation-dependent.*/
-export const ERRORS = {
+export const ERRORS: Record<string, string> = {
   //SPEC// 10.1 Preprocessor Errors
   P0001: "Preprocessor syntax error",
   P0002: "#error",
@@ -101,4 +101,6 @@ export const ERRORS = {
     "Fragment shader uses an input where there is no corresponding vertex output",
   L0008: "Type mismatch between vertex output and fragment input",
   L0009: "Missing main function for shader",
+
+  C0001: "struct specifier cannot be parameter type",
 }

@@ -44,7 +44,7 @@ import {
 } from "./nodes"
 import { ALL_TOKENS, GLSL_LEXER, RESERVED_KEYWORDS, TOKEN } from "./lexer"
 
-import { DEV, substrContext } from "./util"
+import { DEV, ExpandedLocation, substrContext } from "./util"
 
 class GLSLParser extends EmbeddedActionsParser {
   protected currentChildren: Node[] = []
@@ -425,15 +425,18 @@ class GLSLParser extends EmbeddedActionsParser {
           const declarators: Declarator[] = []
           this.MANY_SEP({
             SEP: TOKEN.COMMA,
-            DEF: () =>
-              declarators.push({
+            DEF: this.ANNOTATE(() => {
+              const declarator: Declarator = {
                 kind: "declarator",
                 name: this.CONSUME(TOKEN.IDENTIFIER),
                 arraySpecifier: this.OPTION(() =>
                   this.SUBRULE(this.arraySpecifier),
                 ),
                 init: undefined,
-              }),
+              }
+              declarators.push(declarator)
+              return declarator
+            }),
           })
           this.CONSUME(TOKEN.SEMICOLON)
           const declaration: StructDeclaration = {
@@ -562,40 +565,43 @@ class GLSLParser extends EmbeddedActionsParser {
         ALT: () => this.SUBRULE(this.primaryExpression),
       },
     ])
-    this.MANY(() =>
-      this.OR2([
-        {
-          ALT: () => {
-            this.CONSUME(TOKEN.LEFT_BRACKET)
-            const index = this.SUBRULE(this.expression)
-            this.CONSUME(TOKEN.RIGHT_BRACKET)
-            result = { kind: "arrayAccess", on: result, index }
+    this.MANY(
+      this.ANNOTATE(() => {
+        this.OR2([
+          {
+            ALT: () => {
+              this.CONSUME(TOKEN.LEFT_BRACKET)
+              const index = this.SUBRULE(this.expression)
+              this.CONSUME(TOKEN.RIGHT_BRACKET)
+              result = { kind: "arrayAccess", on: result, index }
+            },
           },
-        },
-        {
-          ALT: () => {
-            this.CONSUME1(TOKEN.DOT)
-            const functionCall = this.SUBRULE2(this.functionCall)
-            result = { kind: "methodCall", on: result, functionCall }
+          {
+            ALT: () => {
+              this.CONSUME1(TOKEN.DOT)
+              const functionCall = this.SUBRULE2(this.functionCall)
+              result = { kind: "methodCall", on: result, functionCall }
+            },
           },
-        },
-        {
-          ALT: () => {
-            this.CONSUME2(TOKEN.DOT)
-            const field = this.CONSUME(TOKEN.IDENTIFIER)
-            result = { kind: "fieldAccess", on: result, field }
+          {
+            ALT: () => {
+              this.CONSUME2(TOKEN.DOT)
+              const field = this.CONSUME(TOKEN.IDENTIFIER)
+              result = { kind: "fieldAccess", on: result, field }
+            },
           },
-        },
-        {
-          ALT: () => {
-            result = {
-              kind: "postfixExpression",
-              on: result,
-              op: this.CONSUME(TOKEN.POSTFIX_OP),
-            }
+          {
+            ALT: () => {
+              result = {
+                kind: "postfixExpression",
+                on: result,
+                op: this.CONSUME(TOKEN.POSTFIX_OP),
+              }
+            },
           },
-        },
-      ]),
+        ])
+        return result
+      }),
     )
     return result
   })
@@ -832,7 +838,7 @@ class GLSLParser extends EmbeddedActionsParser {
                   const declarators: Declarator[] = []
                   this.MANY_SEP2({
                     SEP: TOKEN.COMMA,
-                    DEF: () => {
+                    DEF: this.ANNOTATE(() => {
                       const name = this.CONSUME3(TOKEN.IDENTIFIER)
                       const arraySpecifier = this.OPTION5(() =>
                         this.SUBRULE(this.arraySpecifier),
@@ -841,13 +847,15 @@ class GLSLParser extends EmbeddedActionsParser {
                         this.CONSUME(TOKEN.EQUAL)
                         return this.SUBRULE(this.initializer)
                       })
-                      declarators.push({
+                      const declarator: Declarator = {
                         kind: "declarator",
                         name,
                         arraySpecifier,
                         init,
-                      })
-                    },
+                      }
+                      declarators.push(declarator)
+                      return declarator
+                    }),
                   })
                   this.CONSUME2(TOKEN.SEMICOLON)
                   return {
@@ -1034,6 +1042,7 @@ class GLSLParser extends EmbeddedActionsParser {
           ALT: (): DoWhileStatement => {
             this.CONSUME2(TOKEN.DO)
             const statement = this.SUBRULE2(this.statement, { ARGS: [true] })
+            this.CONSUME2(TOKEN.WHILE)
             this.CONSUME2(TOKEN.LEFT_PAREN)
             const conditionExpression = this.SUBRULE2(this.expression)
             this.CONSUME2(TOKEN.RIGHT_PAREN)
@@ -1310,7 +1319,7 @@ function checkParsingErrors(input: string, errors: IRecognitionException[]) {
               "\n" +
               e.context.ruleStack.join(" > ") +
               "\n" +
-              substrContext(input, e.token),
+              substrContext(input, e.token as ExpandedLocation),
           )
           .join("\n"),
     )

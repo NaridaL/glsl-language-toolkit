@@ -1,4 +1,5 @@
 module.exports = {
+  testPathIgnorePatterns: [".idea", "lib", "coverage"],
   preset: "ts-jest",
   testEnvironment: "node",
   globals: {

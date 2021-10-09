@@ -1,5 +1,5 @@
-import { IToken } from "chevrotain"
 import { Many } from "lodash"
+import "colors"
 
 export const DEV = process.env.NODE_ENV !== "production"
 
@@ -37,18 +37,22 @@ export function ccorrect<T, R>(
   }
 }
 
-export function substrContext(
-  input: string,
-  token: Pick<IToken, "startLine" | "endLine" | "startColumn" | "endColumn">,
-): string {
+export interface ExpandedLocation {
+  startLine: number
+  endLine: number
+  startColumn: number
+  endColumn: number
+}
+
+export function substrContext(input: string, token: ExpandedLocation): string {
   const lines = input.split("\n")
-  const sLine = token.startLine!
-  const eLine = token.endLine!
+  const sLine = token.startLine
+  const eLine = token.endLine
   return (
     "./src/compiler.lambda:" +
     sLine +
     ":" +
-    (token.startColumn! - 1) +
+    (token.startColumn - 1) +
     "\n" +
     lines
       .map((l, i) => [i + 1, l] as [number, string])
@@ -57,8 +61,8 @@ export function substrContext(
         if (n >= sLine && n <= eLine) {
           l = underline(
             l,
-            sLine === n ? token.startColumn! - 1 : 0,
-            eLine === n ? token.endColumn! : l.length,
+            sLine === n ? token.startColumn - 1 : 0,
+            eLine === n ? token.endColumn : l.length,
             (s) => s.red.underline,
           )
         }

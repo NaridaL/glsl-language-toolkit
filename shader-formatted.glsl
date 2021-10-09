@@ -618,6 +618,7 @@ vec3 cross(vec3 x, vec3 y);
 //Returns a vector in the same direction as x but with a length of 1 i.e.
 // x/length(x)
 genType normalize(genType x);
+// Orients a vector to point away from a surface as defined by its normal.
 //If dot(Nref, I) < 0 return N, otherwise return -N.
 genType faceforward(
   genType N,

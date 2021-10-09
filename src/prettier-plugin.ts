@@ -253,7 +253,8 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             return [p(n, "on"), ".", p(n, "field")]
           case "constantExpression":
             return n._const.image
-
+          case "variableExpression":
+            return n.var.image
           default:
             throw new Error(
               "unexpected n type " +

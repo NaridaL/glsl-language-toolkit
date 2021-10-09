@@ -332,7 +332,8 @@ export class AbstractVisitor<R> {
     return
   }
   protected arrayAccess(n: ArrayAccess): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.on)
+    this.visit(n.index)
     return
   }
   protected translationUnit(n: TranslationUnit): R | undefined {
@@ -340,11 +341,12 @@ export class AbstractVisitor<R> {
     return
   }
   protected assignmentExpression(n: AssignmentExpression): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.lhs)
+    this.visit(n.rhs)
     return
   }
   protected fieldAccess(n: FieldAccess): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.on)
     return
   }
   protected conditionalExpression(n: ConditionalExpression): R | undefined {
@@ -384,19 +386,16 @@ export class AbstractVisitor<R> {
     return
   }
   protected returnStatement(n: ReturnStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.what)
     return
   }
   protected continueStatement(n: ContinueStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
     return
   }
   protected breakStatement(n: BreakStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
     return
   }
   protected discardStatement(n: DiscardStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
     return
   }
   protected declarator(n: Declarator): R | undefined {
@@ -405,11 +404,13 @@ export class AbstractVisitor<R> {
     return
   }
   protected doWhileStatement(n: DoWhileStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.statement)
+    this.visit(n.conditionExpression)
     return
   }
   protected whileStatement(n: WhileStatement): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.conditionExpression)
+    this.visit(n.statement)
     return
   }
   protected forStatement(n: ForStatement): R | undefined {
@@ -423,7 +424,8 @@ export class AbstractVisitor<R> {
   protected initDeclaratorListDeclaration(
     n: InitDeclaratorListDeclaration,
   ): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.fsType)
+    n.declarators.forEach((d) => this.visit(d))
     return
   }
   protected precisionDeclaration(n: PrecisionDeclaration): R | undefined {
@@ -443,7 +445,7 @@ export class AbstractVisitor<R> {
     return
   }
   protected caseLabel(n: CaseLabel): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n._case)
     return
   }
   protected fullySpecifiedType(n: FullySpecifiedType): R | undefined {

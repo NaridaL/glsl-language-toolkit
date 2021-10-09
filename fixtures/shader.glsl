@@ -1,3 +1,4 @@
+in vec2 coord;
 
 float ambientOcclusion(highp vec3 pWC, vec3 n1WC, vec4) {
     float k = 1.0, j[] = float[2](1,2);

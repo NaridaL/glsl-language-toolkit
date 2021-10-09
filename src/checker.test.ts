@@ -1,10 +1,11 @@
 import { readFileSync } from "fs"
+import { VError } from "@netflix/nerror"
 import { last, Many } from "lodash"
 
 import { check, evaluateConstantExpression } from "./checker"
 import { parseInput } from "./parser"
 import { ExpressionStatement, FunctionDefinition } from "./nodes"
-import { ccorrect } from "./util"
+import { ccorrect, substrContext } from "./util"
 import ProvidesCallback = jest.ProvidesCallback
 
 function bla(p: string) {
@@ -12,73 +13,75 @@ function bla(p: string) {
   return check(parsed)
 }
 
-function sl(p: string, ...expectedErrors: string[]) {
+function sl(p: string, ...expectedErrorCodes: string[]) {
   p = p.replace(/'/g, "")
+  p = p.replace(/`/g, "")
   p = p.replace(/\[\[/g, "")
   p = p.replace(/]]/g, "")
   console.log("testing", p)
   const errs = bla(p)
-  expect(errs.map((x) => x.err)).toEqual(expectedErrors)
-  return errs
+  try {
+    expect(errs.map((x) => x.code)).toEqual(expectedErrorCodes)
+  } catch (e) {
+    const message = errs
+      .map((e) => "CHECK ERROR: " + e.message + "\n" + substrContext(p, e.loc))
+      .join("\n")
+    throw new VError({ cause: e as Error }, message)
+  }
 }
 
 function slexpr(expr: string, ...expectedErrors: string[]): void {
   sl(`void main() { ${expr}; }`, ...expectedErrors)
 }
-test("checks shader.glsl", () => {
+test.skip("checks shader.glsl", () => {
   const c = readFileSync(__dirname + "/../fixtures/shader.glsl", {
     encoding: "utf8",
   })
   sl(c)
 })
-test("S0001: type mismatch", () => {
-  sl("voi" + "" + "" + "d main() { 1 '+' 1.0; }", "S0001")
-})
-test("S0003: if has bool as condition", () => {
-  sl("void main() { if ('1'); }", "S0003")
-})
-test("S0003: while has bool as condition", () => {
-  sl("void main() { while ('1.'); }", "S0003")
-})
-test("S0003: do-while has bool as condition", () => {
-  sl("void main() { do {} while ('vec3(1.)'); }", "S0003")
-})
-test("S0003: for has bool as condition", () => {
-  sl("void main() { for (; 1u; ); }", "S0003")
-})
+test.skip("S0001: type mismatch", () => slexpr("1 '+' 1.0", "S0001"))
+test("S0003: if has bool as condition", () => slexpr("if ('1')", "S0003"))
+test("S0003: while has bool as condition", () =>
+  slexpr("while ('1.')", "S0003"))
+test("S0003: do-while has bool as condition", () =>
+  slexpr("do {} while ('vec3(1.)')", "S0003"))
+test("S0003: for has bool as condition", () => slexpr("for (; 1u; )", "S0003"))
 test("S0004: binary operator not supported for operand types", () => {
-  sl("void main() { 1 + 1.; }", "S0004")
-  sl("void main() { 1. + float[2](1., 2.); }", "S0004")
+  slexpr("1 + 1.", "S0004")
+  slexpr("1. + float[2](1., 2.)", "S0004")
 })
-test("S0004: unary operator not supported for operand types", () => {
-  sl("void main() { float[2] a; -a; }", "S0004")
-})
-test("S0022: redefinition of variable in same scope", () => {
-  sl("void main() { int a; float [[a]]; }", "S0022")
-})
-test("S0024: redefinition of variable in same scope", () => {
-  sl("struct a { int i; }; void a() {}", "S0024")
-})
-test("S0025: cannot mix .xyzw and .rgba", () => {
-  sl("void main() { vec3 a; a.xr; }", "S0025")
-})
-test("S0026: can swizzle at most 4 fields", () => {
-  sl("void main() { vec3 a; a.xxyyzz; }", "S0026")
-})
-test("redefining builtin", () => {
-  sl("void min(int i) {}", "redefining builtin")
-})
-test("S0027: TODO", () => {
-  sl("void main() { 1++; }", "S0027")
-})
+test("S0004: cannot assign float to int var", () =>
+  slexpr("int a; a = 1.0", "S0004"))
+test("S", () => slexpr("float[2] r; r[`true`]", "X"))
+test("S0004: unary operator not supported for operand types", () =>
+  slexpr("float[2] a; -a", "S0004"))
+test("S0022: redefinition of variable in same scope", () =>
+  slexpr("int a; float [[a]]", "S0022"))
+test("S0022: redefinition of parameter", () =>
+  sl("void f(int i, float i);", "S0022"))
+test("S0024: redefinition of variable in same scope", () =>
+  sl("struct a { int i; }; void a() {}", "S0024"))
+test("C0001: struct specifier cannot be parameter type", () =>
+  sl("void f(struct G {} x);", "C0001"))
+test("S0025: cannot mix .xyzw and .rgba", () => slexpr("vec3 a; a.xr", "S0025"))
+test("S0026: can swizzle at most 4 fields", () =>
+  slexpr("vec3 a; a.xxyyzz", "S0026"))
+test("S0027: ternary cannot be l-value", () =>
+  slexpr("int a, b; true ? a : b = 2", "S0027"))
+test("S0027: TODO", () => slexpr("1++", "S0027"))
+test("S0054: redefining builtin", () => sl("void min(int i) {}", "S0054"))
+test("S0057", () => slexpr("switch (true) {}", "S0057"))
 
-test("too many args to builtin", () => {
-  slexpr("min(.2, .3, .5)", "no matching overload for params")
-})
+test("too many args to builtin", () =>
+  slexpr("min(.2, .3, .5)", "no matching overload for params"))
+test("struct definition cannot be constructor", () =>
+  slexpr(
+    "struct G { int i; }(2)",
+    "structure definition cannot be constructor",
+  ))
 
-test("struct decl in func return type", () => {
-  sl("struct G { int i; } foo() { return G(1); }")
-})
+test("struct decl in func return type", () =>
+  sl("struct G { int i; } foo() { return G(1); }"))
 
 function mat(...rs: number[][]): number[] {
   const cols = rs[0].length
@@ -110,7 +113,7 @@ describe("/*constant expressions", () => {
         if (errs[0].error) {
           console.log(errs[0].error)
         }
-        throw new Error("" + errs.map((e) => e.err).join("\n"))
+        throw new Error("" + errs.map((e) => e.message).join("\n"))
       }
       const expr = (
         last(
@@ -216,12 +219,15 @@ describe("/*constant expressions", () => {
     test("1.2+1.4", isFloat(2.6))
     test("2u-3u", isUint(0xffff_ffff))
 
-    test("vec2(1,2) + 1.", isFloat([2, 4]))
-    test("ivec2(1,2) + 1", isInt([2, 4]))
-    test("uvec2(1,2) + 1u", isUint([2, 4]))
-    test("1. + vec2(1,2)", isFloat([2, 4]))
-    test("1 + ivec2(1,2)", isInt([2, 4]))
-    test("1u + uvec2(1,2)", isUint([2, 4]))
+    test("vec2(1,2) + 1.", isFloat([2, 3]))
+    test("ivec2(1,2) + 1", isInt([2, 3]))
+    test("uvec2(1,2) + 1u", isUint([2, 3]))
+    test("1. + vec2(1,2)", isFloat([2, 3]))
+    test("1 + ivec2(1,2)", isInt([2, 3]))
+    test("1u + uvec2(1,2)", isUint([2, 3]))
+
+    test("vec3(1,2,3) - vec3(4,5,6)", isFloat([-3, -3, -3]))
+    test("vec3(1,2,3) * vec3(4,5,6)", isFloat([4, 10, 18]))
 
     test("mat2(1,2, 3,4) + 1.", isMat([2, 4], [3, 5]))
     test("mat2(1,2, 3,4) - 1.", isMat([0, 2], [1, 3]))
@@ -233,6 +239,7 @@ describe("/*constant expressions", () => {
     test("mat2(2,2,2,2) * mat2(3)", isMat([6, 6], [6, 6]))
     test("vec3(1,2,3) * mat2x3(7,9,11, 8,10,12)", isFloat([58, 64]))
     test("mat3x2(7,9, 11,8, 10,12) * vec3(1,2,3)", isFloat([59, 61]))
+    test("mat2(1,2, 3,4) / mat2(1,2, 3,4)", isMat([1, 1], [1, 1]))
   })
 
   describe("array access*/", () => {
