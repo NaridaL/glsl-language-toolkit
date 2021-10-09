@@ -1087,6 +1087,7 @@ class BinderVisitor extends AbstractVisitor<any> {
           result = binding.type
         } else {
           // TODO markError
+          markError(typeSpecifierNonArray, "Refers to TODO, not a struct")
         }
       } else {
         result = { kind: "basic", type: typeSpecifierNonArray.tokenType }

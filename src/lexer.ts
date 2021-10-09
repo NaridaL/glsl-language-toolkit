@@ -423,15 +423,14 @@ export namespace TOKEN {
     pattern: /\w[\w\d]*/i,
   })
 
-  function KEYWORD(const1: string, ...categories: TokenType[]) {
-    return createToken({
+  const KEYWORD = (const1: string, ...categories: TokenType[]) =>
+    createToken({
       name: const1,
       pattern: const1.toLowerCase(),
       label: "'" + const1.toLowerCase() + "'",
       longer_alt: IDENTIFIER,
       categories,
     })
-  }
 
   export const CONST = KEYWORD("CONST")
   export const UNIFORM = KEYWORD("UNIFORM")
@@ -466,14 +465,13 @@ export namespace TOKEN {
     name: "BASIC_TYPE",
     pattern: Lexer.NA,
   })
-  function createBasicType(t: string) {
-    return createToken({
+  const createBasicType = (t: string) =>
+    createToken({
       name: t.toUpperCase(),
       pattern: t,
       longer_alt: IDENTIFIER,
       categories: BASIC_TYPE,
     })
-  }
   export const BOOL = createBasicType("bool")
   export const INT = createBasicType("int")
   export const FLOAT = createBasicType("float")

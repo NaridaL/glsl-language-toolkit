@@ -21,8 +21,8 @@ const htmlText = createSyntaxDiagramsCode(
 fs.writeFileSync(path.join(__dirname, "../generated_diagrams.html"), htmlText)
 
 // const fileName = "../fixtures/shader.glsl";
-const fileName = "../builtins.glsl"
-// const fileName = "../fixtures/raymarchingPrimitives.glsl";
+// const fileName = "../builtins.glsl"
+const fileName = "../fixtures/raymarchingPrimitives.glsl"
 const shader = fs.readFileSync(require.resolve(fileName), {
   encoding: "utf8",
 })
@@ -58,6 +58,6 @@ console.log("PARSER SUCCESS!!!".green)
 const formatted = prettier.format(shader, {
   parser: "glsl-parse",
   plugins: [prettierPlugin],
-  printWidth: 40,
+  // printWidth: 40,
 })
 fs.writeFileSync("./shader-formatted.glsl", formatted, { encoding: "utf8" })

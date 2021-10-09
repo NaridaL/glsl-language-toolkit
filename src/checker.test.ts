@@ -46,6 +46,7 @@ test("S0003: while has bool as condition", () =>
 test("S0003: do-while has bool as condition", () =>
   slexpr("do {} while ('vec3(1.)')", "S0003"))
 test("S0003: for has bool as condition", () => slexpr("for (; 1u; )", "S0003"))
+test("S0031: const has no init", () => sl("const [[x]];", "S0031"))
 test("S0004: binary operator not supported for operand types", () => {
   slexpr("1 + 1.", "S0004")
   slexpr("1. + float[2](1., 2.)", "S0004")

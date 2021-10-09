@@ -2,13 +2,32 @@
 
 import { AstPath, Doc, format, Plugin, SupportInfo } from "prettier"
 import { builders } from "prettier/doc"
-import { IToken } from "chevrotain"
-
-import { Node, Token } from "./nodes"
+import { IToken, TokenType } from "chevrotain"
+import { AbstractVisitor, Node, Token } from "./nodes"
 import { TOKEN } from "./lexer"
 import { parseInput } from "./parser"
 
 const { group, indent, join, line, softline, hardline } = builders
+
+export const CHILDREN_VISITOR: AbstractVisitor<Node[]> & {
+  visit(n: Node): Node[]
+} = new (class extends AbstractVisitor<Node[]> {
+  private result: Node[] | undefined = undefined
+
+  public visit(n: Node | undefined) {
+    if (this.result) {
+      if (n) {
+        this.result.push(n)
+      }
+      return undefined
+    } else {
+      const result = (this.result = [])
+      super.visit(n)
+      this.result = undefined
+      return result
+    }
+  }
+})() as any
 
 export const languages: SupportInfo["languages"] = [
   { name: "glsl", parsers: ["glsl-parser"] },
@@ -46,6 +65,68 @@ function normalizeFloat(image: string) {
   return (+image).toLocaleString("en-US", { minimumFractionDigits: 1 })
 }
 
+function getOpPrecedence(op: TokenType): number {
+  switch (op) {
+    case TOKEN.STAR:
+    case TOKEN.SLASH:
+    case TOKEN.PERCENT:
+      return 4
+    case TOKEN.PLUS:
+    case TOKEN.DASH:
+      return 5
+    case TOKEN.LEFT_OP:
+    case TOKEN.RIGHT_OP:
+      return 6
+    case TOKEN.LEFT_ANGLE:
+    case TOKEN.RIGHT_ANGLE:
+    case TOKEN.LE_OP:
+    case TOKEN.GE_OP:
+      return 7
+    case TOKEN.EQ_OP:
+    case TOKEN.NE_OP:
+      return 8
+    case TOKEN.AMPERSAND:
+      return 9
+    case TOKEN.CARET:
+      return 10
+    case TOKEN.VERTICAL_BAR:
+      return 11
+    case TOKEN.AND_OP:
+      return 12
+    case TOKEN.XOR_OP:
+      return 12
+    case TOKEN.OR_OP:
+      return 13
+    case TOKEN.COMMA:
+      return 17
+    default:
+      throw new Error()
+  }
+}
+function getPrecedence(n: Node): number {
+  switch (n.kind) {
+    default:
+      return 1
+    case "arrayAccess":
+    case "functionCall":
+    case "fieldAccess":
+    case "postfixExpression":
+      return 2
+    case "unaryExpression":
+      return 3
+    case "binaryExpression":
+      return getOpPrecedence(n.op.tokenType)
+    case "conditionalExpression":
+      return 15
+    case "assignmentExpression":
+      return 16
+    case "commaExpression":
+      return 17
+  }
+}
+function paren(doc: Doc, cond: boolean): Doc {
+  return cond ? ["(", doc, ")"] : doc
+}
 export const printers: Plugin<Node | IToken>["printers"] = {
   "glsl-ast": {
     print(path, options, print): Doc {
@@ -66,30 +147,42 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           ////////// DECLARATIONS
           case "translationUnit":
             return join(hardline, path.map(print, "declarations"))
-          case "fullySpecifiedType":
-            return [p(n, "typeQualifier"), p(n, "typeSpecifier")].filter(
-              (x) => (x as any).length !== 0,
-            )
-          case "typeSpecifier":
-            return join(
-              " ",
-              [
-                p(n, "precisionQualifier"),
-                p(n, "typeSpecifierNonArray"),
-                p(n, "arraySpecifier"),
-              ].filter((x) => (x as any).length !== 0),
-            )
-          case "typeQualifier":
-            return join(
-              " ",
-              [
-                p(n, "invariantQualifier"),
-                p(n, "interpolationQualifier"),
-                p(n, "layoutQualifier"),
-                p(n, "storageQualifier"),
-              ].filter((x) => (x as any).length !== 0),
-            )
-          case "storageQualifier":
+          case "fullySpecifiedType": {
+            const parts: Doc = []
+            if (n.typeQualifier) {
+              parts.push(p(n, "typeQualifier"), " ")
+            }
+            parts.push(p(n, "typeSpecifier"))
+            return parts
+          }
+          case "typeSpecifier": {
+            const parts: Doc = []
+            if (n.precisionQualifier) {
+              parts.push(n.precisionQualifier.image, " ")
+            }
+            parts.push(p(n, "typeSpecifierNonArray"))
+            if (n.arraySpecifier) {
+              parts.push(p(n, "arraySpecifier"))
+            }
+            return parts
+          }
+          case "typeQualifier": {
+            const parts: Doc = []
+            if (n.invariantQualifier) {
+              parts.push("invariant ")
+            }
+            if (n.interpolationQualifier) {
+              parts.push(n.interpolationQualifier.image, " ")
+            }
+            if (n.layoutQualifier) {
+              parts.push(p(n, "layoutQualifier"), " ")
+            }
+            if (n.storageQualifier) {
+              parts.push(p(n, "storageQualifier"), " ")
+            }
+            return parts
+          }
+          case "storageQualifier": {
             const parts: Doc = []
             if (n.CONST) {
               parts.push("const ")
@@ -107,6 +200,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               parts.push("uniform ")
             }
             return parts
+          }
           case "functionPrototype":
           case "functionDefinition":
             return [
@@ -128,7 +222,11 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             return [
               n.parameterTypeQualifier
                 ? [p(n, "parameterTypeQualifier"), " "]
-                : [],
+                : "",
+              n.parameterQualifier?.tokenType === TOKEN.OUT ||
+              n.parameterQualifier?.tokenType === TOKEN.INOUT
+                ? n.parameterQualifier?.image + " "
+                : "",
               p(n, "typeSpecifier"),
               " ",
               p(n, "pName"),
@@ -151,7 +249,12 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "arraySpecifier":
             return ["[", p(n, "size"), "]"]
           case "arrayAccess":
-            return [p(n, "on"), "[", p(n, "index"), "]"]
+            return [
+              paren(p(n, "on"), getPrecedence(n.on) > 2),
+              "[",
+              p(n, "index"),
+              "]",
+            ]
           case "structSpecifier":
             return group([
               "struct",
@@ -180,33 +283,44 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "breakStatement":
             return ["break", ";"]
           case "selectionStatement":
-            return group([
-              "if",
-              " ",
-              "(",
-              indent([softline, p(n, "condition")]),
-              softline,
-              ") ",
-              p(n, "yes"),
-              n.no ? ["else", p(n, "no")] : "",
-            ])
-          case "forStatement":
-            return group([
-              "for ",
-              "(",
-              indent([
+            return [
+              group([
+                "if",
+                " ",
+                "(",
+                indent([softline, p(n, "condition")]),
                 softline,
-                p(n, "initExpression"),
-                softline,
-                p(n, "conditionExpression"),
-                ";",
-                line,
-                p(n, "loopExpression"),
+                ") ",
+                p(n, "yes"),
               ]),
-              softline,
-              ") ",
-              p(n, "statement"),
-            ])
+              n.no
+                ? [
+                    hardline,
+                    "else",
+                    n.no.kind === "selectionStatement" ? " " : line,
+                    p(n, "no"),
+                  ]
+                : "",
+            ]
+          case "forStatement":
+            return [
+              group([
+                "for ",
+                "(",
+                indent([
+                  softline,
+                  p(n, "initExpression"),
+                  softline,
+                  p(n, "conditionExpression"),
+                  ";",
+                  line,
+                  p(n, "loopExpression"),
+                ]),
+                softline,
+                ")",
+              ]),
+              group([indent([line, p(n, "statement")])]),
+            ]
           case "whileStatement":
             return [
               "while (",
@@ -234,10 +348,16 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               softline,
               ")",
             ])
+          case "methodCall":
+            return [
+              paren(p(n, "on"), getPrecedence(n.on) > 2),
+              ".",
+              p(n, "functionCall"),
+            ]
           case "postfixExpression":
-            return [p(n, "on"), p(n, "op")]
+            return [paren(p(n, "on"), getPrecedence(n.on) > 2), p(n, "op")]
           case "unaryExpression":
-            return [p(n, "op"), p(n, "on")]
+            return [p(n, "op"), paren(p(n, "on"), getPrecedence(n.on) > 3)]
           case "assignmentExpression":
             return group([
               p(n, "lhs"),
@@ -245,12 +365,30 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               p(n, "op"),
               indent([line, p(n, "rhs")]),
             ])
-          case "binaryExpression":
-            return group([p(n, "lhs"), " ", p(n, "op"), line, p(n, "rhs")])
+          case "conditionalExpression":
+            return [
+              paren(p(n, "condition"), getPrecedence(n.condition) >= 15),
+              indent([line, "? ", p(n, "yes"), line, ": ", p(n, "no")]),
+            ]
+          case "binaryExpression": {
+            const lhs = paren(
+              p(n, "lhs"),
+              getPrecedence(n.lhs) > getOpPrecedence(n.op.tokenType),
+            )
+            const rhs = paren(
+              p(n, "rhs"),
+              getPrecedence(n.rhs) >= getOpPrecedence(n.op.tokenType),
+            )
+            return group([lhs, " ", p(n, "op"), line, rhs])
+          }
           case "expressionStatement":
             return [p(n, "expression"), ";"]
           case "fieldAccess":
-            return [p(n, "on"), ".", p(n, "field")]
+            return [
+              paren(p(n, "on"), getPrecedence(n.on) > 2),
+              ".",
+              p(n, "field"),
+            ]
           case "constantExpression":
             return n._const.image
           case "variableExpression":
@@ -273,7 +411,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
 
     // @ts-expect-error
     getCommentChildNodes(node: Node | Token): Node[] {
-      return isToken(node) ? [] : (node as any).children
+      return isToken(node) ? [] : CHILDREN_VISITOR.visit(node)!
     },
     canAttachComment(node) {
       return true
@@ -284,7 +422,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
       // Current options
       options,
     ): Doc {
-      const n = commentPath.getValue()
+      const n = commentPath.getValue() as Token
       if (n.tokenType === TOKEN.MULTILINE_COMMENT && n.image[2] === "*") {
         const src = n.image
           .substr(3, n.image.length - 5)
