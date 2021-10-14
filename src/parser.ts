@@ -40,30 +40,16 @@ import {
   TypeQualifier,
   TypeSpecifier,
   UnaryExpression,
+  UniformBlock,
   WhileStatement,
 } from "./nodes"
 import { ALL_TOKENS, GLSL_LEXER, RESERVED_KEYWORDS, TOKEN } from "./lexer"
 
 import { DEV, ExpandedLocation, substrContext } from "./util"
 
+const VERSION_REGEXP = /\s*#\s*version\s+(\d+)\s+es\s*/
+
 class GLSLParser extends EmbeddedActionsParser {
-  protected currentChildren: Node[] = []
-  protected backtracking = false
-  //SPEC//     // GramNote:  No '*' or '&' unary ops.  Pointers are not supported.
-  public unaryExpression = this.RR(
-    "unaryExpression",
-    (): Expression =>
-      this.OR([
-        { ALT: () => this.SUBRULE1(this.postfixExpression) },
-        {
-          ALT: (): UnaryExpression => {
-            const op = this.CONSUME(TOKEN.UNARY_OP)
-            const on = this.SUBRULE2(this.unaryExpression)
-            return { kind: "unaryExpression", op, on }
-          },
-        },
-      ]),
-  )
   //SPEC//     multiplicativeExpression PERCENT unaryExpression
   public multiplicativeExpression = this.RR(
     "multiplicativeExpression",
@@ -87,6 +73,22 @@ class GLSLParser extends EmbeddedActionsParser {
     (): Expression =>
       this.LEFT_ASSOC(this.shiftExpression, TOKEN.RELATIONAL_OP),
   )
+  //SPEC//     equalityExpression NE_OP relationalExpression
+  public equalityExpression = this.RR(
+    "equalityExpression",
+    (): Expression =>
+      this.LEFT_ASSOC(this.relationalExpression, TOKEN.EQUALITY_OP),
+  )
+  //SPEC//     andExpression AMPERSAND equalityExpression
+  public andExpression = this.RR(
+    "andExpression",
+    (): Expression => this.LEFT_ASSOC(this.equalityExpression, TOKEN.AMPERSAND),
+  )
+  //SPEC//     exclusiveOrExpression CARET andExpression
+  public exclusiveOrExpression = this.RR(
+    "exclusiveOrExpression",
+    (): Expression => this.LEFT_ASSOC(this.andExpression, TOKEN.CARET),
+  )
 
   //SPEC// variableIdentifier:
   //SPEC//     IDENTIFIER
@@ -96,11 +98,11 @@ class GLSLParser extends EmbeddedActionsParser {
   //SPEC//     UINTCONSTANT
   //SPEC//     FLOATCONSTANT
   //SPEC//     BOOLCONSTANT
-  //SPEC//     equalityExpression NE_OP relationalExpression
-  public equalityExpression = this.RR(
-    "equalityExpression",
+  //SPEC//     inclusiveOrExpression VERTICAL_BAR exclusiveOrExpression
+  public inclusiveOrExpression = this.RR(
+    "inclusiveOrExpression",
     (): Expression =>
-      this.LEFT_ASSOC(this.relationalExpression, TOKEN.EQUALITY_OP),
+      this.LEFT_ASSOC(this.exclusiveOrExpression, TOKEN.VERTICAL_BAR),
   )
   //SPEC// postfixExpression:
   //SPEC//     primaryExpression
@@ -109,10 +111,10 @@ class GLSLParser extends EmbeddedActionsParser {
   //SPEC//     postfixExpression DOT FIELD_SELECTION
   //SPEC//     postfixExpression INC_OP
   //SPEC//     postfixExpression DEC_OP
-  //SPEC//     andExpression AMPERSAND equalityExpression
-  public andExpression = this.RR(
-    "andExpression",
-    (): Expression => this.LEFT_ASSOC(this.equalityExpression, TOKEN.AMPERSAND),
+  //SPEC//     logicalAndExpression AND_OP inclusiveOrExpression
+  public logicalAndExpression = this.RR(
+    "logicalAndExpression",
+    (): Expression => this.LEFT_ASSOC(this.inclusiveOrExpression, TOKEN.AND_OP),
   )
   //SPEC// integerExpression:
   //SPEC//     expression
@@ -138,16 +140,15 @@ class GLSLParser extends EmbeddedActionsParser {
   //SPEC// functionIdentifier:
   //SPEC//     typeSpecifier
   //SPEC//     IDENTIFIER
-  //SPEC//     exclusiveOrExpression CARET andExpression
-  public exclusiveOrExpression = this.RR(
-    "exclusiveOrExpression",
-    (): Expression => this.LEFT_ASSOC(this.andExpression, TOKEN.CARET),
+  //SPEC//     logicalXorExpression XOR_OP logicalAndExpression
+  public logicalXorExpression = this.RR(
+    "logicalXorExpression",
+    (): Expression => this.LEFT_ASSOC(this.logicalAndExpression, TOKEN.XOR_OP),
   )
-  //SPEC//     inclusiveOrExpression VERTICAL_BAR exclusiveOrExpression
-  public inclusiveOrExpression = this.RR(
-    "inclusiveOrExpression",
-    (): Expression =>
-      this.LEFT_ASSOC(this.exclusiveOrExpression, TOKEN.VERTICAL_BAR),
+  //SPEC//     logicalOrExpression OR_OP logicalXorExpression
+  public logicalOrExpression = this.RR(
+    "logicalOrExpression",
+    (): Expression => this.LEFT_ASSOC(this.logicalXorExpression, TOKEN.OR_OP),
   )
   //SPEC// unaryExpression:
   //SPEC//     postfixExpression
@@ -160,52 +161,6 @@ class GLSLParser extends EmbeddedActionsParser {
   //SPEC//     DASH
   //SPEC//     BANG
   //SPEC//     TILDE
-  //SPEC//     logicalAndExpression AND_OP inclusiveOrExpression
-  public logicalAndExpression = this.RR(
-    "logicalAndExpression",
-    (): Expression => this.LEFT_ASSOC(this.inclusiveOrExpression, TOKEN.AND_OP),
-  )
-  //SPEC// multiplicativeExpression:
-  //SPEC//     unaryExpression
-  //SPEC//     multiplicativeExpression STAR unaryExpression
-  //SPEC//     multiplicativeExpression SLASH unaryExpression
-  //SPEC//     logicalXorExpression XOR_OP logicalAndExpression
-  public logicalXorExpression = this.RR(
-    "logicalXorExpression",
-    (): Expression => this.LEFT_ASSOC(this.logicalAndExpression, TOKEN.XOR_OP),
-  )
-  //SPEC// additiveExpression:
-  //SPEC//     multiplicativeExpression
-  //SPEC//     additiveExpression PLUS multiplicativeExpression
-  //SPEC//     logicalOrExpression OR_OP logicalXorExpression
-  public logicalOrExpression = this.RR(
-    "logicalOrExpression",
-    (): Expression => this.LEFT_ASSOC(this.logicalXorExpression, TOKEN.OR_OP),
-  )
-  //SPEC// shiftExpression:
-  //SPEC//     additiveExpression
-  //SPEC//     shiftExpression LEFT_OP additiveExpression
-  // and do semantic check later.
-  public assignmentExpression = this.RR(
-    "assignmentExpression",
-    (): Expression => {
-      let result = this.SUBRULE(this.conditionalExpression)
-      this.MANY(
-        this.ANNOTATE((): AssignmentExpression => {
-          const op = this.CONSUME(TOKEN.ASSIGN_OP)
-          const rhs = this.SUBRULE1(this.conditionalExpression)
-          result = { kind: "assignmentExpression", lhs: result, op, rhs }
-          return result
-        }),
-      )
-      return result
-    },
-  )
-  //SPEC// relationalExpression:
-  //SPEC//     shiftExpression
-  //SPEC//     relationalExpression LEFT_ANGLE shiftExpression
-  //SPEC//     relationalExpression RIGHT_ANGLE shiftExpression
-  //SPEC//     relationalExpression LE_OP shiftExpression
   //SPEC//     expression COMMA assignmentExpression
   public expression = this.RR("expression", (): Expression => {
     let result!: Expression
@@ -220,9 +175,10 @@ class GLSLParser extends EmbeddedActionsParser {
     })
     return result
   })
-  //SPEC// equalityExpression:
-  //SPEC//     relationalExpression
-  //SPEC//     equalityExpression EQ_OP relationalExpression
+  //SPEC// multiplicativeExpression:
+  //SPEC//     unaryExpression
+  //SPEC//     multiplicativeExpression STAR unaryExpression
+  //SPEC//     multiplicativeExpression SLASH unaryExpression
   //SPEC//     LEFT_PAREN expression RIGHT_PAREN
   public primaryExpression = this.RR(
     "primaryExpression",
@@ -250,8 +206,9 @@ class GLSLParser extends EmbeddedActionsParser {
         },
       ]),
   )
-  //SPEC// andExpression:
-  //SPEC//     equalityExpression
+  //SPEC// additiveExpression:
+  //SPEC//     multiplicativeExpression
+  //SPEC//     additiveExpression PLUS multiplicativeExpression
   //SPEC//     logicalOrExpression QUESTION expression COLON assignmentExpression
   public conditionalExpression = this.RR(
     "conditionalExpression",
@@ -270,21 +227,38 @@ class GLSLParser extends EmbeddedActionsParser {
       )
     },
   )
-  //SPEC// exclusiveOrExpression:
-  //SPEC//     andExpression
+  //SPEC// shiftExpression:
+  //SPEC//     additiveExpression
+  //SPEC//     shiftExpression LEFT_OP additiveExpression
+  // and do semantic check later.
+  public assignmentExpression = this.RR(
+    "assignmentExpression",
+    (): Expression => {
+      let result = this.SUBRULE(this.conditionalExpression)
+      this.MANY(
+        this.ANNOTATE((): AssignmentExpression => {
+          const op = this.CONSUME(TOKEN.ASSIGN_OP)
+          const rhs = this.SUBRULE1(this.conditionalExpression)
+          result = { kind: "assignmentExpression", lhs: result, op, rhs }
+          return result
+        }),
+      )
+      return result
+    },
+  )
+  //SPEC// relationalExpression:
+  //SPEC//     shiftExpression
+  //SPEC//     relationalExpression LEFT_ANGLE shiftExpression
+  //SPEC//     relationalExpression RIGHT_ANGLE shiftExpression
+  //SPEC//     relationalExpression LE_OP shiftExpression
   //SPEC//     conditionalExpression
   public constantExpression = this.RR(
     "constantExpression",
     (): Expression => this.SUBRULE(this.conditionalExpression),
   )
-  //SPEC// inclusiveOrExpression:
-  //SPEC//     exclusiveOrExpression
-  public declaration = this.RR(
-    "declaration",
-    (): Declaration => this.SUBRULE(this.externalDeclaration, { ARGS: [true] }),
-  )
-  //SPEC// logicalAndExpression:
-  //SPEC//     inclusiveOrExpression
+  //SPEC// equalityExpression:
+  //SPEC//     relationalExpression
+  //SPEC//     equalityExpression EQ_OP relationalExpression
   //SPEC//     IDENTIFIER EQUAL UINTCONSTANT
   public layoutQualifier = this.RR("layoutQualifier", (): LayoutQualifier => {
     this.CONSUME(TOKEN.LAYOUT)
@@ -310,8 +284,8 @@ class GLSLParser extends EmbeddedActionsParser {
     })
     return { kind: "layoutQualifier", layoutQualifierIds }
   })
-  //SPEC// logicalXorExpression:
-  //SPEC//     logicalAndExpression
+  //SPEC// andExpression:
+  //SPEC//     equalityExpression
   //SPEC//     UNIFORM
   public storageQualifier = this.RR(
     "storageQualifier",
@@ -333,8 +307,8 @@ class GLSLParser extends EmbeddedActionsParser {
       return { kind: "storageQualifier", CONST, CENTROID, IN, OUT, UNIFORM }
     },
   )
-  //SPEC// logicalOrExpression:
-  //SPEC//     logicalXorExpression
+  //SPEC// exclusiveOrExpression:
+  //SPEC//     andExpression
   //SPEC//     invariantQualifier interpolationQualifier storageQualifier
   public typeQualifier = this.RR("typeQualifier", (): TypeQualifier => {
     let storageQualifier: StorageQualifier | undefined
@@ -382,12 +356,62 @@ class GLSLParser extends EmbeddedActionsParser {
       invariantQualifier,
     }
   })
-  //SPEC// conditionalExpression:
-  //SPEC//     logicalOrExpression
+  //SPEC// inclusiveOrExpression:
   //SPEC//     LOW_PRECISION
   public precisionQualifier = this.RR(
     "precisionQualifier",
     (): IToken => this.CONSUME(TOKEN.PRECISION_QUALIFIER),
+  )
+  //SPEC// logicalAndExpression:
+  //SPEC//     inclusiveOrExpression
+  // assignmentExpression: conditionalExpression (assignmentOperator conditionalExpression)*
+  public arraySpecifier = this.RR("arraySpecifier", (): ArraySpecifier => {
+    this.CONSUME(TOKEN.LEFT_BRACKET)
+    const size = this.OPTION3(() => this.SUBRULE(this.constantExpression))
+    this.CONSUME(TOKEN.RIGHT_BRACKET)
+    return { kind: "arraySpecifier", size }
+  })
+  //SPEC// logicalXorExpression:
+  //SPEC//     logicalAndExpression
+  //SPEC// constantExpression:
+  public structSpecifier = this.RR("structSpecifier", (): StructSpecifier => {
+    this.CONSUME(TOKEN.STRUCT)
+    const name = this.OPTION2(() => this.CONSUME(TOKEN.IDENTIFIER))
+    this.CONSUME(TOKEN.LEFT_BRACE)
+    const declarations = this.SUBRULE(this.structDeclarationList)
+    this.CONSUME(TOKEN.RIGHT_BRACE)
+    return { kind: "structSpecifier", name, declarations }
+  })
+  //SPEC// logicalOrExpression:
+  //SPEC//     logicalXorExpression
+  //SPEC//     TYPE_NAME
+  public typeSpecifierNonArray = this.RR(
+    "typeSpecifierNonArray",
+    (): IToken | StructSpecifier =>
+      this.OR([
+        { ALT: () => this.CONSUME(TOKEN.BASIC_TYPE) },
+        { ALT: () => this.CONSUME(TOKEN.VOID) },
+        { ALT: () => this.SUBRULE(this.structSpecifier) },
+        { ALT: () => this.CONSUME(TOKEN.IDENTIFIER) },
+      ]),
+  )
+  //SPEC// conditionalExpression:
+  //SPEC//     logicalOrExpression
+  //SPEC//     typeSpecifierNonarray LEFT_BRACKET constantExpression RIGHT_BRACKET
+  public typeSpecifierNoPrec = this.RR(
+    "typeSpecifierNoPrec",
+    (): TypeSpecifier => {
+      const typeSpecifierNonArray = this.SUBRULE(this.typeSpecifierNonArray)
+      const arraySpecifier = this.OPTION1(() =>
+        this.SUBRULE(this.arraySpecifier),
+      )
+      return {
+        kind: "typeSpecifier",
+        precisionQualifier: undefined,
+        arraySpecifier,
+        typeSpecifierNonArray,
+      }
+    },
   )
   //SPEC// assignmentExpression:
   //SPEC//     conditionalExpression
@@ -405,120 +429,6 @@ class GLSLParser extends EmbeddedActionsParser {
   //SPEC//     XORASSIGN
   //SPEC//     ORASSIGN
   // conditionalExpression starts with unaryExpression, so rewrite to
-  // assignmentExpression: conditionalExpression (assignmentOperator conditionalExpression)*
-  public arraySpecifier = this.RR("arraySpecifier", (): ArraySpecifier => {
-    this.CONSUME(TOKEN.LEFT_BRACKET)
-    const size = this.OPTION3(() => this.SUBRULE(this.constantExpression))
-    this.CONSUME(TOKEN.RIGHT_BRACKET)
-    return { kind: "arraySpecifier", size }
-  })
-  //SPEC// expression:
-  //SPEC//     assignmentExpression
-  //SPEC//     IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
-  public structDeclarationList = this.RULE(
-    "structDeclarationList",
-    (): StructDeclaration[] => {
-      const result: StructDeclaration[] = []
-      this.MANY(
-        this.ANNOTATE(() => {
-          const fsType = this.SUBRULE(this.fullySpecifiedType)
-          const declarators: Declarator[] = []
-          this.MANY_SEP({
-            SEP: TOKEN.COMMA,
-            DEF: this.ANNOTATE(() => {
-              const declarator: Declarator = {
-                kind: "declarator",
-                name: this.CONSUME(TOKEN.IDENTIFIER),
-                arraySpecifier: this.OPTION(() =>
-                  this.SUBRULE(this.arraySpecifier),
-                ),
-                init: undefined,
-              }
-              declarators.push(declarator)
-              return declarator
-            }),
-          })
-          this.CONSUME(TOKEN.SEMICOLON)
-          const declaration: StructDeclaration = {
-            kind: "structDeclaration",
-            fsType,
-            declarators,
-          }
-          result.push(declaration)
-          return declaration
-        }),
-      )
-      return result
-    },
-  )
-  //SPEC// constantExpression:
-  public structSpecifier = this.RR("structSpecifier", (): StructSpecifier => {
-    this.CONSUME(TOKEN.STRUCT)
-    const name = this.OPTION2(() => this.CONSUME(TOKEN.IDENTIFIER))
-    this.CONSUME(TOKEN.LEFT_BRACE)
-    const declarations = this.SUBRULE(this.structDeclarationList)
-    this.CONSUME(TOKEN.RIGHT_BRACE)
-    return { kind: "structSpecifier", name, declarations }
-  })
-  //SPEC// declaration:
-  //SPEC//     functionPrototype SEMICOLON
-  //SPEC//     initDeclaratorList SEMICOLON
-  //SPEC//     PRECISION precisionQualifier typeSpecifierNoPrec SEMICOLON
-  //SPEC//     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE SEMICOLON
-  //SPEC//     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE IDENTIFIER SEMICOLON
-  //SPEC//     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE IDENTIFIER LEFT_BRACKET
-  //SPEC//     constantExpression RIGHT_BRACKET SEMICOLON
-  //SPEC//     TYPE_NAME
-  public typeSpecifierNonArray = this.RR(
-    "typeSpecifierNonArray",
-    (): IToken | StructSpecifier =>
-      this.OR([
-        { ALT: () => this.CONSUME(TOKEN.BASIC_TYPE) },
-        { ALT: () => this.CONSUME(TOKEN.VOID) },
-        { ALT: () => this.SUBRULE(this.structSpecifier) },
-        { ALT: () => this.CONSUME(TOKEN.IDENTIFIER) },
-      ]),
-  )
-  //SPEC//     typeSpecifierNonarray LEFT_BRACKET constantExpression RIGHT_BRACKET
-  public typeSpecifierNoPrec = this.RR(
-    "typeSpecifierNoPrec",
-    (): TypeSpecifier => {
-      const typeSpecifierNonArray = this.SUBRULE(this.typeSpecifierNonArray)
-      const arraySpecifier = this.OPTION1(() =>
-        this.SUBRULE(this.arraySpecifier),
-      )
-      return {
-        kind: "typeSpecifier",
-        precisionQualifier: undefined,
-        arraySpecifier,
-        typeSpecifierNonArray,
-      }
-    },
-  )
-  //SPEC// functionPrototype:
-  //SPEC//     functionDeclarator RIGHT_PAREN
-  //SPEC// functionDeclarator:
-  //SPEC//     functionHeader
-  //SPEC//     functionHeaderWithParameters
-  //SPEC// functionHeaderWithParameters:
-  //SPEC//     functionHeader parameterDeclaration
-  //SPEC//     functionHeaderWithParameters COMMA parameterDeclaration
-  //SPEC// functionHeader:
-  //SPEC//     fullySpecifiedType IDENTIFIER LEFT_PAREN
-  //SPEC// parameterDeclarator:
-  //SPEC//     typeSpecifier IDENTIFIER
-  //SPEC//     typeSpecifier IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
-  //SPEC// parameterDeclaration:
-  //SPEC//     parameterTypeQualifier parameterQualifier parameterDeclarator
-  //SPEC//     parameterQualifier parameterDeclarator
-  //SPEC//     parameterTypeQualifier parameterQualifier parameterTypeSpecifier
-  //SPEC//     parameterQualifier parameterTypeSpecifier
-  //SPEC// parameterQualifier:
-  //SPEC//     /* empty */
-  //SPEC//     IN
-  //SPEC//     OUT
-  //SPEC//     INOUT
-  //SPEC// parameterTypeSpecifier:
   //SPEC//     FIELD_SELECTION
   public functionCall = this.RR("functionCall", (): FunctionCall => {
     const callee = this.SUBRULE(this.typeSpecifierNoPrec)
@@ -531,29 +441,13 @@ class GLSLParser extends EmbeddedActionsParser {
     this.CONSUME(TOKEN.RIGHT_PAREN)
     return { kind: "functionCall", callee, args }
   })
-
-  //SPEC// initDeclaratorList:
-  //SPEC//     singleDeclaration
-  //SPEC//     initDeclaratorList COMMA IDENTIFIER
-  //SPEC//     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
-  //SPEC//     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET RIGHT_BRACKET EQUAL initializer
-  //SPEC//     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET EQUAL initializer
-  //SPEC//     initDeclaratorList COMMA IDENTIFIER EQUAL initializer
-  //SPEC// singleDeclaration:
-  //SPEC//     fullySpecifiedType
-  //SPEC//     fullySpecifiedType IDENTIFIER
-  //SPEC//     fullySpecifiedType IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
-  //SPEC//     fullySpecifiedType IDENTIFIER LEFT_BRACKET RIGHT_BRACKET EQUAL initializer
-  //SPEC//     fullySpecifiedType IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET EQUAL initializer
-  //SPEC//     fullySpecifiedType IDENTIFIER EQUAL initializer
-  //SPEC//     INVARIANT IDENTIFIER
+  //SPEC// expression:
+  //SPEC//     assignmentExpression
   // used for lookahead
   public functionCallHeader = this.RULE("functionCallHeader", (): void => {
     this.SUBRULE(this.typeSpecifierNoPrec)
     this.CONSUME(TOKEN.LEFT_PAREN)
   })
-  //SPEC// fullySpecifiedType:
-  //SPEC//     typeSpecifier
   // We add postfixExpression DOT functionCall.
   public postfixExpression = this.RR("postfixExpression", (): Expression => {
     let result = this.OR1([
@@ -605,19 +499,29 @@ class GLSLParser extends EmbeddedActionsParser {
     )
     return result
   })
-  //SPEC// invariantQualifier:
-  //SPEC//     INVARIANT
-  //SPEC// interpolationQualifier:
-  //SPEC//     SMOOTH
-  //SPEC//     FLAT
-  //SPEC// layoutQualifier:
-  //SPEC//     LAYOUT LEFT_PAREN layoutQualifierIdList RIGHT_PAREN
-  //SPEC// layoutQualifierIdList:
-  //SPEC//     layoutQualifierId
-  //SPEC//     layoutQualifierIdList COMMA layoutQualifierId
-  //SPEC// layoutQualifierId:
-  //SPEC//     IDENTIFIER
-  //SPEC//     IDENTIFIER EQUAL INTCONSTANT
+  //SPEC// declaration:
+  //SPEC//     functionPrototype SEMICOLON
+  //SPEC//     initDeclaratorList SEMICOLON
+  //SPEC//     PRECISION precisionQualifier typeSpecifierNoPrec SEMICOLON
+  //SPEC//     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE SEMICOLON
+  //SPEC//     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE IDENTIFIER SEMICOLON
+  //SPEC//     typeQualifier IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE IDENTIFIER LEFT_BRACKET
+  //SPEC//                                                        constantExpression RIGHT_BRACKET SEMICOLON
+  //SPEC//     // GramNote:  No '*' or '&' unary ops.  Pointers are not supported.
+  public unaryExpression = this.RR(
+    "unaryExpression",
+    (): Expression =>
+      this.OR([
+        { ALT: () => this.SUBRULE1(this.postfixExpression) },
+        {
+          ALT: (): UnaryExpression => {
+            const op = this.CONSUME(TOKEN.UNARY_OP)
+            const on = this.SUBRULE2(this.unaryExpression)
+            return { kind: "unaryExpression", op, on }
+          },
+        },
+      ]),
+  )
   //SPEC//     precisionQualifier typeSpecifierNoPrec
   public typeSpecifier = this.RR("typeSpecifier", (): TypeSpecifier => {
     const precisionQualifier = this.OPTION(() =>
@@ -626,15 +530,30 @@ class GLSLParser extends EmbeddedActionsParser {
     const typeSpecifierNoPrec = this.SUBRULE(this.typeSpecifierNoPrec)
     return Object.assign({}, typeSpecifierNoPrec, { precisionQualifier })
   })
-  //SPEC// parameterTypeQualifier:
-  //SPEC//     CONST
-  //SPEC// typeQualifier:
-  //SPEC//     storageQualifier
-  //SPEC//     layoutQualifier
-  //SPEC//     layoutQualifier storageQualifier
-  //SPEC//     interpolationQualifier
-  //SPEC//     interpolationQualifier storageQualifier
-  //SPEC//     invariantQualifier storageQualifier
+  //SPEC// functionPrototype:
+  //SPEC//     functionDeclarator RIGHT_PAREN
+  //SPEC// functionDeclarator:
+  //SPEC//     functionHeader
+  //SPEC//     functionHeaderWithParameters
+  //SPEC// functionHeaderWithParameters:
+  //SPEC//     functionHeader parameterDeclaration
+  //SPEC//     functionHeaderWithParameters COMMA parameterDeclaration
+  //SPEC// functionHeader:
+  //SPEC//     fullySpecifiedType IDENTIFIER LEFT_PAREN
+  //SPEC// parameterDeclarator:
+  //SPEC//     typeSpecifier IDENTIFIER
+  //SPEC//     typeSpecifier IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
+  //SPEC// parameterDeclaration:
+  //SPEC//     parameterTypeQualifier parameterQualifier parameterDeclarator
+  //SPEC//     parameterQualifier parameterDeclarator
+  //SPEC//     parameterTypeQualifier parameterQualifier parameterTypeSpecifier
+  //SPEC//     parameterQualifier parameterTypeSpecifier
+  //SPEC// parameterQualifier:
+  //SPEC//     /* empty */
+  //SPEC//     IN
+  //SPEC//     OUT
+  //SPEC//     INOUT
+  //SPEC// parameterTypeSpecifier:
   //SPEC//     typeSpecifier
   public parameterDeclaration = this.RR(
     "parameterDeclaration",
@@ -665,12 +584,22 @@ class GLSLParser extends EmbeddedActionsParser {
       }
     },
   )
-  //SPEC// storageQualifier:
-  //SPEC//     CONST
-  //SPEC//     IN
-  //SPEC//     OUT
-  //SPEC//     CENTROID IN
-  //SPEC//     CENTROID OUT
+
+  //SPEC// initDeclaratorList:
+  //SPEC//     singleDeclaration
+  //SPEC//     initDeclaratorList COMMA IDENTIFIER
+  //SPEC//     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
+  //SPEC//     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET RIGHT_BRACKET EQUAL initializer
+  //SPEC//     initDeclaratorList COMMA IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET EQUAL initializer
+  //SPEC//     initDeclaratorList COMMA IDENTIFIER EQUAL initializer
+  //SPEC// singleDeclaration:
+  //SPEC//     fullySpecifiedType
+  //SPEC//     fullySpecifiedType IDENTIFIER
+  //SPEC//     fullySpecifiedType IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
+  //SPEC//     fullySpecifiedType IDENTIFIER LEFT_BRACKET RIGHT_BRACKET EQUAL initializer
+  //SPEC//     fullySpecifiedType IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET EQUAL initializer
+  //SPEC//     fullySpecifiedType IDENTIFIER EQUAL initializer
+  //SPEC//     INVARIANT IDENTIFIER
   //SPEC//     typeQualifier typeSpecifier
   public fullySpecifiedType = this.RR(
     "fullySpecifiedType",
@@ -680,16 +609,72 @@ class GLSLParser extends EmbeddedActionsParser {
       return { kind: "fullySpecifiedType", typeQualifier, typeSpecifier }
     },
   )
-  //SPEC// typeSpecifier:
-  //SPEC//     typeSpecifierNoPrec
+  //SPEC// fullySpecifiedType:
+  //SPEC//     typeSpecifier
+  //SPEC//     IDENTIFIER LEFT_BRACKET constantExpression RIGHT_BRACKET
+  public structDeclarationList = this.RULE(
+    "structDeclarationList",
+    (): StructDeclaration[] => {
+      const result: StructDeclaration[] = []
+      this.MANY(
+        this.ANNOTATE(() => {
+          const fsType = this.SUBRULE(this.fullySpecifiedType)
+          const declarators: Declarator[] = []
+          this.MANY_SEP({
+            SEP: TOKEN.COMMA,
+            DEF: this.ANNOTATE(() => {
+              const declarator: Declarator = {
+                kind: "declarator",
+                name: this.CONSUME(TOKEN.IDENTIFIER),
+                arraySpecifier: this.OPTION(() =>
+                  this.SUBRULE(this.arraySpecifier),
+                ),
+                init: undefined,
+              }
+              declarators.push(declarator)
+              return declarator
+            }),
+          })
+          this.CONSUME(TOKEN.SEMICOLON)
+          const declaration: StructDeclaration = {
+            kind: "structDeclaration",
+            fsType,
+            declarators,
+          }
+          result.push(declaration)
+          return declaration
+        }),
+      )
+      return result
+    },
+  )
+  //SPEC// invariantQualifier:
+  //SPEC//     INVARIANT
+  //SPEC// interpolationQualifier:
+  //SPEC//     SMOOTH
+  //SPEC//     FLAT
+  //SPEC// layoutQualifier:
+  //SPEC//     LAYOUT LEFT_PAREN layoutQualifierIdList RIGHT_PAREN
+  //SPEC// layoutQualifierIdList:
+  //SPEC//     layoutQualifierId
+  //SPEC//     layoutQualifierIdList COMMA layoutQualifierId
+  //SPEC// layoutQualifierId:
+  //SPEC//     IDENTIFIER
+  //SPEC//     IDENTIFIER EQUAL INTCONSTANT
   //SPEC//     assignmentExpression
   public initializer = this.RR(
     "initializer",
     (): Expression => this.SUBRULE(this.assignmentExpression),
   )
-  //SPEC// typeSpecifierNoPrec:
-  //SPEC//     typeSpecifierNonarray
-  //SPEC//     typeSpecifierNonarray LEFT_BRACKET RIGHT_BRACKET
+  //SPEC// parameterTypeQualifier:
+  //SPEC//     CONST
+  //SPEC// typeQualifier:
+  //SPEC//     storageQualifier
+  //SPEC//     layoutQualifier
+  //SPEC//     layoutQualifier storageQualifier
+  //SPEC//     interpolationQualifier
+  //SPEC//     interpolationQualifier storageQualifier
+  //SPEC//     invariantQualifier storageQualifier
   //SPEC//     // GramNote:  No 'enum', or 'typedef'.
   public singleDeclaration = this.RULE("singleDeclaration", (): void =>
     this.OR([
@@ -720,71 +705,22 @@ class GLSLParser extends EmbeddedActionsParser {
       },
     ]),
   )
-  //SPEC// typeSpecifierNonarray:
-  //SPEC//     VOID
-  //SPEC//     FLOAT
-  //SPEC//     INT
-  //SPEC//     UINT
-  //SPEC//     BOOL
-  //SPEC//     VEC2
-  //SPEC//     VEC3
-  //SPEC//     VEC4
-  //SPEC//     BVEC2
-  //SPEC//     BVEC3
-  //SPEC//     BVEC4
-  //SPEC//     IVEC2
-  //SPEC//     IVEC3
-  //SPEC//     IVEC4
-  //SPEC//     UVEC2
-  //SPEC//     UVEC3
-  //SPEC//     UVEC4
-  //SPEC//     MAT2
-  //SPEC//     MAT3
-  //SPEC//     MAT4
-  //SPEC//     MAT2X2
-  //SPEC//     MAT2X3
-  //SPEC//     MAT2X4
-  //SPEC//     MAT3X2
-  //SPEC//     MAT3X3
-  //SPEC//     MAT3X4
-  //SPEC//     MAT4X2
-  //SPEC//     MAT4X3
-  //SPEC//     MAT4X4
-  //SPEC//     SAMPLER2D
-  //SPEC//     SAMPLER3D
-  //SPEC//     SAMPLERCUBE
-  //SPEC//     SAMPLER2DSHADOW
-  //SPEC//     SAMPLERCUBESHADOW
-  //SPEC//     SAMPLER2DARRAY
-  //SPEC//     SAMPLER2DARRAYSHADOW
-  //SPEC//     ISAMPLER2D
-  //SPEC//     ISAMPLER3D
-  //SPEC//     ISAMPLERCUBE
-  //SPEC//     ISAMPLER2DARRAY
-  //SPEC//     USAMPLER2D
-  //SPEC//     USAMPLER3D
-  //SPEC//     USAMPLERCUBE
-  //SPEC//     USAMPLER2DARRAY
-  //SPEC//     structSpecifier
-  //SPEC//     statementList statement
-  public compoundStatement = this.RR(
-    "compoundStatement",
-    (newScope): CompoundStatement => {
-      this.CONSUME(TOKEN.LEFT_BRACE)
-      const statements: Statement[] = []
-      this.MANY(() => statements.push(this.SUBRULE(this.statement)))
-      this.CONSUME(TOKEN.RIGHT_BRACE)
-      return { kind: "compoundStatement", statements, newScope }
-    },
-  )
-  //SPEC// precisionQualifier:
-  //SPEC//     HIGH_PRECISION
-  //SPEC//     MEDIUM_PRECISION
+  //SPEC// storageQualifier:
+  //SPEC//     CONST
+  //SPEC//     IN
+  //SPEC//     OUT
+  //SPEC//     CENTROID IN
+  //SPEC//     CENTROID OUT
   //SPEC//     typeQualifier SEMICOLON
   public externalDeclaration = this.RR(
     "externalDeclaration",
     (noFunction?: boolean): Declaration =>
       this.OR([
+        // uniform/interface block
+        {
+          GATE: this.BACKTRACK(this.uniformBlockHeader),
+          ALT: (): UniformBlock => this.SUBRULE(this.uniformBlock),
+        },
         // initDeclaratorList, functionPrototype or functionDefinition
         {
           ALT: () => {
@@ -883,10 +819,16 @@ class GLSLParser extends EmbeddedActionsParser {
         },
       ]),
   )
-
-  //SPEC// structSpecifier:
-  //SPEC//     STRUCT IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE
-  //SPEC//     STRUCT LEFT_BRACE structDeclarationList RIGHT_BRACE
+  //SPEC// typeSpecifier:
+  //SPEC//     typeSpecifierNoPrec
+  //SPEC//     exclusiveOrExpression
+  public declaration = this.RR(
+    "declaration",
+    (): Declaration => this.SUBRULE(this.externalDeclaration, { ARGS: [true] }),
+  )
+  //SPEC// typeSpecifierNoPrec:
+  //SPEC//     typeSpecifierNonarray
+  //SPEC//     typeSpecifierNonarray LEFT_BRACKET RIGHT_BRACKET
   //SPEC//     expression SEMICOLON
   public expressionStatement = this.RR(
     "expressionStatement",
@@ -896,34 +838,52 @@ class GLSLParser extends EmbeddedActionsParser {
       return { kind: "expressionStatement", expression }
     },
   )
-  //SPEC//     statementWithScope
-  public selectionStatement = this.RR(
-    "selectionStatement",
-    (): SelectionStatement => {
-      this.CONSUME(TOKEN.IF)
-      this.CONSUME(TOKEN.LEFT_PAREN)
-      const condition = this.SUBRULE(this.expression)
-      this.CONSUME(TOKEN.RIGHT_PAREN)
-      const yes = this.SUBRULE2(this.statement, { ARGS: [true] })
-      const no = this.OPTION(() => {
-        this.CONSUME(TOKEN.ELSE)
-        return this.SUBRULE3(this.statement, { ARGS: [true] })
-      })
-      return { kind: "selectionStatement", condition, yes, no }
-    },
-  )
-  //SPEC// structDeclarationList:
-  //SPEC//     structDeclaration
-  //SPEC//     structDeclarationList structDeclaration
-  //SPEC// structDeclaration:
-  //SPEC//     typeSpecifier structDeclaratorList SEMICOLON
-  //SPEC//     typeQualifier typeSpecifier structDeclaratorList SEMICOLON
-  //SPEC// structDeclaratorList:
-  //SPEC//     structDeclarator
-  //SPEC//     structDeclaratorList COMMA structDeclarator
-  //SPEC// structDeclarator:
-  //SPEC//     IDENTIFIER
-  //SPEC//     IDENTIFIER LEFT_BRACKET RIGHT_BRACKET
+  //SPEC// typeSpecifierNonarray:
+  //SPEC//     VOID
+  //SPEC//     FLOAT
+  //SPEC//     INT
+  //SPEC//     UINT
+  //SPEC//     BOOL
+  //SPEC//     VEC2
+  //SPEC//     VEC3
+  //SPEC//     VEC4
+  //SPEC//     BVEC2
+  //SPEC//     BVEC3
+  //SPEC//     BVEC4
+  //SPEC//     IVEC2
+  //SPEC//     IVEC3
+  //SPEC//     IVEC4
+  //SPEC//     UVEC2
+  //SPEC//     UVEC3
+  //SPEC//     UVEC4
+  //SPEC//     MAT2
+  //SPEC//     MAT3
+  //SPEC//     MAT4
+  //SPEC//     MAT2X2
+  //SPEC//     MAT2X3
+  //SPEC//     MAT2X4
+  //SPEC//     MAT3X2
+  //SPEC//     MAT3X3
+  //SPEC//     MAT3X4
+  //SPEC//     MAT4X2
+  //SPEC//     MAT4X3
+  //SPEC//     MAT4X4
+  //SPEC//     SAMPLER2D
+  //SPEC//     SAMPLER3D
+  //SPEC//     SAMPLERCUBE
+  //SPEC//     SAMPLER2DSHADOW
+  //SPEC//     SAMPLERCUBESHADOW
+  //SPEC//     SAMPLER2DARRAY
+  //SPEC//     SAMPLER2DARRAYSHADOW
+  //SPEC//     ISAMPLER2D
+  //SPEC//     ISAMPLER3D
+  //SPEC//     ISAMPLERCUBE
+  //SPEC//     ISAMPLER2DARRAY
+  //SPEC//     USAMPLER2D
+  //SPEC//     USAMPLER3D
+  //SPEC//     USAMPLERCUBE
+  //SPEC//     USAMPLER2DARRAY
+  //SPEC//     structSpecifier
   // simplify to expression | declaration and check in checker
   public condition = this.RR(
     "condition",
@@ -960,8 +920,9 @@ class GLSLParser extends EmbeddedActionsParser {
         ],
       }),
   )
-
-  //SPEC// initializer:
+  //SPEC// precisionQualifier:
+  //SPEC//     HIGH_PRECISION
+  //SPEC//     MEDIUM_PRECISION
   //SPEC//     statementList
   public switchStatement = this.RR(
     "switchStatement",
@@ -974,25 +935,10 @@ class GLSLParser extends EmbeddedActionsParser {
       body: this.SUBRULE(this.compoundStatement),
     }),
   )
-  //SPEC// declarationStatement:
-  //SPEC//     declaration
-  //SPEC// statement:
-  //SPEC//     compoundStatementWithScope
-  //SPEC//     simpleStatement
-  //SPEC// statementNoNewScope:
-  //SPEC//     compoundStatementNoNewScope
-  //SPEC//     simpleStatement
-  //SPEC// statementWithScope:
-  //SPEC//     compoundStatementNoNewScope
-  //SPEC//     simpleStatement
-  //SPEC// // Grammar Note:  labeled statements for SWITCH only; 'goto' is not supported.
-  //SPEC// simpleStatement:
-  //SPEC//     declarationStatement
-  //SPEC//     expressionStatement
-  //SPEC//     selectionStatement
-  //SPEC//     switchStatement
-  //SPEC//     caseLabel
-  //SPEC//     iterationStatement
+
+  //SPEC// structSpecifier:
+  //SPEC//     STRUCT IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE
+  //SPEC//     STRUCT LEFT_BRACE structDeclarationList RIGHT_BRACE
   //SPEC//     DEFAULT COLON
   public caseLabel = this.RR(
     "caseLabel",
@@ -1014,6 +960,136 @@ class GLSLParser extends EmbeddedActionsParser {
           },
         },
       ]),
+  )
+  //SPEC// // Grammar Note:  No 'goto'.  Gotos are not supported.
+  public jumpStatement = this.RR("jumpStatement", (): JumpStatement => {
+    const result: JumpStatement = this.OR([
+      {
+        ALT: () => {
+          this.CONSUME(TOKEN.CONTINUE)
+          return { kind: "continueStatement" }
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME(TOKEN.BREAK)
+          return { kind: "breakStatement" }
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME(TOKEN.DISCARD)
+          return { kind: "discardStatement" }
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME(TOKEN.RETURN)
+          const what = this.OPTION(() => this.SUBRULE(this.expression))
+          return { kind: "returnStatement", what }
+        },
+      },
+    ])
+    this.CONSUME(TOKEN.SEMICOLON)
+    return result
+  })
+  //SPEC// structDeclarationList:
+  //SPEC//     structDeclaration
+  //SPEC//     structDeclarationList structDeclaration
+  //SPEC// structDeclaration:
+  //SPEC//     typeSpecifier structDeclaratorList SEMICOLON
+  //SPEC//     typeQualifier typeSpecifier structDeclaratorList SEMICOLON
+  //SPEC// structDeclaratorList:
+  //SPEC//     structDeclarator
+  //SPEC//     structDeclaratorList COMMA structDeclarator
+  //SPEC// structDeclarator:
+  //SPEC//     IDENTIFIER
+  //SPEC//     IDENTIFIER LEFT_BRACKET RIGHT_BRACKET
+  //SPEC//     jumpStatement
+  public statement = this.RR(
+    "statement",
+    (newScope?): Statement =>
+      this.OR<Statement>([
+        {
+          // We want "IDENTIFIER ;" to be parsed as a variableExpression, so
+          // we add a special rule here.
+          ALT: () => {
+            const v = this.CONSUME(TOKEN.IDENTIFIER)
+            this.CONSUME(TOKEN.SEMICOLON)
+            return {
+              kind: "expressionStatement",
+              expression: { kind: "variableExpression", var: v },
+            }
+          },
+          IGNORE_AMBIGUITIES: true,
+        },
+        // declarationStatement
+        {
+          GATE: this.BACKTRACK(this.declaration),
+          ALT: () =>
+            this.SUBRULE(this.declaration, {
+              ARGS: [true],
+            }) as InitDeclaratorListDeclaration,
+        },
+        { ALT: () => this.SUBRULE(this.expressionStatement) },
+        { ALT: () => this.SUBRULE(this.selectionStatement) },
+        { ALT: () => this.SUBRULE(this.switchStatement) },
+        { ALT: () => this.SUBRULE(this.caseLabel) },
+        { ALT: () => this.SUBRULE(this.iterationStatement) },
+        { ALT: () => this.SUBRULE(this.jumpStatement) },
+        {
+          ALT: () =>
+            this.SUBRULE(this.compoundStatement, { ARGS: [!!newScope] }),
+        },
+      ]),
+  )
+
+  //SPEC// initializer:
+  //SPEC//     statementList statement
+  public compoundStatement = this.RR(
+    "compoundStatement",
+    (newScope): CompoundStatement => {
+      this.CONSUME(TOKEN.LEFT_BRACE)
+      const statements: Statement[] = []
+      this.MANY(() => statements.push(this.SUBRULE(this.statement)))
+      this.CONSUME(TOKEN.RIGHT_BRACE)
+      return { kind: "compoundStatement", statements, newScope }
+    },
+  )
+  //SPEC// declarationStatement:
+  //SPEC//     declaration
+  //SPEC// statement:
+  //SPEC//     compoundStatementWithScope
+  //SPEC//     simpleStatement
+  //SPEC// statementNoNewScope:
+  //SPEC//     compoundStatementNoNewScope
+  //SPEC//     simpleStatement
+  //SPEC// statementWithScope:
+  //SPEC//     compoundStatementNoNewScope
+  //SPEC//     simpleStatement
+  //SPEC// // Grammar Note:  labeled statements for SWITCH only; 'goto' is not supported.
+  //SPEC// simpleStatement:
+  //SPEC//     declarationStatement
+  //SPEC//     expressionStatement
+  //SPEC//     selectionStatement
+  //SPEC//     switchStatement
+  //SPEC//     caseLabel
+  //SPEC//     iterationStatement
+  //SPEC//     statementWithScope
+  public selectionStatement = this.RR(
+    "selectionStatement",
+    (): SelectionStatement => {
+      this.CONSUME(TOKEN.IF)
+      this.CONSUME(TOKEN.LEFT_PAREN)
+      const condition = this.SUBRULE(this.expression)
+      this.CONSUME(TOKEN.RIGHT_PAREN)
+      const yes = this.SUBRULE2(this.statement, { ARGS: [true] })
+      const no = this.OPTION(() => {
+        this.CONSUME(TOKEN.ELSE)
+        return this.SUBRULE3(this.statement, { ARGS: [true] })
+      })
+      return { kind: "selectionStatement", condition, yes, no }
+    },
   )
   //SPEC// compoundStatementWithScope:
   //SPEC//     LEFT_BRACE RIGHT_BRACE
@@ -1054,20 +1130,13 @@ class GLSLParser extends EmbeddedActionsParser {
           ALT: (): ForStatement => {
             this.CONSUME3(TOKEN.FOR)
             this.CONSUME3(TOKEN.LEFT_PAREN)
-            let initExpression
-            this.OR3([
+            const initExpression = this.OR3([
               {
                 GATE: this.BACKTRACK(this.singleDeclaration),
-                ALT: () => {
-                  initExpression = this.SUBRULE(this.declaration)
-                },
+                ALT: () => this.SUBRULE(this.declaration),
               },
-              { ALT: () => this.CONSUME1(TOKEN.SEMICOLON) },
               {
-                ALT: () => {
-                  initExpression = this.SUBRULE3(this.expression)
-                  this.CONSUME3(TOKEN.SEMICOLON)
-                },
+                ALT: () => this.SUBRULE(this.expressionStatement),
               },
             ])
             const conditionExpression = this.OPTION3(() =>
@@ -1090,86 +1159,9 @@ class GLSLParser extends EmbeddedActionsParser {
         },
       ]),
   )
+
   //SPEC// expressionStatement:
   //SPEC//     SEMICOLON
-  //SPEC// // Grammar Note:  No 'goto'.  Gotos are not supported.
-  public jumpStatement = this.RR("jumpStatement", (): JumpStatement => {
-    const result: JumpStatement = this.OR([
-      {
-        ALT: () => {
-          this.CONSUME(TOKEN.CONTINUE)
-          return { kind: "continueStatement" }
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME(TOKEN.BREAK)
-          return { kind: "breakStatement" }
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME(TOKEN.DISCARD)
-          return { kind: "discardStatement" }
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME(TOKEN.RETURN)
-          const what = this.OPTION(() => this.SUBRULE(this.expression))
-          return { kind: "returnStatement", what }
-        },
-      },
-    ])
-    this.CONSUME(TOKEN.SEMICOLON)
-    return result
-  })
-  //SPEC// selectionStatement:
-  //SPEC//     IF LEFT_PAREN expression RIGHT_PAREN selectionRestStatement
-  //SPEC// selectionRestStatement:
-  //SPEC//     statementWithScope ELSE statementWithScope
-  //SPEC//     jumpStatement
-  public statement = this.RR(
-    "statement",
-    (newScope?): Statement =>
-      this.OR<Statement>([
-        {
-          // We want "IDENTIFIER ;" to be parsed as a variableExpression, so
-          // we add a special rule here.
-          ALT: () => {
-            const v = this.CONSUME(TOKEN.IDENTIFIER)
-            this.CONSUME(TOKEN.SEMICOLON)
-            return {
-              kind: "expressionStatement",
-              expression: { kind: "variableExpression", var: v },
-            }
-          },
-          IGNORE_AMBIGUITIES: true,
-        },
-        // declarationStatement
-        {
-          GATE: this.BACKTRACK(this.declaration),
-          ALT: () =>
-            this.SUBRULE(this.declaration, {
-              ARGS: [true],
-            }) as InitDeclaratorListDeclaration,
-        },
-        { ALT: () => this.SUBRULE(this.expressionStatement) },
-        { ALT: () => this.SUBRULE(this.selectionStatement) },
-        { ALT: () => this.SUBRULE(this.switchStatement) },
-        { ALT: () => this.SUBRULE(this.caseLabel) },
-        { ALT: () => this.SUBRULE(this.iterationStatement) },
-        { ALT: () => this.SUBRULE(this.jumpStatement) },
-        {
-          ALT: () =>
-            this.SUBRULE(this.compoundStatement, { ARGS: [!!newScope] }),
-        },
-      ]),
-  )
-
-  //SPEC// condition:
-  //SPEC//     expression
-  //SPEC//     fullySpecifiedType IDENTIFIER EQUAL initializer
   //SPEC//     declaration
   public translationUnit = this.RR("translationUnit", (): TranslationUnit => {
     const declarations: Declaration[] = []
@@ -1178,6 +1170,47 @@ class GLSLParser extends EmbeddedActionsParser {
     )
     return { kind: "translationUnit", declarations }
   })
+
+  // Minimum rule we need to test if a uniformBlock is next.
+  protected uniformBlockHeader = this.RULE("uniformBlockHeader", () => {
+    this.OPTION(() => this.SUBRULE(this.layoutQualifier))
+    this.CONSUME(TOKEN.UNIFORM)
+    this.CONSUME(TOKEN.IDENTIFIER)
+    this.CONSUME(TOKEN.LEFT_BRACE)
+  })
+  public uniformBlock = this.RR("uniformBlock", (): UniformBlock => {
+    // this.CONSUME(TOKEN.UNIFORM)
+    this.SUBRULE(this.typeQualifier)
+    const blockName = this.CONSUME(TOKEN.IDENTIFIER)
+    this.CONSUME(TOKEN.LEFT_BRACE)
+    const declarations = this.SUBRULE(this.structDeclarationList)
+    this.CONSUME(TOKEN.RIGHT_BRACE)
+    let namespace: IToken | undefined
+    let arraySpecifier
+    this.OPTION(() => {
+      namespace = this.CONSUME1(TOKEN.IDENTIFIER)
+      arraySpecifier = this.OPTION1(() => this.SUBRULE(this.arraySpecifier))
+    })
+    this.CONSUME(TOKEN.SEMICOLON)
+    return {
+      kind: "uniformBlock",
+      blockName,
+      declarations,
+      namespace,
+      arraySpecifier,
+    }
+  })
+
+  //SPEC// selectionStatement:
+  //SPEC//     IF LEFT_PAREN expression RIGHT_PAREN selectionRestStatement
+  //SPEC// selectionRestStatement:
+  //SPEC//     statementWithScope ELSE statementWithScope
+  protected currentChildren: Node[] = []
+
+  //SPEC// condition:
+  //SPEC//     expression
+  //SPEC//     fullySpecifiedType IDENTIFIER EQUAL initializer
+  protected backtracking = false
   //SPEC// switchStatement:
   //SPEC//     SWITCH LEFT_PAREN expression RIGHT_PAREN LEFT_BRACE switchStatementList RIGHT_BRACE
   //SPEC// switchStatementList:
@@ -1188,12 +1221,14 @@ class GLSLParser extends EmbeddedActionsParser {
 
     this.performSelfAnalysis()
   }
+
   //SPEC// caseLabel:
   //SPEC//     CASE expression COLON
 
   public reset() {
     super.reset()
   }
+
   //SPEC// iterationStatement:
   //SPEC//     WHILE LEFT_PAREN condition RIGHT_PAREN statementNoNewScope
   //SPEC//     DO statementWithScope WHILE LEFT_PAREN expression RIGHT_PAREN SEMICOLON
@@ -1219,6 +1254,7 @@ class GLSLParser extends EmbeddedActionsParser {
     )
     return result
   }
+
   //SPEC// jumpStatement:
   //SPEC//     CONTINUE SEMICOLON
   //SPEC//     BREAK SEMICOLON
@@ -1251,6 +1287,7 @@ class GLSLParser extends EmbeddedActionsParser {
       }
     }
   }
+
   //SPEC// translationUnit:
   //SPEC//     externalDeclaration
   //SPEC//     translationUnit externalDeclaration
@@ -1271,6 +1308,7 @@ class GLSLParser extends EmbeddedActionsParser {
       }
     }
   }
+
   //SPEC// functionDefinition:
   //SPEC//     functionPrototype compoundStatementNoNewScope
 

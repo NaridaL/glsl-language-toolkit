@@ -2,26 +2,54 @@ import { readFileSync } from "fs"
 import { VError } from "@netflix/nerror"
 import { last, Many } from "lodash"
 
-import { check, evaluateConstantExpression } from "./checker"
+import { check, evaluateConstantExpression, ShaderType } from "./checker"
 import { parseInput } from "./parser"
 import { ExpressionStatement, FunctionDefinition } from "./nodes"
 import { ccorrect, substrContext } from "./util"
 import ProvidesCallback = jest.ProvidesCallback
 
-function bla(p: string) {
+function parseAndCheck(p: string, shaderType: ShaderType | undefined) {
   const parsed = parseInput(p)
-  return check(parsed)
+  return check(parsed, shaderType)
 }
 
-function sl(p: string, ...expectedErrorCodes: string[]) {
-  p = p.replace(/'/g, "")
-  p = p.replace(/`/g, "")
-  p = p.replace(/\[\[/g, "")
-  p = p.replace(/]]/g, "")
-  console.log("testing", p)
-  const errs = bla(p)
+function glsl(
+  p: string,
+  expectedErrorCodes: string[],
+  shaderType?: ShaderType,
+) {
+  const expectedErrors = expectedErrorCodes.map((code) => ({
+    code,
+    start: 0,
+    end: 0,
+  }))
+  let i = 0
+  p = p.replace(
+    /`(.*?)`|\[\[(.*?)]]|'(.*?)'/g,
+    (
+      _,
+      m0: string | undefined,
+      m1: string | undefined,
+      m2: string | undefined,
+      offset,
+    ) => {
+      const str = (m0 ?? m1 ?? m2)!
+      console.log(m0, m1, m2, offset)
+      expectedErrors[i].start = offset + 1
+      expectedErrors[i].end = offset + str.length
+      i++
+      return str
+    },
+  )
+  const errs = parseAndCheck(p, shaderType)
   try {
-    expect(errs.map((x) => x.code)).toEqual(expectedErrorCodes)
+    expect(
+      errs.map(({ code, loc }) => ({
+        code,
+        start: loc.startColumn,
+        end: loc.endColumn,
+      })),
+    ).toEqual(expectedErrors)
   } catch (e) {
     const message = errs
       .map((e) => "CHECK ERROR: " + e.message + "\n" + substrContext(p, e.loc))
@@ -30,59 +58,96 @@ function sl(p: string, ...expectedErrorCodes: string[]) {
   }
 }
 
-function slexpr(expr: string, ...expectedErrors: string[]): void {
-  sl(`void main() { ${expr}; }`, ...expectedErrors)
+function glslExpr(expr: string, expectedErrors: string[]): void {
+  glsl(`void main() { ${expr}; }`, expectedErrors)
 }
+
 test.skip("checks shader.glsl", () => {
   const c = readFileSync(__dirname + "/../fixtures/shader.glsl", {
     encoding: "utf8",
   })
-  sl(c)
+  glsl(c, [])
 })
-test.skip("S0001: type mismatch", () => slexpr("1 '+' 1.0", "S0001"))
-test("S0003: if has bool as condition", () => slexpr("if ('1')", "S0003"))
-test("S0003: while has bool as condition", () =>
-  slexpr("while ('1.')", "S0003"))
-test("S0003: do-while has bool as condition", () =>
-  slexpr("do {} while ('vec3(1.)')", "S0003"))
-test("S0003: for has bool as condition", () => slexpr("for (; 1u; )", "S0003"))
-test("S0031: const has no init", () => sl("const [[x]];", "S0031"))
-test("S0004: binary operator not supported for operand types", () => {
-  slexpr("1 + 1.", "S0004")
-  slexpr("1. + float[2](1., 2.)", "S0004")
+describe("expected errors", () => {
+  test.skip("S0001: type mismatch", () => glslExpr("1 '+' 1.0", ["S0001"]))
+  test("S0003: if has bool as condition", () => glslExpr("if ('1')", ["S0003"]))
+  test("S0003: while has bool as condition", () =>
+    glslExpr("while ('1.')", ["S0003"]))
+  test("S0003: do-while has bool as condition", () =>
+    glslExpr("do {} while ('vec3(1.)')", ["S0003"]))
+  test("S0003: for has bool as condition", () =>
+    glslExpr("for (; `1u`; )", ["S0003"]))
+  test("S0031: const has no init", () => sl("const [[x]];", "S0031"))
+  test("S0004: binary operator not supported for operand types", () => {
+    glslExpr("1 + 1.", ["S0004"])
+    glslExpr("1. + float[2](1., 2.)", ["S0004"])
+  })
+  test("S0004: cannot assign float to int var", () =>
+    glslExpr("int a; a = 1.0", ["S0004"]))
+  test("S", () => glslExpr("float[2] r; r[`true`]", ["X"]))
+  test("S0004: unary operator not supported for operand types", () =>
+    glslExpr("float[2] a; `-a`", ["S0004"]))
+  test("S0022: redefinition of variable in same scope", () =>
+    glslExpr("int a; float [[a]]", ["S0022"]))
+  test("S0022: redefinition of parameter", () =>
+    glsl("void f(int i, float `i`);", ["S0022"]))
+  test("S0024: redefinition of variable in same scope", () =>
+    glsl("struct a { int i; }; void a() {}", ["S0024"]))
+  test("C0001: struct specifier cannot be parameter type", () =>
+    glsl("void f(struct G {} x);", ["C0001"]))
+  test("S0025: cannot mix .xyzw and .rgba", () =>
+    glslExpr("vec3 a; a.`xr`", ["S0025"]))
+  test("S0026: can swizzle at most 4 fields", () =>
+    glslExpr("vec3 a; a.`xxyyzz`", ["S0026"]))
+  test("S0027: ternary cannot be l-value", () =>
+    glslExpr("int a, b; true ? a : b = 2", ["S0027"]))
+  test("S0027: TODO", () => glslExpr("1++", ["S0027"]))
+  test("S0054: redefining builtin", () =>
+    glsl("void `min`(int i) {}", ["S0054"]))
+  test("S0057", () => glslExpr("switch (true) {}", ["S0057"]))
+  test("S0027: const parameter cannot be l-value", () =>
+    glsl("void f(const int i) { `i` = 2; }", ["S0027"]))
+  test("S0035: All uses of invariant must be at the global scope", () => {
+    // glslExpr("`invariant` a", ["S0035"])
+    glslExpr("invariant float f", ["S0035"])
+  })
+  test("centroid out in fragment shader is an error", () =>
+    glsl("centroid out float f;", ["XXX"], "fragment"))
+  test("invalid fragment shader outputs", () => {
+    glsl("out bool b;", ["XXX"], "fragment")
+    glsl("out sampler2D s;", ["XXX"], "fragment")
+    glsl("out mat3 m;", ["XXX"], "fragment")
+    glsl("out struct S { int i; } g;", ["XXX"], "fragment")
+  })
+  test("fragment shader outputs declared as array may only be indexed by a constant", () => {
+    glsl(
+      "uniform int i; out float[2] fs; void main() { fs[i]; }",
+      ["XXX"],
+      "fragment",
+    )
+  })
+  describe("uniform block", () => {
+    test("opaque types are not allowed ", () =>
+      glsl("uniform U { `sampler2D` s; };", ["56789"]))
+    test("structure definition cannot be nested", () =>
+      glsl("uniform U { `struct S { int i; }` s; };", ["56"]))
+    test("no in qualifier on member", () =>
+      glsl("uniform U { `in` int i; };", ["78987"]))
+  })
+
+  test("S0034: Variable cannot be declared invariant", () =>
+    glsl("`invariant` in float f;", ["S0034"]))
+
+  test("too many args to builtin", () =>
+    glslExpr("`min(.2, .3, .5)`", ["no matching overload for params"]))
+  test("struct definition cannot be constructor", () =>
+    glslExpr("`struct G { int i; }`(2)", [
+      "structure definition cannot be constructor",
+    ]))
+
+  test("struct decl in func return type", () =>
+    glsl("`struct G { int i; }` foo() { return G(1); }", ["yy"]))
 })
-test("S0004: cannot assign float to int var", () =>
-  slexpr("int a; a = 1.0", "S0004"))
-test("S", () => slexpr("float[2] r; r[`true`]", "X"))
-test("S0004: unary operator not supported for operand types", () =>
-  slexpr("float[2] a; -a", "S0004"))
-test("S0022: redefinition of variable in same scope", () =>
-  slexpr("int a; float [[a]]", "S0022"))
-test("S0022: redefinition of parameter", () =>
-  sl("void f(int i, float i);", "S0022"))
-test("S0024: redefinition of variable in same scope", () =>
-  sl("struct a { int i; }; void a() {}", "S0024"))
-test("C0001: struct specifier cannot be parameter type", () =>
-  sl("void f(struct G {} x);", "C0001"))
-test("S0025: cannot mix .xyzw and .rgba", () => slexpr("vec3 a; a.xr", "S0025"))
-test("S0026: can swizzle at most 4 fields", () =>
-  slexpr("vec3 a; a.xxyyzz", "S0026"))
-test("S0027: ternary cannot be l-value", () =>
-  slexpr("int a, b; true ? a : b = 2", "S0027"))
-test("S0027: TODO", () => slexpr("1++", "S0027"))
-test("S0054: redefining builtin", () => sl("void min(int i) {}", "S0054"))
-test("S0057", () => slexpr("switch (true) {}", "S0057"))
-
-test("too many args to builtin", () =>
-  slexpr("min(.2, .3, .5)", "no matching overload for params"))
-test("struct definition cannot be constructor", () =>
-  slexpr(
-    "struct G { int i; }(2)",
-    "structure definition cannot be constructor",
-  ))
-
-test("struct decl in func return type", () =>
-  sl("struct G { int i; } foo() { return G(1); }"))
 
 function mat(...rs: number[][]): number[] {
   const cols = rs[0].length
@@ -109,7 +174,7 @@ describe("/*constant expressions", () => {
     return () => {
       const exprStr = expect.getState().currentTestName
       const unit = parseInput(`void main() { ${exprStr}; }`)
-      const errs = check(unit)
+      const errs = check(unit, undefined)
       if (errs.length) {
         if (errs[0].error) {
           console.log(errs[0].error)

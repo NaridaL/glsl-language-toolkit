@@ -37,6 +37,7 @@ import {
   TranslationUnit,
   TypeSpecifier,
   UnaryExpression,
+  UniformBlock,
   VariableExpression,
   WhileStatement,
 } from "./nodes"
@@ -62,6 +63,7 @@ type StructType = Readonly<{
     }
   }
 }>
+export type ShaderType = "vertex" | "fragment"
 
 function isVectorType(n: NormalizedType | undefined): n is BasicType {
   return n?.kind === "basic" && getVectorSize(n.type) !== 0
@@ -627,7 +629,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
   }
 
   protected methodCall(n: MethodCall): TypeAndValue | undefined {
-    const oType = CHECKER_VISITOR.check(n.on)
+    const oType = CHECKER_VISITOR.check(n.on, shaderType)
     if (oType?.kind === "array") {
       return { type: BasicType.INT, value: oType.size }
     }
@@ -1340,12 +1342,68 @@ function typesEquals(as: NormalizedType[], bs: NormalizedType[]): boolean {
   return as.length === bs.length && as.every((a, i) => typeEquals(a, bs[i]))
 }
 
+function isOpaqueType(tokenType: TokenType): boolean {
+  return [
+    TOKEN.USAMPLERCUBE,
+    TOKEN.USAMPLER3D,
+    TOKEN.USAMPLER2DARRAY,
+    TOKEN.USAMPLER2D,
+    TOKEN.SAMPLERCUBESHADOW,
+    TOKEN.SAMPLERCUBE,
+    TOKEN.SAMPLER3D,
+    TOKEN.SAMPLER2DSHADOW,
+    TOKEN.SAMPLER2DARRAYSHADOW,
+    TOKEN.SAMPLER2DARRAY,
+    TOKEN.SAMPLER2D,
+    TOKEN.ISAMPLERCUBE,
+    TOKEN.ISAMPLER3D,
+    TOKEN.ISAMPLER2DARRAY,
+    TOKEN.ISAMPLER2D,
+  ].includes(tokenType)
+}
+
 class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   private currentFunctionPrototypeReturnType: NormalizedType | undefined =
     undefined
+  private shaderType: ShaderType | undefined = undefined
 
-  public check(u: Node | undefined): NormalizedType | undefined {
+  public check(
+    u: Node | undefined,
+    shaderType: ShaderType | undefined,
+  ): NormalizedType | undefined {
+    this.shaderType = shaderType
     return super.visit(u)
+  }
+
+  protected uniformBlock(n: UniformBlock): NormalizedType | undefined {
+    for (const declaration of n.declarations) {
+      const ts = declaration.fsType.typeSpecifier
+      if (isToken(ts.typeSpecifierNonArray)) {
+        if (isOpaqueType(ts.typeSpecifierNonArray.tokenType)) {
+          markError(
+            ts.typeSpecifierNonArray,
+            "opaque type is not allowed in uniform block",
+          )
+        }
+      } else {
+        markError(ts, "struct definition is not allowed in uniform block")
+      }
+      const storageQualifier =
+        declaration.fsType.typeQualifier?.storageQualifier
+      if (
+        storageQualifier &&
+        (storageQualifier.CENTROID ||
+          storageQualifier.IN ||
+          storageQualifier.OUT ||
+          storageQualifier.CONST)
+      ) {
+        markError(
+          storageQualifier,
+          "only the (redundant) qualifier uniform is allowed in a uniform block",
+        )
+      }
+    }
+    return super.uniformBlock(n)
   }
 
   protected assignmentExpression(n: AssignmentExpression) {
@@ -1863,10 +1921,13 @@ function loadBuiltins() {
 
 loadBuiltins()
 
-export function check(u: TranslationUnit): CheckError[] {
+export function check(
+  u: TranslationUnit,
+  shaderType: ShaderType | undefined,
+): CheckError[] {
   const result = errors
   BINDER_VISITOR.bind(u)
-  CHECKER_VISITOR.check(u)
+  CHECKER_VISITOR.check(u, shaderType)
   errors = []
   return result
 }

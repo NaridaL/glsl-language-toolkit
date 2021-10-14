@@ -7,6 +7,7 @@ export interface BaseNode {
   children?: Node[]
   firstToken?: Token
   lastToken?: Token
+  tokens?: Token[]
 }
 
 export interface ArraySpecifier extends BaseNode {
@@ -177,6 +178,14 @@ export interface ExpressionStatement extends BaseNode {
   expression: Expression
 }
 
+export interface UniformBlock extends BaseNode {
+  kind: "uniformBlock"
+  blockName: Token
+  declarations: StructDeclaration[]
+  namespace: Token | undefined
+  arraySpecifier: ArraySpecifier | undefined
+}
+
 export type Expression =
   | ArrayAccess
   | AssignmentExpression
@@ -273,6 +282,7 @@ export type Declaration =
   | InitDeclaratorListDeclaration
   | PrecisionDeclaration
   | InvariantDeclaration
+  | UniformBlock
 export type JumpStatement =
   | ReturnStatement
   | ContinueStatement
@@ -487,6 +497,11 @@ export class AbstractVisitor<R> {
     return
   }
   protected constantExpression(_n: ConstantExpression): R | undefined {
+    return
+  }
+  protected uniformBlock(n: UniformBlock): R | undefined {
+    n.declarations?.forEach((d) => this.visit(d))
+    this.visit(n.arraySpecifier)
     return
   }
 }

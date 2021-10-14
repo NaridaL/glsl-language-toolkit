@@ -3,11 +3,29 @@
 import { AstPath, Doc, format, Plugin, SupportInfo } from "prettier"
 import { builders } from "prettier/doc"
 import { IToken, TokenType } from "chevrotain"
-import { AbstractVisitor, Node, Token } from "./nodes"
+import {
+  AbstractVisitor,
+  BinaryExpression,
+  Expression,
+  ExpressionStatement,
+  Node,
+  Token,
+  TypeQualifier,
+} from "./nodes"
 import { TOKEN } from "./lexer"
 import { parseInput } from "./parser"
 
-const { group, indent, join, line, softline, hardline } = builders
+const {
+  indentIfBreak,
+  conditionalGroup,
+  fill,
+  group,
+  indent,
+  join,
+  line,
+  softline,
+  hardline,
+} = builders
 
 export const CHILDREN_VISITOR: AbstractVisitor<Node[]> & {
   visit(n: Node): Node[]
@@ -57,6 +75,7 @@ export const parsers: Plugin<Node | IToken>["parsers"] = {
     },
   },
 }
+
 export function isToken(x: unknown): x is IToken {
   return (x as any).tokenType
 }
@@ -103,6 +122,7 @@ function getOpPrecedence(op: TokenType): number {
       throw new Error()
   }
 }
+
 function getPrecedence(n: Node): number {
   switch (n.kind) {
     default:
@@ -124,9 +144,46 @@ function getPrecedence(n: Node): number {
       return 17
   }
 }
+
 function paren(doc: Doc, cond: boolean): Doc {
   return cond ? ["(", doc, ")"] : doc
 }
+
+function printBinaryExpression(
+  path: AstPath<Node | IToken>,
+  print: (path: AstPath<Node | IToken>) => Doc,
+  n: BinaryExpression,
+): Doc[] {
+  // Binary operation chains with the same operator precedence should either
+  // completely break or not at all. E.g. a + b + ccccccccccccc should be
+  // "a +\nb +\nccccccccccccc", not "a + b + \nccccccccccccc".
+  const shouldFlatten =
+    n.lhs.kind === "binaryExpression" &&
+    getOpPrecedence(n.lhs.op.tokenType) === getOpPrecedence(n.op.tokenType)
+  const lhsDoc = path.call(
+    shouldFlatten
+      ? (path) =>
+          printBinaryExpression(
+            path,
+            print,
+            path.getValue() as BinaryExpression,
+          )
+      : print,
+    "lhs",
+  )
+
+  return [
+    paren(lhsDoc, getPrecedence(n.lhs) > getOpPrecedence(n.op.tokenType)),
+    " ",
+    path.call(print, "op"),
+    line,
+    paren(
+      path.call(print, "rhs"),
+      getPrecedence(n.rhs) >= getOpPrecedence(n.op.tokenType),
+    ),
+  ]
+}
+
 export const printers: Plugin<Node | IToken>["printers"] = {
   "glsl-ast": {
     print(path, options, print): Doc {
@@ -135,22 +192,33 @@ export const printers: Plugin<Node | IToken>["printers"] = {
         return []
       }
       if (isToken(n)) {
-        if (n.tokenType === TOKEN.FLOATCONSTANT) {
-          return normalizeFloat(n.image)
-        }
         return n.image
       }
       const p = <N extends Node, S extends keyof N>(_: N, s: S) =>
         path.call(print, s)
+
+      const tok = <N extends Node>(
+        n: N,
+        tokenType: TokenType,
+        index = 0,
+      ): Doc => {
+        if (!n.tokens) {
+          return tokenType.PATTERN! as string
+        } else {
+          // TODO: get preprocess stuff
+          return n.tokens.find((t) => t.tokenType === tokenType)!.image
+        }
+      }
+
       try {
         switch (n.kind) {
           ////////// DECLARATIONS
           case "translationUnit":
-            return join(hardline, path.map(print, "declarations"))
+            return [join(hardline, path.map(print, "declarations")), hardline]
           case "fullySpecifiedType": {
             const parts: Doc = []
             if (n.typeQualifier) {
-              parts.push(p(n, "typeQualifier"), " ")
+              parts.push(p(n, "typeQualifier"))
             }
             parts.push(p(n, "typeSpecifier"))
             return parts
@@ -178,7 +246,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               parts.push(p(n, "layoutQualifier"), " ")
             }
             if (n.storageQualifier) {
-              parts.push(p(n, "storageQualifier"), " ")
+              parts.push(p(n, "storageQualifier"))
             }
             return parts
           }
@@ -187,7 +255,14 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             if (n.CONST) {
               parts.push("const ")
             }
-            if (n.CENTROID) {
+            // SPEC: "A variable may be qualified as flat centroid, which will
+            // mean the same thing as qualifying it only as flat."
+            // Normalize to just flat.
+            if (
+              n.CENTROID &&
+              (path.getParentNode() as TypeQualifier).interpolationQualifier
+                ?.tokenType !== TOKEN.FLAT
+            ) {
               parts.push("centroid ")
             }
             if (n.IN) {
@@ -236,16 +311,27 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "structDeclaration":
             return group([
               p(n, "fsType"),
-              indent([line, join([",", line], path.map(print, "declarators"))]),
+              " ",
+              indent(join([",", line], path.map(print, "declarators"))),
               ";",
             ])
-          case "declarator":
-            return [
-              p(n, "name"),
-              p(n, "arraySpecifier"),
-
-              n.init ? [" = ", p(n, "init")] : "",
-            ]
+          case "declarator": {
+            const name = p(n, "name")
+            const arraySpecifier = p(n, "arraySpecifier")
+            if (!n.init) {
+              return [name, arraySpecifier]
+            } else {
+              const groupId = Symbol("declarator")
+              // TODO: need this group?
+              return group([
+                name,
+                arraySpecifier,
+                " =",
+                group(indent(line), { id: groupId }),
+                indentIfBreak(p(n, "init"), { groupId }),
+              ])
+            }
+          }
           case "arraySpecifier":
             return ["[", p(n, "size"), "]"]
           case "arrayAccess":
@@ -278,8 +364,11 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               line,
               "}",
             ])
-          case "returnStatement":
-            return ["return", " ", p(n, "what"), ";"]
+          case "returnStatement": {
+            const what = p(n, "what")
+            return ["return", " ", what, ";"]
+            // return ["return", " ", conditionalGroup([what, indent(what)]), ";"]
+          }
           case "breakStatement":
             return ["break", ";"]
           case "selectionStatement":
@@ -305,21 +394,24 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "forStatement":
             return [
               group([
-                "for ",
-                "(",
+                tok(n, TOKEN.FOR),
+                " ",
+                tok(n, TOKEN.LEFT_PAREN),
                 indent([
                   softline,
                   p(n, "initExpression"),
                   softline,
                   p(n, "conditionExpression"),
-                  ";",
+                  tok(n, TOKEN.SEMICOLON),
                   line,
                   p(n, "loopExpression"),
                 ]),
                 softline,
-                ")",
+                tok(n, TOKEN.RIGHT_PAREN),
               ]),
-              group([indent([line, p(n, "statement")])]),
+              n.statement.kind === "compoundStatement"
+                ? [" ", p(n, "statement")]
+                : group([indent([line, p(n, "statement")])]),
             ]
           case "whileStatement":
             return [
@@ -358,29 +450,23 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             return [paren(p(n, "on"), getPrecedence(n.on) > 2), p(n, "op")]
           case "unaryExpression":
             return [p(n, "op"), paren(p(n, "on"), getPrecedence(n.on) > 3)]
-          case "assignmentExpression":
+          case "assignmentExpression": {
+            const groupId = Symbol("assignment")
             return group([
               p(n, "lhs"),
               " ",
               p(n, "op"),
-              indent([line, p(n, "rhs")]),
+              group(indent(line), { id: groupId }),
+              indentIfBreak(p(n, "rhs"), { groupId }),
             ])
+          }
           case "conditionalExpression":
             return [
               paren(p(n, "condition"), getPrecedence(n.condition) >= 15),
               indent([line, "? ", p(n, "yes"), line, ": ", p(n, "no")]),
             ]
-          case "binaryExpression": {
-            const lhs = paren(
-              p(n, "lhs"),
-              getPrecedence(n.lhs) > getOpPrecedence(n.op.tokenType),
-            )
-            const rhs = paren(
-              p(n, "rhs"),
-              getPrecedence(n.rhs) >= getOpPrecedence(n.op.tokenType),
-            )
-            return group([lhs, " ", p(n, "op"), line, rhs])
-          }
+          case "binaryExpression":
+            return group(printBinaryExpression(path, print, n))
           case "expressionStatement":
             return [p(n, "expression"), ";"]
           case "fieldAccess":
@@ -389,8 +475,13 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               ".",
               p(n, "field"),
             ]
-          case "constantExpression":
-            return n._const.image
+          case "constantExpression": {
+            const c = n._const
+            if (c.tokenType === TOKEN.FLOATCONSTANT) {
+              return normalizeFloat(c.image)
+            }
+            return c.image
+          }
           case "variableExpression":
             return n.var.image
           default:

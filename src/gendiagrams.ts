@@ -58,6 +58,6 @@ console.log("PARSER SUCCESS!!!".green)
 const formatted = prettier.format(shader, {
   parser: "glsl-parse",
   plugins: [prettierPlugin],
-  // printWidth: 40,
+  printWidth: 40,
 })
 fs.writeFileSync("./shader-formatted.glsl", formatted, { encoding: "utf8" })

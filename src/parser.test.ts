@@ -10,11 +10,3 @@ test("parse multi-dim array", () => {
     }
      `).toMatchInlineSnapshot()
 })
-
-test("prettier", () => {
-  const formatted = prettier.format("void foo(){return ha;}", {
-    parser: "glsl-parse",
-    plugins: [prettierPlugin],
-  })
-  expect(formatted).toMatchInlineSnapshot(`"void foo() { return ha; }"`)
-})
