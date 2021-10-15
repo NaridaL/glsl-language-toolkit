@@ -77,7 +77,7 @@ describe("expected errors", () => {
     glslExpr("do {} while ('vec3(1.)')", ["S0003"]))
   test("S0003: for has bool as condition", () =>
     glslExpr("for (; `1u`; )", ["S0003"]))
-  test("S0031: const has no init", () => sl("const [[x]];", "S0031"))
+  test("S0031: const has no init", () => glsl("const int `x`;", ["S0031"]))
   test("S0004: binary operator not supported for operand types", () => {
     glslExpr("1 + 1.", ["S0004"])
     glslExpr("1. + float[2](1., 2.)", ["S0004"])
@@ -90,21 +90,21 @@ describe("expected errors", () => {
   test("S0022: redefinition of variable in same scope", () =>
     glslExpr("int a; float [[a]]", ["S0022"]))
   test("S0022: redefinition of parameter", () =>
-    glsl("void f(int i, float `i`);", ["S0022"]))
+    glsl("void f(int i, `float i`);", ["S0022"]))
   test("S0024: redefinition of variable in same scope", () =>
-    glsl("struct a { int i; }; void a() {}", ["S0024"]))
+    glsl("struct a { int i; }; void `a`() {}", ["S0024"]))
   test("C0001: struct specifier cannot be parameter type", () =>
-    glsl("void f(struct G {} x);", ["C0001"]))
+    glsl("void f(`struct G {}` x);", ["C0001"]))
   test("S0025: cannot mix .xyzw and .rgba", () =>
     glslExpr("vec3 a; a.`xr`", ["S0025"]))
   test("S0026: can swizzle at most 4 fields", () =>
     glslExpr("vec3 a; a.`xxyyzz`", ["S0026"]))
   test("S0027: ternary cannot be l-value", () =>
-    glslExpr("int a, b; true ? a : b = 2", ["S0027"]))
-  test("S0027: TODO", () => glslExpr("1++", ["S0027"]))
+    glslExpr("int a, b; `true ? a : b` = 2", ["S0027"]))
+  test("S0027: TODO", () => glslExpr("`1`++", ["S0027"]))
   test("S0054: redefining builtin", () =>
     glsl("void `min`(int i) {}", ["S0054"]))
-  test("S0057", () => glslExpr("switch (true) {}", ["S0057"]))
+  test("S0057", () => glslExpr("switch (`true`) {}", ["S0057"]))
   test("S0027: const parameter cannot be l-value", () =>
     glsl("void f(const int i) { `i` = 2; }", ["S0027"]))
   test("S0035: All uses of invariant must be at the global scope", () => {
@@ -112,27 +112,55 @@ describe("expected errors", () => {
     glslExpr("invariant float f", ["S0035"])
   })
   test("centroid out in fragment shader is an error", () =>
-    glsl("centroid out float f;", ["XXX"], "fragment"))
+    glsl(
+      "`centroid out` float f;",
+      ["centroid out is not allowed in fragment shaders"],
+      "fragment",
+    ))
   test("invalid fragment shader outputs", () => {
-    glsl("out bool b;", ["XXX"], "fragment")
-    glsl("out sampler2D s;", ["XXX"], "fragment")
-    glsl("out mat3 m;", ["XXX"], "fragment")
-    glsl("out struct S { int i; } g;", ["XXX"], "fragment")
+    glsl(
+      "out `bool` b;",
+      ["boolean types are not allowed as fragment shader outputs"],
+      "fragment",
+    )
+    glsl(
+      "out `sampler2D` s;",
+      ["opaque types are not allowed as fragment shader outputs"],
+      "fragment",
+    )
+    glsl(
+      "out `mat3` m;",
+      ["matrix types are not allowed as fragment shader outputs"],
+      "fragment",
+    )
+    glsl(
+      "out `struct S { int i; }` g;",
+      ["struct definitions are not allowed as fragment shader outputs"],
+      "fragment",
+    )
   })
   test("fragment shader outputs declared as array may only be indexed by a constant", () => {
     glsl(
       "uniform int i; out float[2] fs; void main() { fs[i]; }",
-      ["XXX"],
+      [
+        "fragment shader outputs declared as array may only be indexed by a constant",
+      ],
       "fragment",
     )
   })
   describe("uniform block", () => {
     test("opaque types are not allowed ", () =>
-      glsl("uniform U { `sampler2D` s; };", ["56789"]))
+      glsl("uniform U { `sampler2D` s; };", [
+        "opaque type is not allowed in uniform block",
+      ]))
     test("structure definition cannot be nested", () =>
-      glsl("uniform U { `struct S { int i; }` s; };", ["56"]))
+      glsl("uniform U { `struct S { int i; }` s; };", [
+        "struct definition is not allowed in uniform block",
+      ]))
     test("no in qualifier on member", () =>
-      glsl("uniform U { `in` int i; };", ["78987"]))
+      glsl("uniform U { `in` int i; };", [
+        "only the (redundant) qualifier uniform is allowed in a uniform block",
+      ]))
   })
 
   test("S0034: Variable cannot be declared invariant", () =>

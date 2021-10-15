@@ -250,6 +250,7 @@ export interface TypeQualifier extends BaseNode {
   storageQualifier: StorageQualifier | undefined
   layoutQualifier: LayoutQualifier | undefined
   interpolationQualifier: Token | undefined
+  // token of type INVARIANT
   invariantQualifier: Token | undefined
 }
 

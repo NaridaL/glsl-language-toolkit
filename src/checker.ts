@@ -629,7 +629,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
   }
 
   protected methodCall(n: MethodCall): TypeAndValue | undefined {
-    const oType = CHECKER_VISITOR.check(n.on, shaderType)
+    const oType = CHECKER_VISITOR.check(n.on, undefined)
     if (oType?.kind === "array") {
       return { type: BasicType.INT, value: oType.size }
     }
@@ -990,7 +990,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     let def: FunctionBinding
     if (existingDef) {
       if (existingDef.kind !== "function") {
-        markError(n, "S0024")
+        markError(n.name, "S0024")
         return
       } else if (allDefined(params)) {
         // TODO: error if
@@ -1367,6 +1367,8 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     undefined
   private shaderType: ShaderType | undefined = undefined
 
+  private isGlobal = true
+
   public check(
     u: Node | undefined,
     shaderType: ShaderType | undefined,
@@ -1406,6 +1408,86 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return super.uniformBlock(n)
   }
 
+  protected initDeclaratorListDeclaration(
+    n: InitDeclaratorListDeclaration,
+  ): NormalizedType | undefined {
+    const storageQualifier = n.fsType.typeQualifier?.storageQualifier
+    for (const declarator of n.declarators) {
+      if (storageQualifier?.CONST && !declarator.init) {
+        markError(declarator, "S0031")
+      }
+    }
+    if (this.isGlobal) {
+      if (this.shaderType === "fragment") {
+        if (storageQualifier?.CENTROID && storageQualifier.OUT) {
+          markError(
+            storageQualifier,
+            "centroid out is not allowed in fragment shaders",
+          )
+        }
+        if (storageQualifier?.OUT) {
+          const ts = n.fsType.typeSpecifier.typeSpecifierNonArray
+          if (isToken(ts)) {
+            if (isOpaqueType(ts.tokenType)) {
+              markError(
+                ts,
+                "opaque types are not allowed as fragment shader outputs",
+              )
+            } else if (getMatrixDimensions(ts.tokenType)) {
+              markError(
+                ts,
+                "matrix types are not allowed as fragment shader outputs",
+              )
+            } else if (ts.tokenType === TOKEN.BOOL) {
+              markError(
+                ts,
+                "boolean types are not allowed as fragment shader outputs",
+              )
+            }
+          } else {
+            markError(
+              ts,
+              "struct definitions are not allowed as fragment shader outputs",
+            )
+          }
+        }
+      }
+      if (n.fsType.typeQualifier?.invariantQualifier && storageQualifier?.IN) {
+        markError(
+          n.fsType.typeQualifier?.invariantQualifier,
+          "S0034",
+          "in variable cannot be declared as invariant",
+        )
+      }
+    } else {
+      if (storageQualifier?.IN) {
+        markError(
+          storageQualifier.IN,
+          "in qualifier only allowed at global scope",
+        )
+      }
+      if (storageQualifier?.OUT) {
+        markError(
+          storageQualifier.OUT,
+          "out qualifier only allowed at global scope",
+        )
+      }
+      if (storageQualifier?.CENTROID) {
+        markError(
+          storageQualifier.CENTROID,
+          "centroid qualifier only allowed at global scope",
+        )
+      }
+      if (storageQualifier?.UNIFORM) {
+        markError(
+          storageQualifier.UNIFORM,
+          "uniform qualifier only allowed at global scope",
+        )
+      }
+    }
+    return super.initDeclaratorListDeclaration(n)
+  }
+
   protected assignmentExpression(n: AssignmentExpression) {
     // We parse conditionExpressions on the LHS, but only unaryExpressions are allowed.
 
@@ -1417,7 +1499,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     const rType = this.visit(n.rhs)
     if (typeNotEquals(lType, rType)) {
       // TODO better error code?
-      markError(n, "S0004", lType, rType)
+      markError(n.op, "S0004", lType, rType)
     }
     return lType
   }
@@ -1487,7 +1569,9 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     const oType = this.visit(n.on)
     if (oType?.kind === "array") {
       // array access
-      const x = evaluateConstantExpression(n.index)
+      const cnst = evaluateConstantExpression(n.index)
+      if (this.shaderType === "fragment" && oType.size) {
+      }
       return oType.of
       // TODO: if constant expression, check array access size
     } else if (oType?.kind === "basic") {
@@ -1727,8 +1811,10 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
       throw new Error()
     }
     this.currentFunctionPrototypeReturnType = n.returnTypeResolved
+    this.isGlobal = false
     super.functionDefinition(n)
     this.currentFunctionPrototypeReturnType = undefined
+    this.isGlobal = true
     return
   }
 
