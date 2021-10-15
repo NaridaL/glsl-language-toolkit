@@ -109,6 +109,7 @@ export interface FunctionPrototype extends BaseNode {
 
 export interface ParameterDeclaration extends BaseNode {
   kind: "parameterDeclaration"
+  // TOKEN.CONST
   parameterTypeQualifier: Token | undefined
   parameterQualifier: Token | undefined
   pName: Token | undefined

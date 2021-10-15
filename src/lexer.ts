@@ -483,6 +483,7 @@ export namespace TOKEN {
     pattern: /mat2(?:x2)?/,
     longer_alt: IDENTIFIER,
     categories: BASIC_TYPE,
+    label: "mat2",
   })
   export const MAT3X2 = createBasicType("mat3x2")
   export const MAT3X4 = createBasicType("mat3x4")
@@ -491,6 +492,7 @@ export namespace TOKEN {
     pattern: /mat3(?:x3)?/,
     longer_alt: IDENTIFIER,
     categories: BASIC_TYPE,
+    label: "mat3",
   })
   export const MAT4X2 = createBasicType("mat4x2")
   export const MAT4X3 = createBasicType("mat4x3")
@@ -499,6 +501,7 @@ export namespace TOKEN {
     pattern: /mat4(?:x4)?/,
     longer_alt: IDENTIFIER,
     categories: BASIC_TYPE,
+    label: "mat4",
   })
   export const VEC2 = createBasicType("vec2")
   export const VEC3 = createBasicType("vec3")

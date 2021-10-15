@@ -89,3 +89,10 @@ export function substrContext(input: string, token: ExpandedLocation): string {
 export function allDefined<T>(ts: (T | undefined)[]): ts is T[] {
   return ts.every(Boolean)
 }
+
+// @ts-expect-error this function should be removed as dead code when !DEV
+export function assertNever(_x?: never): never {
+  if (!DEV) {
+    throw new Error()
+  }
+}

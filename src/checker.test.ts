@@ -2,10 +2,16 @@ import { readFileSync } from "fs"
 import { VError } from "@netflix/nerror"
 import { last, Many } from "lodash"
 
-import { check, evaluateConstantExpression, ShaderType } from "./checker"
+import {
+  check,
+  evaluateConstantExpression,
+  ShaderType,
+  typeString,
+} from "./checker"
 import { parseInput } from "./parser"
 import { ExpressionStatement, FunctionDefinition } from "./nodes"
 import { ccorrect, substrContext } from "./util"
+import { TOKEN } from "./lexer"
 import ProvidesCallback = jest.ProvidesCallback
 
 function parseAndCheck(p: string, shaderType: ShaderType | undefined) {
@@ -34,7 +40,6 @@ function glsl(
       offset,
     ) => {
       const str = (m0 ?? m1 ?? m2)!
-      console.log(m0, m1, m2, offset)
       expectedErrors[i].start = offset + 1
       expectedErrors[i].end = offset + str.length
       i++
@@ -68,6 +73,23 @@ test.skip("checks shader.glsl", () => {
   })
   glsl(c, [])
 })
+test("typeString", () => {
+  expect(typeString({ kind: "basic", type: TOKEN.MAT2X2 })).toBe("mat2")
+  expect(
+    typeString({
+      kind: "array",
+      of: { kind: "basic", type: TOKEN.SAMPLERCUBESHADOW },
+      size: 4,
+    }),
+  ).toBe("samplerCubeShadow[4]")
+  expect(
+    typeString({
+      kind: "struct",
+      specifier: { kind: "structSpecifier", name: undefined, declarations: [] },
+      fields: {},
+    }),
+  ).toBe("anonymous struct")
+})
 describe("expected errors", () => {
   test.skip("S0001: type mismatch", () => glslExpr("1 '+' 1.0", ["S0001"]))
   test("S0003: if has bool as condition", () => glslExpr("if ('1')", ["S0003"]))
@@ -79,12 +101,13 @@ describe("expected errors", () => {
     glslExpr("for (; `1u`; )", ["S0003"]))
   test("S0031: const has no init", () => glsl("const int `x`;", ["S0031"]))
   test("S0004: binary operator not supported for operand types", () => {
-    glslExpr("1 + 1.", ["S0004"])
-    glslExpr("1. + float[2](1., 2.)", ["S0004"])
+    glslExpr("1 `+` 1.", ["S0004"])
+    glslExpr("1. `+` float[2](1., 2.)", ["S0004"])
   })
   test("S0004: cannot assign float to int var", () =>
-    glslExpr("int a; a = 1.0", ["S0004"]))
-  test("S", () => glslExpr("float[2] r; r[`true`]", ["X"]))
+    glslExpr("int a; a `=` 1.0", ["S0004"]))
+  test("S0002: array can only be indexed by integer", () =>
+    glslExpr("float[2] r; float f = r[`true`]", ["S0002"]))
   test("S0004: unary operator not supported for operand types", () =>
     glslExpr("float[2] a; `-a`", ["S0004"]))
   test("S0022: redefinition of variable in same scope", () =>
@@ -95,6 +118,10 @@ describe("expected errors", () => {
     glsl("struct a { int i; }; void `a`() {}", ["S0024"]))
   test("C0001: struct specifier cannot be parameter type", () =>
     glsl("void f(`struct G {}` x);", ["C0001"]))
+  test("S0020: constant array index greater than declared size", () =>
+    glslExpr("float[2] ff, f = ff[`2`]", ["S0020"]))
+  test("S0021: negative constant array index", () =>
+    glslExpr("float[2] ff, f = ff[`-1`]", ["S0021"]))
   test("S0025: cannot mix .xyzw and .rgba", () =>
     glslExpr("vec3 a; a.`xr`", ["S0025"]))
   test("S0026: can swizzle at most 4 fields", () =>
@@ -172,9 +199,10 @@ describe("expected errors", () => {
     glslExpr("`struct G { int i; }`(2)", [
       "structure definition cannot be constructor",
     ]))
-
-  test("struct decl in func return type", () =>
-    glsl("`struct G { int i; }` foo() { return G(1); }", ["yy"]))
+})
+describe("valid cases", () => {
+  test("struct decl in func return type is allowed", () =>
+    glsl("struct G { int i; } foo() { return G(1); } G g;", []))
 })
 
 function mat(...rs: number[][]): number[] {

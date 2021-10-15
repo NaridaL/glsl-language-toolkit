@@ -924,17 +924,14 @@ class GLSLParser extends EmbeddedActionsParser {
   //SPEC//     HIGH_PRECISION
   //SPEC//     MEDIUM_PRECISION
   //SPEC//     statementList
-  public switchStatement = this.RR(
-    "switchStatement",
-    (): SwitchStatement => ({
-      kind: "switchStatement",
-      SWITCH: this.CONSUME(TOKEN.SWITCH),
-      LEFT_PAREN: this.CONSUME(TOKEN.LEFT_PAREN),
-      initExpression: this.SUBRULE(this.expression),
-      RIGHT_PAREN: this.CONSUME(TOKEN.RIGHT_PAREN),
-      body: this.SUBRULE(this.compoundStatement),
-    }),
-  )
+  public switchStatement = this.RR("switchStatement", (): SwitchStatement => {
+    this.CONSUME(TOKEN.SWITCH)
+    this.CONSUME(TOKEN.LEFT_PAREN)
+    const initExpression = this.SUBRULE(this.expression)
+    this.CONSUME(TOKEN.RIGHT_PAREN)
+    const body = this.SUBRULE(this.compoundStatement)
+    return { kind: "switchStatement", initExpression, body }
+  })
 
   //SPEC// structSpecifier:
   //SPEC//     STRUCT IDENTIFIER LEFT_BRACE structDeclarationList RIGHT_BRACE

@@ -44,8 +44,9 @@ import {
 import { TOKEN } from "./lexer"
 import { applyBuiltinFunction, Matrix } from "./builtins"
 import { parseInput } from "./parser"
-import { allDefined, ccorrect, ExpandedLocation } from "./util"
+import { allDefined, assertNever, ccorrect, ExpandedLocation } from "./util"
 import { ERRORS } from "./errors"
+import { shortDesc } from "./gendiagrams"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
 type ArrayType = Readonly<{
@@ -54,8 +55,8 @@ type ArrayType = Readonly<{
   size: number
 }>
 type StructType = Readonly<{
-  specifier: StructSpecifier
   kind: "struct"
+  specifier: StructSpecifier
   fields: {
     [name: string]: {
       type: NormalizedType | undefined
@@ -124,13 +125,31 @@ function markError(
   })
 }
 
+export function typeString(t: NormalizedType | undefined): string {
+  if (!t) {
+    return "unknown"
+  } else if (t.kind === "basic") {
+    return t.type.LABEL ?? (t.type.PATTERN as string)
+  } else if (t.kind === "array") {
+    return typeString(t.of) + "[" + t.size + "]"
+  } else if (t.kind === "struct") {
+    return t.specifier.name
+      ? "struct " + t.specifier.name.image
+      : "anonymous struct"
+  } else {
+    assertNever(t)
+  }
+}
+
 function isLValue(n: Node): boolean {
   switch (n.kind) {
     case "variableExpression":
       // true if binding wasn't resolved to avoid bogus errors
       return (
         !n.binding ||
-        !!n.binding?.dl?.fsType.typeQualifier?.storageQualifier?.CONST
+        (!n.binding?.declaratorList?.fsType.typeQualifier?.storageQualifier
+          ?.CONST &&
+          !n.binding.parameter?.parameterTypeQualifier)
       )
     case "fieldAccess":
       return isLValue(n.on)
@@ -640,7 +659,8 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
     n: VariableExpression,
   ): TypeAndValue | undefined {
     return (
-      n.binding?.dl?.fsType.typeQualifier?.storageQualifier?.CONST &&
+      n.binding?.declaratorList?.fsType.typeQualifier?.storageQualifier
+        ?.CONST &&
       n.binding.d?.init &&
       this.visit(n.binding.d?.init)
     )
@@ -695,9 +715,9 @@ interface StructBinding {
 
 interface VariableBinding {
   kind: "variable"
-  dl?: InitDeclaratorListDeclaration
-  d?: Declarator
-  pd?: ParameterDeclaration
+  declaratorList?: InitDeclaratorListDeclaration
+  declarator?: Declarator
+  parameter?: ParameterDeclaration
   type: NormalizedType | undefined
 }
 
@@ -736,10 +756,6 @@ export function isToken(x: Token | Node): x is Token {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function isTokenType(type: TokenType | StructSpecifier): type is TokenType {
   return typeof type.name === "string"
-}
-
-function assertNever(_x?: never): never {
-  throw new Error()
 }
 
 function typeEquals(
@@ -922,8 +938,8 @@ class BinderVisitor extends AbstractVisitor<any> {
       } else {
         this.scope.defs[d.name.image] = {
           kind: "variable",
-          dl: n,
-          d,
+          declaratorList: n,
+          declarator: d,
           type: this.figure(n.fsType, d.arraySpecifier),
         }
       }
@@ -1053,7 +1069,11 @@ class BinderVisitor extends AbstractVisitor<any> {
       if (existingDef) {
         markError(n, "S0022")
       } else {
-        this.scope.defs[n.pName.image] = { kind: "variable", pd: n, type }
+        this.scope.defs[n.pName.image] = {
+          kind: "variable",
+          parameter: n,
+          type,
+        }
       }
     }
   }
@@ -1087,9 +1107,12 @@ class BinderVisitor extends AbstractVisitor<any> {
         const binding = this.resolve(typeSpecifierNonArray.image)
         if (binding?.kind === "struct") {
           result = binding.type
-        } else {
+        } else if (binding) {
           // TODO markError
-          markError(typeSpecifierNonArray, "Refers to TODO, not a struct")
+          markError(
+            typeSpecifierNonArray,
+            typeSpecifierNonArray.image + " refers to TODO, not a struct",
+          )
         }
       } else {
         result = { kind: "basic", type: typeSpecifierNonArray.tokenType }
@@ -1563,14 +1586,33 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
       typeNotEquals(iType, BasicType.INT) &&
       typeNotEquals(iType, BasicType.UINT)
     ) {
-      markError(n, "S0002")
+      markError(n.index, "S0002")
     }
 
     const oType = this.visit(n.on)
     if (oType?.kind === "array") {
       // array access
       const cnst = evaluateConstantExpression(n.index)
-      if (this.shaderType === "fragment" && oType.size) {
+      if (this.shaderType === "fragment") {
+        const isShaderOutputVariable =
+          n.on.kind === "variableExpression" &&
+          n.on.binding &&
+          n.on.binding?.declaratorList?.fsType.typeQualifier?.storageQualifier
+            ?.OUT
+        if (isShaderOutputVariable && !cnst) {
+          markError(
+            n.index,
+            "fragment shader outputs declared as array may only be indexed by a constant",
+          )
+        }
+      }
+      if (cnst) {
+        if (oType.size && cnst.value >= oType.size) {
+          markError(n.index, "S0020")
+        }
+        if (cnst.value < 0) {
+          markError(n.index, "S0021")
+        }
       }
       return oType.of
       // TODO: if constant expression, check array access size
@@ -1646,6 +1688,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     const rType = this.visit(n.rhs)
 
     function markErr(n: BinaryExpression) {
+      console.log(shortDesc(n.firstToken!))
       markError(
         n,
         "S0004",
@@ -1656,7 +1699,9 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
           VALID_BINARY_OPERATIONS.filter(([op]) => op === n.op.tokenType)
             .map(
               ([op, lhs, rhs]) =>
-                `  ${lhs.PATTERN} ${op.PATTERN} ${rhs.PATTERN}`,
+                `  ${lhs.LABEL ?? lhs.PATTERN} ${op.PATTERN} ${
+                  rhs.LABEL ?? rhs.PATTERN
+                }`,
             )
             .join("\n"),
       )
