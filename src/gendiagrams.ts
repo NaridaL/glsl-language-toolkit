@@ -3,16 +3,15 @@
 import * as path from "path"
 import * as fs from "fs"
 
-import { createSyntaxDiagramsCode, IToken } from "chevrotain"
+import { createSyntaxDiagramsCode } from "chevrotain"
 import "colors"
 import prettier from "prettier"
 
 import { mapValues } from "lodash"
 import * as prettierPlugin from "./prettier-plugin"
-import { isToken } from "./prettier-plugin"
-import { GLSL_PARSER, parseInput } from "./parser"
+import { GLSL_PARSER, parseInput, shortDesc } from "./parser"
 import "./checker"
-import { Node, Token } from "./nodes"
+import { isNode, isToken, Node, Token } from "./nodes"
 
 // create the HTML Text
 const htmlText = createSyntaxDiagramsCode(
@@ -31,15 +30,6 @@ const shader = fs.readFileSync(require.resolve(fileName), {
 console.time("parsing")
 const cst = parseInput(shader)
 console.timeEnd("parsing")
-export function shortDesc(node: Node | IToken) {
-  return isToken(node)
-    ? `${node.tokenType.name}(${node.image}) ${node.startOffset}-${
-        "" + node.endOffset
-      }`
-    : `${node.kind} ${node.firstToken!.startOffset}-${
-        "" + node.lastToken!.endOffset
-      }`
-}
 export function recurseJSON(
   replacer: (this: any, key: string, value: any) => any,
   x: unknown,
@@ -59,9 +49,9 @@ export function recurseJSON(
 export const simplifyCst = recurseJSON.bind(undefined, (key, value) =>
   key === "children"
     ? (value as Node[]).map(shortDesc)
-    : (value as Token)?.image
+    : value && typeof value === "object" && isToken(value)
     ? shortDesc(value)
-    : value || null,
+    : value,
 )
 fs.writeFileSync(
   "./cst.json",

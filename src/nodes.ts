@@ -4,7 +4,6 @@ export type Token = IToken
 
 export interface BaseNode {
   kind: string
-  children?: Node[]
   firstToken?: Token
   lastToken?: Token
   tokens?: Token[]
@@ -181,6 +180,7 @@ export interface ExpressionStatement extends BaseNode {
 
 export interface UniformBlock extends BaseNode {
   kind: "uniformBlock"
+  typeQualifier: TypeQualifier
   blockName: Token
   declarations: StructDeclaration[]
   namespace: Token | undefined
@@ -321,7 +321,7 @@ export type Node =
 
 export class AbstractVisitor<R> {
   protected visit(n: Node | undefined): R | undefined {
-    return n && this[n.kind](n as any)
+    return n && (this[n.kind] as (n: Node) => R | undefined)(n)
   }
   protected arraySpecifier(n: ArraySpecifier): R | undefined {
     this.visit(n.size)
@@ -339,7 +339,9 @@ export class AbstractVisitor<R> {
   }
   protected functionCall(n: FunctionCall): R | undefined {
     this.visit(n.callee)
-    n.args.forEach((a) => this.visit(a))
+    for (const a of n.args) {
+      this.visit(a)
+    }
     return
   }
   protected arrayAccess(n: ArrayAccess): R | undefined {
@@ -348,7 +350,9 @@ export class AbstractVisitor<R> {
     return
   }
   protected translationUnit(n: TranslationUnit): R | undefined {
-    n.declarations?.forEach((n) => this.visit(n))
+    for (const d of n.declarations) {
+      this.visit(d)
+    }
     return
   }
   protected assignmentExpression(n: AssignmentExpression): R | undefined {
@@ -381,38 +385,48 @@ export class AbstractVisitor<R> {
   }
   protected functionDefinition(n: FunctionDefinition): R | undefined {
     this.visit(n.returnType)
-    n.params.forEach((p) => this.visit(p))
+    for (const p of n.params) {
+      this.visit(p)
+    }
     this.visit(n.body)
     return
   }
   protected functionPrototype(n: FunctionPrototype): R | undefined {
     this.visit(n.returnType)
-    n.params.forEach((p) => this.visit(p))
+    for (const p of n.params) {
+      this.visit(p)
+    }
     return
   }
   protected parameterDeclaration(n: ParameterDeclaration): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    this.visit(n.arraySpecifier)
+    this.visit(n.typeSpecifier)
     return
   }
   protected typeSpecifier(n: TypeSpecifier): R | undefined {
-    n.children?.forEach((n) => this.visit(n))
+    if (isNode(n.typeSpecifierNonArray)) {
+      this.visit(n.typeSpecifierNonArray)
+    }
+    this.visit(n.arraySpecifier)
     return
   }
   protected compoundStatement(n: CompoundStatement): R | undefined {
-    n.statements.forEach((n) => this.visit(n))
+    for (const n1 of n.statements) {
+      this.visit(n1)
+    }
     return
   }
   protected returnStatement(n: ReturnStatement): R | undefined {
     this.visit(n.what)
     return
   }
-  protected continueStatement(n: ContinueStatement): R | undefined {
+  protected continueStatement(_n: ContinueStatement): R | undefined {
     return
   }
-  protected breakStatement(n: BreakStatement): R | undefined {
+  protected breakStatement(_n: BreakStatement): R | undefined {
     return
   }
-  protected discardStatement(n: DiscardStatement): R | undefined {
+  protected discardStatement(_n: DiscardStatement): R | undefined {
     return
   }
   protected declarator(n: Declarator): R | undefined {
@@ -445,7 +459,9 @@ export class AbstractVisitor<R> {
     n: InitDeclaratorListDeclaration,
   ): R | undefined {
     this.visit(n.fsType)
-    n.declarators.forEach((d) => this.visit(d))
+    for (const d of n.declarators) {
+      this.visit(d)
+    }
     return
   }
   protected precisionDeclaration(n: PrecisionDeclaration): R | undefined {
@@ -481,7 +497,9 @@ export class AbstractVisitor<R> {
     return
   }
   protected structSpecifier(n: StructSpecifier): R | undefined {
-    n.declarations.forEach((d) => this.visit(d))
+    for (const d of n.declarations) {
+      this.visit(d)
+    }
     return
   }
   protected layoutQualifier(_n: LayoutQualifier): R | undefined {
@@ -492,7 +510,9 @@ export class AbstractVisitor<R> {
   }
   protected structDeclaration(n: StructDeclaration): R | undefined {
     this.visit(n.fsType)
-    n.declarators.forEach((d) => this.visit(d))
+    for (const d of n.declarators) {
+      this.visit(d)
+    }
     return
   }
   protected variableExpression(_n: VariableExpression): R | undefined {
@@ -502,8 +522,18 @@ export class AbstractVisitor<R> {
     return
   }
   protected uniformBlock(n: UniformBlock): R | undefined {
-    n.declarations?.forEach((d) => this.visit(d))
+    this.visit(n.typeQualifier)
+    for (const d of n.declarations) {
+      this.visit(d)
+    }
     this.visit(n.arraySpecifier)
     return
   }
+}
+
+export function isToken(x: Token | Node): x is Token {
+  return "tokenType" in x
+}
+export function isNode(x: Token | Node): x is Node {
+  return "kind" in x
 }

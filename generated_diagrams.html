@@ -9,12 +9,12 @@
 </style>
 
 
-<link rel='stylesheet' href='https://unpkg.com/chevrotain@9.0.2/diagrams/diagrams.css'>
+<link rel='stylesheet' href='https://unpkg.com/chevrotain@9.1.0/diagrams/diagrams.css'>
 
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/vendor/railroad-diagrams.js'></script>
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/src/diagrams_builder.js'></script>
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/src/diagrams_behavior.js'></script>
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/src/main.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/vendor/railroad-diagrams.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/diagrams_builder.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/diagrams_behavior.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/main.js'></script>
 
 <div id="diagrams" align="center"></div>    
 
@@ -352,6 +352,36 @@
   },
   {
     "type": "Rule",
+    "name": "assignmentExpression",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "conditionalExpression",
+        "idx": 0
+      },
+      {
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "ASSIGN_OP",
+            "label": "ASSIGN_OP",
+            "idx": 0,
+            "pattern": "NOT_APPLICABLE"
+          },
+          {
+            "type": "NonTerminal",
+            "name": "conditionalExpression",
+            "idx": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
     "name": "expression",
     "orgText": "",
     "definition": [
@@ -372,6 +402,165 @@
             "idx": 0
           }
         ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "conditionalExpression",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "logicalOrExpression",
+        "idx": 1
+      },
+      {
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "QUESTION",
+            "label": "'?'",
+            "idx": 0,
+            "pattern": "?"
+          },
+          {
+            "type": "NonTerminal",
+            "name": "expression",
+            "idx": 2
+          },
+          {
+            "type": "Terminal",
+            "name": "COLON",
+            "label": "':'",
+            "idx": 0,
+            "pattern": ":"
+          },
+          {
+            "type": "NonTerminal",
+            "name": "assignmentExpression",
+            "idx": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "switchStatement",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "SWITCH",
+        "label": "'switch'",
+        "idx": 0,
+        "pattern": "switch"
+      },
+      {
+        "type": "Terminal",
+        "name": "LEFT_PAREN",
+        "label": "'('",
+        "idx": 0,
+        "pattern": "("
+      },
+      {
+        "type": "NonTerminal",
+        "name": "expression",
+        "idx": 0
+      },
+      {
+        "type": "Terminal",
+        "name": "RIGHT_PAREN",
+        "label": "')'",
+        "idx": 0,
+        "pattern": ")"
+      },
+      {
+        "type": "NonTerminal",
+        "name": "compoundStatement",
+        "idx": 0
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "jumpStatement",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "CONTINUE",
+                "label": "'continue'",
+                "idx": 0,
+                "pattern": "continue"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "BREAK",
+                "label": "'break'",
+                "idx": 0,
+                "pattern": "break"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "DISCARD",
+                "label": "'discard'",
+                "idx": 0,
+                "pattern": "discard"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "RETURN",
+                "label": "'return'",
+                "idx": 0,
+                "pattern": "return"
+              },
+              {
+                "type": "Option",
+                "idx": 0,
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "expression",
+                    "idx": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "SEMICOLON",
+        "label": "';'",
+        "idx": 0,
+        "pattern": ";"
       }
     ]
   },
@@ -431,78 +620,6 @@
                 "pattern": "NOT_APPLICABLE"
               }
             ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "conditionalExpression",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "NonTerminal",
-        "name": "logicalOrExpression",
-        "idx": 1
-      },
-      {
-        "type": "Option",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Terminal",
-            "name": "QUESTION",
-            "label": "'?'",
-            "idx": 0,
-            "pattern": "?"
-          },
-          {
-            "type": "NonTerminal",
-            "name": "expression",
-            "idx": 2
-          },
-          {
-            "type": "Terminal",
-            "name": "COLON",
-            "label": "':'",
-            "idx": 0,
-            "pattern": ":"
-          },
-          {
-            "type": "NonTerminal",
-            "name": "assignmentExpression",
-            "idx": 3
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "assignmentExpression",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "NonTerminal",
-        "name": "conditionalExpression",
-        "idx": 0
-      },
-      {
-        "type": "Repetition",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Terminal",
-            "name": "ASSIGN_OP",
-            "label": "ASSIGN_OP",
-            "idx": 0,
-            "pattern": "NOT_APPLICABLE"
-          },
-          {
-            "type": "NonTerminal",
-            "name": "conditionalExpression",
-            "idx": 1
           }
         ]
       }
@@ -570,7 +687,7 @@
               },
               {
                 "type": "Alternation",
-                "idx": 9,
+                "idx": 0,
                 "definition": [
                   {
                     "type": "Alternative",
@@ -704,7 +821,7 @@
               {
                 "type": "NonTerminal",
                 "name": "storageQualifier",
-                "idx": 1
+                "idx": 0
               }
             ]
           },
@@ -714,7 +831,7 @@
               {
                 "type": "NonTerminal",
                 "name": "layoutQualifier",
-                "idx": 2
+                "idx": 1
               },
               {
                 "type": "Option",
@@ -723,7 +840,7 @@
                   {
                     "type": "NonTerminal",
                     "name": "storageQualifier",
-                    "idx": 3
+                    "idx": 2
                   }
                 ]
               }
@@ -746,7 +863,7 @@
                   {
                     "type": "NonTerminal",
                     "name": "storageQualifier",
-                    "idx": 5
+                    "idx": 3
                   }
                 ]
               }
@@ -829,52 +946,6 @@
         "label": "']'",
         "idx": 0,
         "pattern": "]"
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "structSpecifier",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Terminal",
-        "name": "STRUCT",
-        "label": "'struct'",
-        "idx": 0,
-        "pattern": "struct"
-      },
-      {
-        "type": "Option",
-        "idx": 2,
-        "definition": [
-          {
-            "type": "Terminal",
-            "name": "IDENTIFIER",
-            "label": "IDENTIFIER",
-            "idx": 0,
-            "pattern": "\\w[\\w\\d]*"
-          }
-        ]
-      },
-      {
-        "type": "Terminal",
-        "name": "LEFT_BRACE",
-        "label": "'{'",
-        "idx": 0,
-        "pattern": "{"
-      },
-      {
-        "type": "NonTerminal",
-        "name": "structDeclarationList",
-        "idx": 0
-      },
-      {
-        "type": "Terminal",
-        "name": "RIGHT_BRACE",
-        "label": "'}'",
-        "idx": 0,
-        "pattern": "}"
       }
     ]
   },
@@ -1290,57 +1361,103 @@
   },
   {
     "type": "Rule",
-    "name": "structDeclarationList",
+    "name": "structDeclaration",
     "orgText": "",
     "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "fullySpecifiedType",
+        "idx": 0
+      },
+      {
+        "type": "RepetitionWithSeparator",
+        "idx": 0,
+        "separator": {
+          "type": "Terminal",
+          "name": "COMMA",
+          "label": "','",
+          "idx": 1,
+          "pattern": ","
+        },
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "IDENTIFIER",
+            "label": "IDENTIFIER",
+            "idx": 0,
+            "pattern": "\\w[\\w\\d]*"
+          },
+          {
+            "type": "Option",
+            "idx": 0,
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "arraySpecifier",
+                "idx": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "SEMICOLON",
+        "label": "';'",
+        "idx": 0,
+        "pattern": ";"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "structSpecifier",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "STRUCT",
+        "label": "'struct'",
+        "idx": 0,
+        "pattern": "struct"
+      },
+      {
+        "type": "Option",
+        "idx": 2,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "IDENTIFIER",
+            "label": "IDENTIFIER",
+            "idx": 0,
+            "pattern": "\\w[\\w\\d]*"
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "LEFT_BRACE",
+        "label": "'{'",
+        "idx": 0,
+        "pattern": "{"
+      },
       {
         "type": "Repetition",
         "idx": 0,
         "definition": [
           {
             "type": "NonTerminal",
-            "name": "fullySpecifiedType",
+            "name": "structDeclaration",
             "idx": 0
-          },
-          {
-            "type": "RepetitionWithSeparator",
-            "idx": 0,
-            "separator": {
-              "type": "Terminal",
-              "name": "COMMA",
-              "label": "','",
-              "idx": 1,
-              "pattern": ","
-            },
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "IDENTIFIER",
-                "label": "IDENTIFIER",
-                "idx": 0,
-                "pattern": "\\w[\\w\\d]*"
-              },
-              {
-                "type": "Option",
-                "idx": 0,
-                "definition": [
-                  {
-                    "type": "NonTerminal",
-                    "name": "arraySpecifier",
-                    "idx": 0
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "type": "Terminal",
-            "name": "SEMICOLON",
-            "label": "';'",
-            "idx": 0,
-            "pattern": ";"
           }
         ]
+      },
+      {
+        "type": "Terminal",
+        "name": "RIGHT_BRACE",
+        "label": "'}'",
+        "idx": 0,
+        "pattern": "}"
       }
     ]
   },
@@ -1457,6 +1574,668 @@
             ]
           }
         ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "initDeclaratorList",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "externalDeclaration",
+        "idx": 0
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "expressionStatement",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "expression",
+            "idx": 0
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "SEMICOLON",
+        "label": "';'",
+        "idx": 0,
+        "pattern": ";"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "condition",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "fullySpecifiedType",
+                "idx": 2
+              },
+              {
+                "type": "Terminal",
+                "name": "IDENTIFIER",
+                "label": "IDENTIFIER",
+                "idx": 0,
+                "pattern": "\\w[\\w\\d]*"
+              },
+              {
+                "type": "Terminal",
+                "name": "EQUAL",
+                "label": "'='",
+                "idx": 0,
+                "pattern": "="
+              },
+              {
+                "type": "NonTerminal",
+                "name": "initializer",
+                "idx": 3
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "expression",
+                "idx": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "caseLabel",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "CASE",
+                "label": "'case'",
+                "idx": 0,
+                "pattern": "case"
+              },
+              {
+                "type": "NonTerminal",
+                "name": "expression",
+                "idx": 0
+              },
+              {
+                "type": "Terminal",
+                "name": "COLON",
+                "label": "':'",
+                "idx": 0,
+                "pattern": ":"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "DEFAULT",
+                "label": "'default'",
+                "idx": 2,
+                "pattern": "default"
+              },
+              {
+                "type": "Terminal",
+                "name": "COLON",
+                "label": "':'",
+                "idx": 2,
+                "pattern": ":"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "selectionStatement",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "IF",
+        "label": "'if'",
+        "idx": 0,
+        "pattern": "if"
+      },
+      {
+        "type": "Terminal",
+        "name": "LEFT_PAREN",
+        "label": "'('",
+        "idx": 0,
+        "pattern": "("
+      },
+      {
+        "type": "NonTerminal",
+        "name": "expression",
+        "idx": 0
+      },
+      {
+        "type": "Terminal",
+        "name": "RIGHT_PAREN",
+        "label": "')'",
+        "idx": 0,
+        "pattern": ")"
+      },
+      {
+        "type": "NonTerminal",
+        "name": "statement",
+        "idx": 2
+      },
+      {
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "ELSE",
+            "label": "'else'",
+            "idx": 0,
+            "pattern": "else"
+          },
+          {
+            "type": "NonTerminal",
+            "name": "statement",
+            "idx": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "statement",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "IDENTIFIER",
+                "label": "IDENTIFIER",
+                "idx": 0,
+                "pattern": "\\w[\\w\\d]*"
+              },
+              {
+                "type": "Terminal",
+                "name": "SEMICOLON",
+                "label": "';'",
+                "idx": 0,
+                "pattern": ";"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "expressionStatement",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "initDeclaratorList",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "selectionStatement",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "switchStatement",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "caseLabel",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "iterationStatement",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "jumpStatement",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "compoundStatement",
+                "idx": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "compoundStatement",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "LEFT_BRACE",
+        "label": "'{'",
+        "idx": 0,
+        "pattern": "{"
+      },
+      {
+        "type": "Repetition",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "statement",
+            "idx": 0
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "RIGHT_BRACE",
+        "label": "'}'",
+        "idx": 0,
+        "pattern": "}"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "iterationStatement",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "WHILE",
+                "label": "'while'",
+                "idx": 0,
+                "pattern": "while"
+              },
+              {
+                "type": "Terminal",
+                "name": "LEFT_PAREN",
+                "label": "'('",
+                "idx": 0,
+                "pattern": "("
+              },
+              {
+                "type": "NonTerminal",
+                "name": "condition",
+                "idx": 0
+              },
+              {
+                "type": "Terminal",
+                "name": "RIGHT_PAREN",
+                "label": "')'",
+                "idx": 0,
+                "pattern": ")"
+              },
+              {
+                "type": "NonTerminal",
+                "name": "statement",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "DO",
+                "label": "'do'",
+                "idx": 2,
+                "pattern": "do"
+              },
+              {
+                "type": "NonTerminal",
+                "name": "statement",
+                "idx": 2
+              },
+              {
+                "type": "Terminal",
+                "name": "WHILE",
+                "label": "'while'",
+                "idx": 2,
+                "pattern": "while"
+              },
+              {
+                "type": "Terminal",
+                "name": "LEFT_PAREN",
+                "label": "'('",
+                "idx": 2,
+                "pattern": "("
+              },
+              {
+                "type": "NonTerminal",
+                "name": "expression",
+                "idx": 2
+              },
+              {
+                "type": "Terminal",
+                "name": "RIGHT_PAREN",
+                "label": "')'",
+                "idx": 2,
+                "pattern": ")"
+              },
+              {
+                "type": "Terminal",
+                "name": "SEMICOLON",
+                "label": "';'",
+                "idx": 2,
+                "pattern": ";"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "FOR",
+                "label": "'for'",
+                "idx": 3,
+                "pattern": "for"
+              },
+              {
+                "type": "Terminal",
+                "name": "LEFT_PAREN",
+                "label": "'('",
+                "idx": 3,
+                "pattern": "("
+              },
+              {
+                "type": "Alternation",
+                "idx": 3,
+                "definition": [
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "NonTerminal",
+                        "name": "initDeclaratorList",
+                        "idx": 0
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "NonTerminal",
+                        "name": "expressionStatement",
+                        "idx": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "Option",
+                "idx": 3,
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "condition",
+                    "idx": 3
+                  }
+                ]
+              },
+              {
+                "type": "Terminal",
+                "name": "SEMICOLON",
+                "label": "';'",
+                "idx": 4,
+                "pattern": ";"
+              },
+              {
+                "type": "Option",
+                "idx": 4,
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "expression",
+                    "idx": 4
+                  }
+                ]
+              },
+              {
+                "type": "Terminal",
+                "name": "RIGHT_PAREN",
+                "label": "')'",
+                "idx": 3,
+                "pattern": ")"
+              },
+              {
+                "type": "NonTerminal",
+                "name": "statement",
+                "idx": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "translationUnit",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "RepetitionMandatory",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "externalDeclaration",
+            "idx": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "uniformBlock",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "typeQualifier",
+        "idx": 0
+      },
+      {
+        "type": "Terminal",
+        "name": "IDENTIFIER",
+        "label": "IDENTIFIER",
+        "idx": 0,
+        "pattern": "\\w[\\w\\d]*"
+      },
+      {
+        "type": "Terminal",
+        "name": "LEFT_BRACE",
+        "label": "'{'",
+        "idx": 0,
+        "pattern": "{"
+      },
+      {
+        "type": "Repetition",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "structDeclaration",
+            "idx": 0
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "RIGHT_BRACE",
+        "label": "'}'",
+        "idx": 0,
+        "pattern": "}"
+      },
+      {
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "IDENTIFIER",
+            "label": "IDENTIFIER",
+            "idx": 1,
+            "pattern": "\\w[\\w\\d]*"
+          },
+          {
+            "type": "Option",
+            "idx": 1,
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "arraySpecifier",
+                "idx": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "SEMICOLON",
+        "label": "';'",
+        "idx": 0,
+        "pattern": ";"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "uniformBlockHeader",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "layoutQualifier",
+            "idx": 0
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "UNIFORM",
+        "label": "'uniform'",
+        "idx": 0,
+        "pattern": "uniform"
+      },
+      {
+        "type": "Terminal",
+        "name": "IDENTIFIER",
+        "label": "IDENTIFIER",
+        "idx": 0,
+        "pattern": "\\w[\\w\\d]*"
+      },
+      {
+        "type": "Terminal",
+        "name": "LEFT_BRACE",
+        "label": "'{'",
+        "idx": 0,
+        "pattern": "{"
       }
     ]
   },
@@ -1653,779 +2432,6 @@
             ]
           }
         ]
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "declaration",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "NonTerminal",
-        "name": "externalDeclaration",
-        "idx": 0
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "expressionStatement",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Option",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "NonTerminal",
-            "name": "expression",
-            "idx": 0
-          }
-        ]
-      },
-      {
-        "type": "Terminal",
-        "name": "SEMICOLON",
-        "label": "';'",
-        "idx": 0,
-        "pattern": ";"
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "condition",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Alternation",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "fullySpecifiedType",
-                "idx": 2
-              },
-              {
-                "type": "Terminal",
-                "name": "IDENTIFIER",
-                "label": "IDENTIFIER",
-                "idx": 0,
-                "pattern": "\\w[\\w\\d]*"
-              },
-              {
-                "type": "Terminal",
-                "name": "EQUAL",
-                "label": "'='",
-                "idx": 0,
-                "pattern": "="
-              },
-              {
-                "type": "NonTerminal",
-                "name": "initializer",
-                "idx": 3
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "expression",
-                "idx": 0
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "switchStatement",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Terminal",
-        "name": "SWITCH",
-        "label": "'switch'",
-        "idx": 0,
-        "pattern": "switch"
-      },
-      {
-        "type": "Terminal",
-        "name": "LEFT_PAREN",
-        "label": "'('",
-        "idx": 0,
-        "pattern": "("
-      },
-      {
-        "type": "NonTerminal",
-        "name": "expression",
-        "idx": 0
-      },
-      {
-        "type": "Terminal",
-        "name": "RIGHT_PAREN",
-        "label": "')'",
-        "idx": 0,
-        "pattern": ")"
-      },
-      {
-        "type": "NonTerminal",
-        "name": "compoundStatement",
-        "idx": 0
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "caseLabel",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Alternation",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "CASE",
-                "label": "'case'",
-                "idx": 0,
-                "pattern": "case"
-              },
-              {
-                "type": "NonTerminal",
-                "name": "expression",
-                "idx": 0
-              },
-              {
-                "type": "Terminal",
-                "name": "COLON",
-                "label": "':'",
-                "idx": 0,
-                "pattern": ":"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "DEFAULT",
-                "label": "'default'",
-                "idx": 2,
-                "pattern": "default"
-              },
-              {
-                "type": "Terminal",
-                "name": "COLON",
-                "label": "':'",
-                "idx": 2,
-                "pattern": ":"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "jumpStatement",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Alternation",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "CONTINUE",
-                "label": "'continue'",
-                "idx": 0,
-                "pattern": "continue"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "BREAK",
-                "label": "'break'",
-                "idx": 0,
-                "pattern": "break"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "DISCARD",
-                "label": "'discard'",
-                "idx": 0,
-                "pattern": "discard"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "RETURN",
-                "label": "'return'",
-                "idx": 0,
-                "pattern": "return"
-              },
-              {
-                "type": "Option",
-                "idx": 0,
-                "definition": [
-                  {
-                    "type": "NonTerminal",
-                    "name": "expression",
-                    "idx": 0
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "type": "Terminal",
-        "name": "SEMICOLON",
-        "label": "';'",
-        "idx": 0,
-        "pattern": ";"
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "statement",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Alternation",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "IDENTIFIER",
-                "label": "IDENTIFIER",
-                "idx": 0,
-                "pattern": "\\w[\\w\\d]*"
-              },
-              {
-                "type": "Terminal",
-                "name": "SEMICOLON",
-                "label": "';'",
-                "idx": 0,
-                "pattern": ";"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "declaration",
-                "idx": 0
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "expressionStatement",
-                "idx": 0
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "selectionStatement",
-                "idx": 0
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "switchStatement",
-                "idx": 0
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "caseLabel",
-                "idx": 0
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "iterationStatement",
-                "idx": 0
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "jumpStatement",
-                "idx": 0
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "compoundStatement",
-                "idx": 0
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "compoundStatement",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Terminal",
-        "name": "LEFT_BRACE",
-        "label": "'{'",
-        "idx": 0,
-        "pattern": "{"
-      },
-      {
-        "type": "Repetition",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "NonTerminal",
-            "name": "statement",
-            "idx": 0
-          }
-        ]
-      },
-      {
-        "type": "Terminal",
-        "name": "RIGHT_BRACE",
-        "label": "'}'",
-        "idx": 0,
-        "pattern": "}"
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "selectionStatement",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Terminal",
-        "name": "IF",
-        "label": "'if'",
-        "idx": 0,
-        "pattern": "if"
-      },
-      {
-        "type": "Terminal",
-        "name": "LEFT_PAREN",
-        "label": "'('",
-        "idx": 0,
-        "pattern": "("
-      },
-      {
-        "type": "NonTerminal",
-        "name": "expression",
-        "idx": 0
-      },
-      {
-        "type": "Terminal",
-        "name": "RIGHT_PAREN",
-        "label": "')'",
-        "idx": 0,
-        "pattern": ")"
-      },
-      {
-        "type": "NonTerminal",
-        "name": "statement",
-        "idx": 2
-      },
-      {
-        "type": "Option",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Terminal",
-            "name": "ELSE",
-            "label": "'else'",
-            "idx": 0,
-            "pattern": "else"
-          },
-          {
-            "type": "NonTerminal",
-            "name": "statement",
-            "idx": 3
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "iterationStatement",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Alternation",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "WHILE",
-                "label": "'while'",
-                "idx": 0,
-                "pattern": "while"
-              },
-              {
-                "type": "Terminal",
-                "name": "LEFT_PAREN",
-                "label": "'('",
-                "idx": 0,
-                "pattern": "("
-              },
-              {
-                "type": "NonTerminal",
-                "name": "condition",
-                "idx": 0
-              },
-              {
-                "type": "Terminal",
-                "name": "RIGHT_PAREN",
-                "label": "')'",
-                "idx": 0,
-                "pattern": ")"
-              },
-              {
-                "type": "NonTerminal",
-                "name": "statement",
-                "idx": 0
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "DO",
-                "label": "'do'",
-                "idx": 2,
-                "pattern": "do"
-              },
-              {
-                "type": "NonTerminal",
-                "name": "statement",
-                "idx": 2
-              },
-              {
-                "type": "Terminal",
-                "name": "WHILE",
-                "label": "'while'",
-                "idx": 2,
-                "pattern": "while"
-              },
-              {
-                "type": "Terminal",
-                "name": "LEFT_PAREN",
-                "label": "'('",
-                "idx": 2,
-                "pattern": "("
-              },
-              {
-                "type": "NonTerminal",
-                "name": "expression",
-                "idx": 2
-              },
-              {
-                "type": "Terminal",
-                "name": "RIGHT_PAREN",
-                "label": "')'",
-                "idx": 2,
-                "pattern": ")"
-              },
-              {
-                "type": "Terminal",
-                "name": "SEMICOLON",
-                "label": "';'",
-                "idx": 2,
-                "pattern": ";"
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "Terminal",
-                "name": "FOR",
-                "label": "'for'",
-                "idx": 3,
-                "pattern": "for"
-              },
-              {
-                "type": "Terminal",
-                "name": "LEFT_PAREN",
-                "label": "'('",
-                "idx": 3,
-                "pattern": "("
-              },
-              {
-                "type": "Alternation",
-                "idx": 3,
-                "definition": [
-                  {
-                    "type": "Alternative",
-                    "definition": [
-                      {
-                        "type": "NonTerminal",
-                        "name": "declaration",
-                        "idx": 0
-                      }
-                    ]
-                  },
-                  {
-                    "type": "Alternative",
-                    "definition": [
-                      {
-                        "type": "NonTerminal",
-                        "name": "expressionStatement",
-                        "idx": 0
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "type": "Option",
-                "idx": 3,
-                "definition": [
-                  {
-                    "type": "NonTerminal",
-                    "name": "condition",
-                    "idx": 3
-                  }
-                ]
-              },
-              {
-                "type": "Terminal",
-                "name": "SEMICOLON",
-                "label": "';'",
-                "idx": 4,
-                "pattern": ";"
-              },
-              {
-                "type": "Option",
-                "idx": 4,
-                "definition": [
-                  {
-                    "type": "NonTerminal",
-                    "name": "expression",
-                    "idx": 4
-                  }
-                ]
-              },
-              {
-                "type": "Terminal",
-                "name": "RIGHT_PAREN",
-                "label": "')'",
-                "idx": 3,
-                "pattern": ")"
-              },
-              {
-                "type": "NonTerminal",
-                "name": "statement",
-                "idx": 3
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "translationUnit",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "RepetitionMandatory",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "NonTerminal",
-            "name": "externalDeclaration",
-            "idx": 0
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "uniformBlockHeader",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Option",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "NonTerminal",
-            "name": "layoutQualifier",
-            "idx": 0
-          }
-        ]
-      },
-      {
-        "type": "Terminal",
-        "name": "UNIFORM",
-        "label": "'uniform'",
-        "idx": 0,
-        "pattern": "uniform"
-      },
-      {
-        "type": "Terminal",
-        "name": "IDENTIFIER",
-        "label": "IDENTIFIER",
-        "idx": 0,
-        "pattern": "\\w[\\w\\d]*"
-      },
-      {
-        "type": "Terminal",
-        "name": "LEFT_BRACE",
-        "label": "'{'",
-        "idx": 0,
-        "pattern": "{"
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "uniformBlock",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "NonTerminal",
-        "name": "typeQualifier",
-        "idx": 0
-      },
-      {
-        "type": "Terminal",
-        "name": "IDENTIFIER",
-        "label": "IDENTIFIER",
-        "idx": 0,
-        "pattern": "\\w[\\w\\d]*"
-      },
-      {
-        "type": "Terminal",
-        "name": "LEFT_BRACE",
-        "label": "'{'",
-        "idx": 0,
-        "pattern": "{"
-      },
-      {
-        "type": "NonTerminal",
-        "name": "structDeclarationList",
-        "idx": 0
-      },
-      {
-        "type": "Terminal",
-        "name": "RIGHT_BRACE",
-        "label": "'}'",
-        "idx": 0,
-        "pattern": "}"
-      },
-      {
-        "type": "Option",
-        "idx": 0,
-        "definition": [
-          {
-            "type": "Terminal",
-            "name": "IDENTIFIER",
-            "label": "IDENTIFIER",
-            "idx": 1,
-            "pattern": "\\w[\\w\\d]*"
-          },
-          {
-            "type": "Option",
-            "idx": 1,
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "arraySpecifier",
-                "idx": 0
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "type": "Terminal",
-        "name": "SEMICOLON",
-        "label": "';'",
-        "idx": 0,
-        "pattern": ";"
       }
     ]
   }

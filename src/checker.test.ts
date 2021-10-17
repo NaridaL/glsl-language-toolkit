@@ -41,9 +41,9 @@ function glsl(
     ) => {
       const str = (m0 ?? m1 ?? m2)!
       expectedErrors[i].start = offset + 1
-      expectedErrors[i].end = offset + str.length
+      expectedErrors[i].end = offset + str.length + 1
       i++
-      return str
+      return " " + str + " " // add spaces so indexes don't change
     },
   )
   const errs = parseAndCheck(p, shaderType)
@@ -51,7 +51,7 @@ function glsl(
     expect(
       errs.map(({ code, loc }) => ({
         code,
-        start: loc.startColumn,
+        start: loc.startColumn - 1,
         end: loc.endColumn,
       })),
     ).toEqual(expectedErrors)
@@ -110,6 +110,10 @@ describe("expected errors", () => {
     glslExpr("float[2] r; float f = r[`true`]", ["S0002"]))
   test("S0004: unary operator not supported for operand types", () =>
     glslExpr("float[2] a; `-a`", ["S0004"]))
+  test("S0006: conditional branches must have same type", () =>
+    glslExpr("`true ? 1 : false`", ["S0006"]))
+  test("S0005: conditional must have boolean condition", () =>
+    glslExpr("`1` ? 1 : 2", ["S0005"]))
   test("S0022: redefinition of variable in same scope", () =>
     glslExpr("int a; float [[a]]", ["S0022"]))
   test("S0022: redefinition of parameter", () =>
@@ -117,7 +121,7 @@ describe("expected errors", () => {
   test("S0024: redefinition of variable in same scope", () =>
     glsl("struct a { int i; }; void `a`() {}", ["S0024"]))
   test("C0001: struct specifier cannot be parameter type", () =>
-    glsl("void f(`struct G {}` x);", ["C0001"]))
+    glsl("void f(`struct G { int i; }` x);", ["C0001"]))
   test("S0020: constant array index greater than declared size", () =>
     glslExpr("float[2] ff, f = ff[`2`]", ["S0020"]))
   test("S0021: negative constant array index", () =>
@@ -126,9 +130,27 @@ describe("expected errors", () => {
     glslExpr("vec3 a; a.`xr`", ["S0025"]))
   test("S0026: can swizzle at most 4 fields", () =>
     glslExpr("vec3 a; a.`xxyyzz`", ["S0026"]))
+  test("S0026: cannot access .z on vec2", () =>
+    glslExpr("vec2 v; v.`z`", ["S0026"]))
+  test("S0026: field is not defined on struct", () =>
+    glslExpr("struct S { int i; } s; s.`x`", ["S0026"]))
+  test("S0026: cannot access field on basic", () =>
+    glslExpr("float f; f.`x`", ["S0026"]))
   test("S0027: ternary cannot be l-value", () =>
-    glslExpr("int a, b; `true ? a : b` = 2", ["S0027"]))
-  test("S0027: TODO", () => glslExpr("`1`++", ["S0027"]))
+    glslExpr("int a, b; (`true ? a : b`) = 2", ["S0027"]))
+  test("S0027: postfix op must be used on l-value", () =>
+    glslExpr("`1`++", ["S0027"]))
+  test("S0027: prefix op must be used on l-value", () =>
+    glslExpr("--`2.`", ["S0027"]))
+  test("S0039: void function cannot have return value", () => {
+    glsl("void main() { return `1`; }", ["S0039"])
+  })
+  test("S0038: function must have return value", () => {
+    glsl("int f() { `return;` }", ["S0038"])
+  })
+  test("S0042: function must return correct type", () => {
+    glsl("int f() { return `1.`; }", ["S0042"])
+  })
   test("S0054: redefining builtin", () =>
     glsl("void `min`(int i) {}", ["S0054"]))
   test("S0057", () => glslExpr("switch (`true`) {}", ["S0057"]))
@@ -136,7 +158,19 @@ describe("expected errors", () => {
     glsl("void f(const int i) { `i` = 2; }", ["S0027"]))
   test("S0035: All uses of invariant must be at the global scope", () => {
     // glslExpr("`invariant` a", ["S0035"])
-    glslExpr("invariant float f", ["S0035"])
+    glslExpr("`invariant` `out` float f", [
+      "S0035",
+      "out qualifier only allowed at global scope",
+    ])
+  })
+  test("in qualifier only allowed at global scope", () =>
+    glslExpr("`in` float f;", ["in qualifier only allowed at global scope"]))
+  test("struct specifiers need at least one member", () =>
+    glsl("`struct S {}`;", ["struct specifiers need at least one member"]))
+  test("G0005: int constant does fit in 32 bits", () => {
+    glslExpr("0xffffffff", [])
+    glslExpr("`0xfffffffff`", ["G0005"])
+    glslExpr("`5000000000`", ["G0005"])
   })
   test("centroid out in fragment shader is an error", () =>
     glsl(
@@ -168,7 +202,7 @@ describe("expected errors", () => {
   })
   test("fragment shader outputs declared as array may only be indexed by a constant", () => {
     glsl(
-      "uniform int i; out float[2] fs; void main() { fs[i]; }",
+      "uniform int i; out float[2] fs; void main() { fs[`i`]; }",
       [
         "fragment shader outputs declared as array may only be indexed by a constant",
       ],

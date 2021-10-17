@@ -3,11 +3,11 @@
 import { AstPath, Doc, format, Plugin, SupportInfo } from "prettier"
 import { builders } from "prettier/doc"
 import { IToken, TokenType } from "chevrotain"
+
 import {
   AbstractVisitor,
   BinaryExpression,
-  Expression,
-  ExpressionStatement,
+  isToken,
   Node,
   Token,
   TypeQualifier,
@@ -15,17 +15,8 @@ import {
 import { TOKEN } from "./lexer"
 import { parseInput } from "./parser"
 
-const {
-  indentIfBreak,
-  conditionalGroup,
-  fill,
-  group,
-  indent,
-  join,
-  line,
-  softline,
-  hardline,
-} = builders
+const { indentIfBreak, group, indent, join, line, softline, hardline } =
+  builders
 
 export const CHILDREN_VISITOR: AbstractVisitor<Node[]> & {
   visit(n: Node): Node[]
@@ -74,10 +65,6 @@ export const parsers: Plugin<Node | IToken>["parsers"] = {
       ).endOffset!
     },
   },
-}
-
-export function isToken(x: unknown): x is IToken {
-  return (x as any).tokenType
 }
 
 function normalizeFloat(image: string) {
@@ -500,11 +487,11 @@ export const printers: Plugin<Node | IToken>["printers"] = {
       }
     },
 
-    // @ts-expect-error
+    // @ts-expect-error getCommentChildNodes isn't in the API for some reason
     getCommentChildNodes(node: Node | Token): Node[] {
       return isToken(node) ? [] : CHILDREN_VISITOR.visit(node)!
     },
-    canAttachComment(node) {
+    canAttachComment(_node) {
       return true
     },
     printComment(
@@ -535,14 +522,6 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           "\n */"
         )
       }
-      console.log(n.image.blue)
-      const parent = commentPath.getParentNode()
-      console.log(
-        `parent type=${parent.type} first = ${parent.firstToken.image}`.yellow,
-      )
-      console.log(
-        `leading=${n.leading}    trailing=${n.trailing}  ${n.placement}`,
-      )
       return n.image
     },
   },

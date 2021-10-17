@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import * as path from "path"
-import { readFileSync, writeFileSync } from "fs"
+import { readFileSync } from "fs"
 import { last, pick } from "lodash"
 import { TokenType } from "chevrotain"
 import "colors"
@@ -25,6 +25,7 @@ import {
   FunctionDefinition,
   FunctionPrototype,
   InitDeclaratorListDeclaration,
+  isToken,
   MethodCall,
   Node,
   ParameterDeclaration,
@@ -43,10 +44,9 @@ import {
 } from "./nodes"
 import { TOKEN } from "./lexer"
 import { applyBuiltinFunction, Matrix } from "./builtins"
-import { parseInput } from "./parser"
+import { parseInput, shortDesc } from "./parser"
 import { allDefined, assertNever, ccorrect, ExpandedLocation } from "./util"
 import { ERRORS } from "./errors"
-import { shortDesc } from "./gendiagrams"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
 type ArrayType = Readonly<{
@@ -658,11 +658,11 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
   protected variableExpression(
     n: VariableExpression,
   ): TypeAndValue | undefined {
+    const binding = n.binding
     return (
-      n.binding?.declaratorList?.fsType.typeQualifier?.storageQualifier
-        ?.CONST &&
-      n.binding.d?.init &&
-      this.visit(n.binding.d?.init)
+      binding?.declaratorList?.fsType.typeQualifier?.storageQualifier?.CONST &&
+      binding.declarator?.init &&
+      this.visit(binding.declarator?.init)
     )
   }
 
@@ -747,10 +747,6 @@ interface Scope {
   defs: {
     [k: string]: Binding
   }
-}
-
-export function isToken(x: Token | Node): x is Token {
-  return "tokenType" in x
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -972,7 +968,6 @@ class BinderVisitor extends AbstractVisitor<any> {
         )
       })
       .join("")
-    writeFileSync("list.txt", xx)
     this.popScope()
   }
 
@@ -1162,6 +1157,20 @@ function getMatrixDimensions(
       return [4, 4]
     default:
       return undefined
+  }
+}
+function getConstantType(t: TokenType): TokenType {
+  switch (t) {
+    case TOKEN.INTCONSTANT:
+      return TOKEN.INT
+    case TOKEN.UINTCONSTANT:
+      return TOKEN.UINT
+    case TOKEN.FLOATCONSTANT:
+      return TOKEN.FLOAT
+    case TOKEN.BOOLCONSTANT:
+      return TOKEN.BOOL
+    default:
+      assertNever()
   }
 }
 
@@ -1359,7 +1368,7 @@ const VALID_BINARY_OPERATIONS: T4[] = [
   ]),
 ]
 // console.table(VALID_BINARY_OPERATIONS.map((x) => x.map((y) => y.PATTERN)))
-console.log("VALID_BINARY_OPERATIONS.length", VALID_BINARY_OPERATIONS.length)
+// console.log("VALID_BINARY_OPERATIONS.length", VALID_BINARY_OPERATIONS.length)
 
 function typesEquals(as: NormalizedType[], bs: NormalizedType[]): boolean {
   return as.length === bs.length && as.every((a, i) => typeEquals(a, bs[i]))
@@ -1430,6 +1439,12 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     }
     return super.uniformBlock(n)
   }
+  protected structSpecifier(n: StructSpecifier): NormalizedType | undefined {
+    if (!n.declarations.length) {
+      markError(n, "struct specifiers need at least one member")
+    }
+    return super.structSpecifier(n)
+  }
 
   protected initDeclaratorListDeclaration(
     n: InitDeclaratorListDeclaration,
@@ -1483,6 +1498,9 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
         )
       }
     } else {
+      if (n.fsType.typeQualifier?.invariantQualifier) {
+        markError(n.fsType.typeQualifier?.invariantQualifier, "S0035")
+      }
       if (storageQualifier?.IN) {
         markError(
           storageQualifier.IN,
@@ -1675,11 +1693,16 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
       } else {
         markError(
           n.field,
-          `field ${f} is not defined on type ${oType.specifier.name}`,
+          "S0026",
+          `field ${f} is not defined on type ${typeString(oType)}`,
         )
       }
     } else if (oType) {
-      markError(n.field, "field access cannot be used on array")
+      markError(
+        n.field,
+        "S0026",
+        "field access cannot be used on " + typeString(oType),
+      )
     }
   }
 
@@ -1688,9 +1711,8 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     const rType = this.visit(n.rhs)
 
     function markErr(n: BinaryExpression) {
-      console.log(shortDesc(n.firstToken!))
       markError(
-        n,
+        n.op,
         "S0004",
         "TODO lhs op rhs",
         "valid ops for " +
@@ -2019,22 +2041,15 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   protected constantExpression(
     n: ConstantExpression,
   ): NormalizedType | undefined {
-    function getConstantType(t: TokenType): TokenType {
-      switch (t) {
-        case TOKEN.INTCONSTANT:
-          return TOKEN.INT
-        case TOKEN.UINTCONSTANT:
-          return TOKEN.UINT
-        case TOKEN.FLOATCONSTANT:
-          return TOKEN.FLOAT
-        case TOKEN.BOOLCONSTANT:
-          return TOKEN.BOOL
-        default:
-          assertNever()
+    const c = n._const
+    if (c.tokenType === TOKEN.INTCONSTANT) {
+      const val = evaluateConstantExpression(n)!.value
+      if (val > 0xffff_ffff) {
+        markError(c, "G0005")
       }
     }
 
-    return { kind: "basic", type: getConstantType(n._const.tokenType) }
+    return { kind: "basic", type: getConstantType(c.tokenType) }
   }
 }
 

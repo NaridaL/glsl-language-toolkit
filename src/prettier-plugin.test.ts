@@ -47,6 +47,7 @@ test("chained binary expressions all break on same op precedence", () => {
 test("required paren are kept", () => {
   testFormat("int i = -(9+b);", "int i = -(9 + b);")
   testFormat("int i = (a ? b : c) ? d : e;", "int i = (a ? b : c) ? d : e;")
+  testFormat("int i = (a = b) ? d : e;", "int i = (a = b) ? d : e;")
   testFormat("int i = (a+b).xy;", "int i = (a + b).xy;")
   testFormat("int i = (a + b)[0];", "int i = (a + b)[0];")
   testFormat("int i = (a + b).length();", "int i = (a + b).length();")
@@ -56,7 +57,7 @@ test("constants", () => {
   testFormat("float f = 2.e-23;", "float f = 2e-23;")
 })
 test("for loop", () => {
-  testFormat("void f() { for(;;); }", "void f() { for (;;); }")
+  testFormat("void f() { for(;;); }", "void f() { for (;; ) ; }")
 })
 test("simplifies qualifiers", () => {
   testFormat("flat centroid in float f;", "flat in float f;")
