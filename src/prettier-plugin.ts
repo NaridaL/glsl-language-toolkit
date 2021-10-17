@@ -68,7 +68,31 @@ export const parsers: Plugin<Node | IToken>["parsers"] = {
 }
 
 function normalizeFloat(image: string) {
-  return (+image).toLocaleString("en-US", { minimumFractionDigits: 1 })
+  const dot = image.indexOf(".")
+  // .xxx => 0.xxx
+  if (dot === 0) {
+    image = "0" + image
+  }
+  // xEx => xex
+  image = image.replace("E", "e")
+  if (dot !== -1) {
+    // x.exxx => xexxx
+    image = image.replace(".e", "e")
+
+    // x.x000 => x.x
+    image = image.replace(/0+$/, "")
+
+    // x. => x.0
+    image = image.replace(/\.$/, ".0")
+
+    // xe00x => xex
+    image = image.replace(/e0+/, "e")
+  }
+
+  // xe+x => xex
+  image = image.replace("e+", "e")
+
+  return image
 }
 
 function getOpPrecedence(op: TokenType): number {

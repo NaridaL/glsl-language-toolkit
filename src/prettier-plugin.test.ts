@@ -53,8 +53,10 @@ test("required paren are kept", () => {
   testFormat("int i = (a + b).length();", "int i = (a + b).length();")
 })
 test("constants", () => {
-  testFormat("float f = 2.2e+23;", "float f = 2.2e23;")
+  testFormat("float f = 2.2E+23;", "float f = 2.2e23;")
   testFormat("float f = 2.e-23;", "float f = 2e-23;")
+  testFormat("float f = .200;", "float f = 0.2;")
+  testFormat("float f = 2.;", "float f = 2.0;")
 })
 test("for loop", () => {
   testFormat("void f() { for(;;); }", "void f() { for (;; ) ; }")

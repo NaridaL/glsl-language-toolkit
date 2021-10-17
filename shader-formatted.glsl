@@ -86,9 +86,9 @@ float sdCappedTorus(
 float sdHexPrism(vec3 p, vec2 h) {
   vec3 q = abs(p);
   const vec3 k = vec3(
-      -0.866,
+      -0.8660254,
       0.5,
-      0.577
+      0.57735
     );
   p = abs(p);
   p.xy -= 2.0 *
@@ -118,9 +118,9 @@ float sdOctogonPrism(
   float h
 ) {
   const vec3 k = vec3(
-      -0.924, // sqrt(2+sqrt(2))/2
-      0.383, // sqrt(2-sqrt(2))/2
-      0.414 // sqrt(2)-1
+      -0.9238795325, // sqrt(2+sqrt(2))/2
+      0.3826834323, // sqrt(2-sqrt(2))/2
+      0.4142135623 // sqrt(2)-1
     );
   // reflections
   p = abs(p);
@@ -396,7 +396,7 @@ float sdOctahedron(vec3 p, float s) {
   else if (3.0 * p.y < m) q = p.yzx;
   else if (3.0 * p.z < m) q = p.zxy;
   else
-  return m * 0.577;
+  return m * 0.57735027;
   float k = clamp(
       0.5 * (q.z - q.y + s),
       0.0,
@@ -406,7 +406,7 @@ float sdOctahedron(vec3 p, float s) {
     vec3(q.x, q.y - s + k, q.z - k)
   );
   // bound, not exact
-  return m * 0.577;
+  return m * 0.57735027;
 }
 float sdPyramid(vec3 p, float h) {
   float m2 = h * h + 0.25;
@@ -485,10 +485,7 @@ vec2 opU(vec2 d1, vec2 d2) {
 //------------------------------------------------------------------
 //------------------------------------------------------------------
 vec2 map(vec3 pos) {
-  vec2 res = vec2(
-      10,000,000,000.0,
-      0.0
-    );
+  vec2 res = vec2(1e10, 0.0);
   {
     res = opU(
       res,
@@ -582,7 +579,7 @@ vec2 map(vec3 pos) {
         sdCappedTorus(
           (pos - vec3(1.0, 0.3, 1.0)) *
           vec3(1, -1, 1),
-          vec2(0.866, -0.5),
+          vec2(0.866025, -0.5),
           0.25,
           0.05
         ),
@@ -816,7 +813,7 @@ vec2 raycast(vec3 ro, vec3 rd) {
     ) {
       vec2 h = map(ro + rd * t);
       if (
-        abs(h.x) < 0.0 * t
+        abs(h.x) < 0.0001 * t
       ) {
         res = vec2(t, h.y);
         break;
@@ -857,8 +854,8 @@ float calcSoftshadow(
 // http://iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
 vec3 calcNormal(vec3 pos) {
   vec2 e = vec2(1.0, -1.0) *
-    0.577 *
-    0.001;
+    0.5773 *
+    0.0005;
   return normalize(
     e.xyy * map(pos + e.xyy).x +
     e.yyx * map(pos + e.yyx).x +
@@ -868,7 +865,7 @@ vec3 calcNormal(vec3 pos) {
   // inspired by tdhooper and klems - a way to prevent the compiler from inlining map() 4 times
   vec3 n = vec3(0.0);
   for (int i = ZERO;i < 4; i++) {
-    vec3 e = 0.577 *
+    vec3 e = 0.5773 *
       (2.0 *
       vec3(
         i + 3 >> 1 & 1,
@@ -876,7 +873,7 @@ vec3 calcNormal(vec3 pos) {
         i & 1
       ) -
       1.0);
-    n += e * map(pos + 0.001 * e).x;
+    n += e * map(pos + 0.0005 * e).x;
     //if( n.x+n.y+n.z>100.0 ) break;
   }
   return normalize(n);
@@ -1093,7 +1090,7 @@ vec3 render(
     col = mix(
       col,
       vec3(0.7, 0.7, 0.9),
-      1.0 - exp(-0.0 * t * t * t)
+      1.0 - exp(-0.0001 * t * t * t)
     );
   }
   return vec3(clamp(col, 0.0, 1.0));
@@ -1170,7 +1167,7 @@ void mainImage(
       // gain
       // col = col*3.0/(2.5+col);
       // gamma
-      col = pow(col, vec3(0.455));
+      col = pow(col, vec3(0.4545));
       tot += col;
     }
   tot /= float(AA * AA);
