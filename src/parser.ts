@@ -45,7 +45,13 @@ import {
   UniformBlock,
   WhileStatement,
 } from "./nodes"
-import { ALL_TOKENS, GLSL_LEXER, RESERVED_KEYWORDS, TOKEN } from "./lexer"
+import {
+  ALL_TOKENS,
+  checkLexingErrors,
+  GLSL_LEXER,
+  RESERVED_KEYWORDS,
+  TOKEN,
+} from "./lexer"
 import { DEV, ExpandedLocation, substrContext } from "./util"
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1337,28 +1343,6 @@ class GLSLParser extends EmbeddedActionsParser {
 // ONLY ONCE
 export const GLSL_PARSER = new GLSLParser()
 
-function checkLexingErrors(input: string, lexingResult: ILexingResult) {
-  if (lexingResult.errors.length) {
-    throw new Error(
-      "LEXER ERROR: " +
-        lexingResult.errors
-          .map(
-            (e) =>
-              e.message +
-              ":\n" +
-              substrContext(input, {
-                startLine: e.line,
-                startColumn: e.column,
-                endLine: e.line,
-                endColumn: e.column + e.length,
-              }),
-          )
-          // .map((e) => e.message)
-          .join(),
-    )
-  }
-}
-
 function checkParsingErrors(input: string, errors: IRecognitionException[]) {
   if (errors.length > 0) {
     throw new Error(
@@ -1387,9 +1371,9 @@ export function shortDesc(node: Node | IToken) {
       }`
 }
 
-export function parseInput(text: string): TranslationUnit {
-  const lexingResult = GLSL_LEXER.tokenize(text)
-  checkLexingErrors(text, lexingResult)
+export function parseInput(input: string): TranslationUnit {
+  const lexingResult = GLSL_LEXER.tokenize(input)
+  checkLexingErrors(input, lexingResult)
 
   const errors = []
 
@@ -1415,7 +1399,7 @@ export function parseInput(text: string): TranslationUnit {
   // "input" is a setter which will reset the glslParser's state.
   GLSL_PARSER.input = lexingResult.tokens
   const result = GLSL_PARSER.translationUnit()
-  checkParsingErrors(text, GLSL_PARSER.errors)
+  checkParsingErrors(input, GLSL_PARSER.errors)
 
   result.comments = lexingResult.groups.COMMENTS
   return result

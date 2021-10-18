@@ -1,9 +1,9 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { createToken, Lexer, TokenType } from "chevrotain"
+import { createToken, ILexingResult, Lexer, TokenType } from "chevrotain"
 import { pull } from "lodash"
 
-import { DEV } from "./util"
+import { DEV, substrContext } from "./util"
 
 export const RESERVED_KEYWORDS = [
   "active",
@@ -423,43 +423,44 @@ export namespace TOKEN {
     pattern: /\w[\w\d]*/i,
   })
 
-  const KEYWORD = (const1: string, ...categories: TokenType[]) =>
+  export const KEYWORD = createToken({ name: "KEYWORD", pattern: Lexer.NA })
+  const createKeyword = (const1: string, category?: TokenType) =>
     createToken({
       name: const1,
       pattern: const1.toLowerCase(),
       label: "'" + const1.toLowerCase() + "'",
       longer_alt: IDENTIFIER,
-      categories,
+      categories: category ? [KEYWORD, category] : KEYWORD,
     })
 
-  export const CONST = KEYWORD("CONST")
-  export const UNIFORM = KEYWORD("UNIFORM")
-  export const LAYOUT = KEYWORD("LAYOUT")
-  export const CENTROID = KEYWORD("CENTROID")
-  export const FLAT = KEYWORD("FLAT", INTERPOLATION_QUALIFIER)
-  export const SMOOTH = KEYWORD("SMOOTH", INTERPOLATION_QUALIFIER)
-  export const BREAK = KEYWORD("BREAK")
-  export const CONTINUE = KEYWORD("CONTINUE")
-  export const DO = KEYWORD("DO")
-  export const PRECISION = KEYWORD("PRECISION")
-  export const FOR = KEYWORD("FOR")
-  export const WHILE = KEYWORD("WHILE")
-  export const SWITCH = KEYWORD("SWITCH")
-  export const CASE = KEYWORD("CASE")
-  export const DEFAULT = KEYWORD("DEFAULT")
+  export const CONST = createKeyword("CONST")
+  export const UNIFORM = createKeyword("UNIFORM")
+  export const LAYOUT = createKeyword("LAYOUT")
+  export const CENTROID = createKeyword("CENTROID")
+  export const FLAT = createKeyword("FLAT", INTERPOLATION_QUALIFIER)
+  export const SMOOTH = createKeyword("SMOOTH", INTERPOLATION_QUALIFIER)
+  export const BREAK = createKeyword("BREAK")
+  export const CONTINUE = createKeyword("CONTINUE")
+  export const DO = createKeyword("DO")
+  export const PRECISION = createKeyword("PRECISION")
+  export const FOR = createKeyword("FOR")
+  export const WHILE = createKeyword("WHILE")
+  export const SWITCH = createKeyword("SWITCH")
+  export const CASE = createKeyword("CASE")
+  export const DEFAULT = createKeyword("DEFAULT")
 
-  export const IF = KEYWORD("IF")
-  export const ELSE = KEYWORD("ELSE")
-  export const INVARIANT = KEYWORD("INVARIANT")
-  export const INOUT = KEYWORD("INOUT", PARAMETER_QUALIFIER)
-  export const OUT = KEYWORD("OUT", PARAMETER_QUALIFIER)
-  export const VOID = KEYWORD("VOID")
-  export const STRUCT = KEYWORD("STRUCT")
-  export const DISCARD = KEYWORD("DISCARD")
-  export const RETURN = KEYWORD("RETURN")
-  export const LOWP = KEYWORD("LOWP", PRECISION_QUALIFIER)
-  export const MEDIUMP = KEYWORD("MEDIUMP", PRECISION_QUALIFIER)
-  export const HIGHP = KEYWORD("HIGHP", PRECISION_QUALIFIER)
+  export const IF = createKeyword("IF")
+  export const ELSE = createKeyword("ELSE")
+  export const INVARIANT = createKeyword("INVARIANT")
+  export const INOUT = createKeyword("INOUT", PARAMETER_QUALIFIER)
+  export const OUT = createKeyword("OUT", PARAMETER_QUALIFIER)
+  export const VOID = createKeyword("VOID")
+  export const STRUCT = createKeyword("STRUCT")
+  export const DISCARD = createKeyword("DISCARD")
+  export const RETURN = createKeyword("RETURN")
+  export const LOWP = createKeyword("LOWP", PRECISION_QUALIFIER)
+  export const MEDIUMP = createKeyword("MEDIUMP", PRECISION_QUALIFIER)
+  export const HIGHP = createKeyword("HIGHP", PRECISION_QUALIFIER)
   export const CONSTANT = createToken({ name: "CONSTANT", pattern: Lexer.NA })
   export const BASIC_TYPE = createToken({
     name: "BASIC_TYPE",
@@ -531,7 +532,7 @@ export namespace TOKEN {
   export const ISAMPLER3D = createBasicType("isampler3D")
   export const ISAMPLER2DARRAY = createBasicType("isampler2DArray")
   export const ISAMPLER2D = createBasicType("isampler2D")
-  export const IN = KEYWORD("IN", PARAMETER_QUALIFIER)
+  export const IN = createKeyword("IN", PARAMETER_QUALIFIER)
   export const BOOLCONSTANT = createToken({
     name: "BOOLCONSTANT",
     pattern: /true|false/,
@@ -567,3 +568,31 @@ export const ALL_TOKENS = pull(Object.values(TOKEN), TOKEN.IDENTIFIER).flatMap(
 ALL_TOKENS.push(TOKEN.IDENTIFIER)
 
 export const GLSL_LEXER = new Lexer(ALL_TOKENS, { ensureOptimizations: DEV })
+
+export function checkLexingErrors(input: string, lexingResult: ILexingResult) {
+  if (lexingResult.errors.length) {
+    throw new Error(
+      "LEXER ERROR: " +
+        lexingResult.errors
+          .map(
+            (e) =>
+              e.message +
+              ":\n" +
+              substrContext(input, {
+                startLine: e.line,
+                startColumn: e.column,
+                endLine: e.line,
+                endColumn: e.column + e.length,
+              }),
+          )
+          // .map((e) => e.message)
+          .join(),
+    )
+  }
+}
+
+export function lex(input: string) {
+  const result = GLSL_LEXER.tokenize(input)
+  checkLexingErrors(input, result)
+  return result.tokens
+}

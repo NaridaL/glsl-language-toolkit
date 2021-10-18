@@ -209,6 +209,8 @@ describe("expected errors", () => {
       "fragment",
     )
   })
+  test("only method is .length()", () =>
+    glslExpr("int[2] i; i.`foo`()", ["only method is .length()"]))
   describe("uniform block", () => {
     test("opaque types are not allowed ", () =>
       glsl("uniform U { `sampler2D` s; };", [
