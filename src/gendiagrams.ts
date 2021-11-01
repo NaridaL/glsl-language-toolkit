@@ -46,6 +46,7 @@ export function recurseJSON(
     return x
   }
 }
+
 export const simplifyCst = recurseJSON.bind(undefined, (key, value) =>
   key === "children"
     ? (value as Node[]).map(shortDesc)

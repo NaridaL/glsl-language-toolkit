@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 import {
   EmbeddedActionsParser,
+  EMPTY_ALT,
   ILexingResult,
   IRecognitionException,
   IRuleConfig,
@@ -22,12 +23,14 @@ import {
   FunctionCall,
   FunctionDefinition,
   FunctionPrototype,
+  getTokenStartLine,
   InitDeclaratorListDeclaration,
   isNode,
   isToken,
   IterationStatement,
   JumpStatement,
   LayoutQualifier,
+  PreprocDefine,
   Node,
   ParameterDeclaration,
   PrecisionDeclaration,
@@ -44,6 +47,8 @@ import {
   UnaryExpression,
   UniformBlock,
   WhileStatement,
+  PreprocDir,
+  PreprocNode,
 } from "./nodes"
 import {
   ALL_TOKENS,
@@ -52,7 +57,7 @@ import {
   RESERVED_KEYWORDS,
   TOKEN,
 } from "./lexer"
-import { DEV, ExpandedLocation, substrContext } from "./util"
+import { DEV, ExpandedLocation, invariant, substrContext } from "./util"
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const VERSION_REGEXP = /\s*#\s*version\s+(\d+)\s+es\s*/
@@ -61,6 +66,7 @@ const VERSION_REGEXP = /\s*#\s*version\s+(\d+)\s+es\s*/
 // "i;" in a function could either be an expressionStatement containing a
 // variableExpression or an initDeclaratorList of type "struct i" with no
 // declarations. As neither of these is a useful construct, we always parse
+
 // ambiguous declarations/statements as TODO.
 class GLSLParser extends EmbeddedActionsParser {
   //SPEC variable_identifier:
@@ -112,7 +118,11 @@ class GLSLParser extends EmbeddedActionsParser {
   public multiplicativeExpression = this.RR(
     "multiplicativeExpression",
     (): Expression =>
-      this.LEFT_ASSOC(this.unaryExpression, TOKEN.MULTIPLICATIVE_OP),
+      this.LEFT_ASSOC(
+        // this.unaryExpression,
+        this.preproc ? this.preprocUnaryExpression : this.unaryExpression,
+        TOKEN.MULTIPLICATIVE_OP,
+      ),
   )
   //SPEC // Grammar Note: No traditional style type casts.
   //SPEC unary_operator:
@@ -804,6 +814,84 @@ class GLSLParser extends EmbeddedActionsParser {
         },
       ]),
   )
+  public preprocUnaryExpression = this.RR(
+    "preprocUnaryExpression",
+    (): Expression =>
+      this.OR([
+        {
+          GATE: () =>
+            this.LA(1).tokenType === TOKEN.IDENTIFIER &&
+            this.LA(1).image === "defined",
+          ALT: () => {
+            const op = this.CONSUME(TOKEN.IDENTIFIER)
+            const _var = this.OR1([
+              { ALT: () => this.SUBRULE(this.preprocIdentifier) },
+              {
+                ALT: () => {
+                  this.CONSUME(TOKEN.LEFT_PAREN)
+                  const _var = this.SUBRULE1(this.preprocIdentifier)
+                  this.CONSUME(TOKEN.RIGHT_PAREN)
+                  return _var
+                },
+              },
+            ])
+            return {
+              kind: "unaryExpression",
+              op,
+              on: { kind: "variableExpression", var: _var },
+            }
+          },
+        },
+        {
+          ALT: () => {
+            const op = this.OR2([
+              { ALT: () => this.CONSUME(TOKEN.PLUS) },
+              { ALT: () => this.CONSUME(TOKEN.DASH) },
+              { ALT: () => this.CONSUME(TOKEN.TILDE) },
+              { ALT: () => this.CONSUME(TOKEN.BANG) },
+            ])
+            const on = this.SUBRULE2(this.preprocUnaryExpression)
+            return { kind: "unaryExpression", op, on }
+          },
+        },
+        {
+          ALT: () => this.SUBRULE(this.preprocPrimaryExpression),
+        },
+      ]),
+  )
+
+  public preprocPrimaryExpression = this.RR(
+    "preprocPrimaryExpression",
+    (): Expression =>
+      this.OR([
+        {
+          ALT: () => {
+            const _var = this.SUBRULE(this.preprocIdentifier)
+            return { kind: "variableExpression", var: _var }
+          },
+        },
+        {
+          ALT: () => {
+            this.CONSUME(TOKEN.LEFT_PAREN)
+            const expr = this.SUBRULE(this.preprocLogicalOrExpression)
+            this.CONSUME(TOKEN.RIGHT_PAREN)
+            return expr
+          },
+        },
+      ]),
+  )
+  public preprocLogicalOrExpression = this.RR(
+    "preprocLogicalOrExpression",
+    () => {
+      try {
+        this.preproc = true
+        return this.LEFT_ASSOC(this.logicalAndExpression, TOKEN.AND_OP)
+      } finally {
+        this.preproc = false
+      }
+    },
+  )
+
   public typeSpecifier = this.RR("typeSpecifier", (): TypeSpecifier => {
     const precisionQualifier = this.OPTION(() =>
       this.SUBRULE(this.precisionQualifier),
@@ -1264,7 +1352,79 @@ class GLSLParser extends EmbeddedActionsParser {
     args?: [uniformBlock?: boolean, function_?: boolean],
   ) => Declaration
 
-  protected backtracking = false
+  public preprocDefine = this.RULE("preprocDefine", (): PreprocDefine => {
+    const def = this.CONSUME(TOKEN.PREPROC)
+    this.ACTION(() => invariant(def.image === "#define"))
+    const isFunctionMacro =
+      def.endOffset === this.LA(1).startOffset &&
+      this.LA(1).tokenType === TOKEN.LEFT_PAREN
+    const params = this.OR([
+      {
+        GATE: () => isFunctionMacro,
+        ALT: () => {
+          this.CONSUME(TOKEN.LEFT_PAREN)
+          const params: Token[] = []
+          this.MANY_SEP({
+            SEP: TOKEN.COMMA,
+            DEF: () => params.push(this.SUBRULE(this.preprocIdentifier)),
+          })
+          this.CONSUME(TOKEN.RIGHT_PAREN)
+          return params
+        },
+      },
+      {
+        GATE: () => !isFunctionMacro,
+        ALT: () => EMPTY_ALT(undefined),
+      },
+    ])
+    const tokens = this.getTokensOnLine()
+    const d: PreprocDefine = {
+      kind: "preprocDefine",
+      params,
+      tokens,
+      node: undefined,
+    }
+    this.defs.push(d)
+    return d
+  })
+
+  public preprocDir = this.RR("preprocDir", (): PreprocDir => {
+    const def = this.CONSUME(TOKEN.PREPROC)
+    this.ACTION(() => invariant(def.image === "#if"))
+    const tokens = this.getTokensOnLine()
+    const d: PreprocDir = {
+      kind: "preprocDir",
+      tokens,
+      node: undefined,
+    }
+    this.defs.push(d)
+    return d
+  })
+
+  public preprocIdentifier = this.RR(
+    "preprocIdentifier",
+    (): Token =>
+      this.OR([
+        { ALT: () => this.CONSUME(TOKEN.IDENTIFIER) },
+        { ALT: () => this.CONSUME(TOKEN.KEYWORD) },
+        { ALT: () => this.CONSUME(TOKEN.BASIC_TYPE) },
+      ]),
+  )
+
+  protected getTokensOnLine(): Token[] {
+    const tokens = []
+    const line = getTokenStartLine(this.LA(0))
+    let tok
+    while (getTokenStartLine((tok = this.LA(1))) === line) {
+      tokens.push(tok)
+      this.SKIP_TOKEN()
+    }
+    return tokens
+  }
+
+  protected backtracking!: boolean
+  private defs: PreprocNode[] = []
+  private preproc!: boolean
 
   public constructor() {
     super(ALL_TOKENS, { skipValidations: !DEV })
@@ -1274,6 +1434,9 @@ class GLSLParser extends EmbeddedActionsParser {
 
   public reset() {
     super.reset()
+    this.defs = []
+    this.backtracking = false
+    this.preproc = false
   }
 
   protected LEFT_ASSOC(rule: (idx: number) => Expression, tok: TokenType) {

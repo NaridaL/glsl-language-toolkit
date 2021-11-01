@@ -130,7 +130,10 @@ export namespace TOKEN {
     name: "ADDITIVE_OP",
     pattern: Lexer.NA,
   })
-  export const SHIFT_OP = createToken({ name: "SHIFT_OP", pattern: Lexer.NA })
+  export const SHIFT_OP = createToken({
+    name: "SHIFT_OP",
+    pattern: Lexer.NA,
+  })
   export const RELATIONAL_OP = createToken({
     name: "RELATIONAL_OP",
     pattern: Lexer.NA,
@@ -161,8 +164,7 @@ export namespace TOKEN {
   })
   export const PREPROC = createToken({
     name: "PREPROC",
-    pattern: /#[^\r\n]*/,
-    group: "PREPROC",
+    pattern: /#\w+/,
   })
 
   // ASSIGNMENT OPERATORS

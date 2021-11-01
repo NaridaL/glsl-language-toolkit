@@ -9,12 +9,12 @@
 </style>
 
 
-<link rel='stylesheet' href='https://unpkg.com/chevrotain@9.0.2/diagrams/diagrams.css'>
+<link rel='stylesheet' href='https://unpkg.com/chevrotain@9.1.0/diagrams/diagrams.css'>
 
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/vendor/railroad-diagrams.js'></script>
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/src/diagrams_builder.js'></script>
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/src/diagrams_behavior.js'></script>
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/src/main.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/vendor/railroad-diagrams.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/diagrams_builder.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/diagrams_behavior.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/main.js'></script>
 
 <div id="diagrams" align="center"></div>    
 
@@ -1253,6 +1253,222 @@
   },
   {
     "type": "Rule",
+    "name": "preprocUnaryExpression",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "IDENTIFIER",
+                "label": "IDENTIFIER",
+                "idx": 0,
+                "pattern": "\\w[\\w\\d]*"
+              },
+              {
+                "type": "Alternation",
+                "idx": 1,
+                "definition": [
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "NonTerminal",
+                        "name": "preprocIdentifier",
+                        "idx": 0
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "Terminal",
+                        "name": "LEFT_PAREN",
+                        "label": "'('",
+                        "idx": 0,
+                        "pattern": "("
+                      },
+                      {
+                        "type": "NonTerminal",
+                        "name": "preprocIdentifier",
+                        "idx": 1
+                      },
+                      {
+                        "type": "Terminal",
+                        "name": "RIGHT_PAREN",
+                        "label": "')'",
+                        "idx": 0,
+                        "pattern": ")"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Alternation",
+                "idx": 2,
+                "definition": [
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "Terminal",
+                        "name": "PLUS",
+                        "label": "'+'",
+                        "idx": 0,
+                        "pattern": "+"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "Terminal",
+                        "name": "DASH",
+                        "label": "'-'",
+                        "idx": 0,
+                        "pattern": "-"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "Terminal",
+                        "name": "TILDE",
+                        "label": "'~'",
+                        "idx": 0,
+                        "pattern": "~"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "Terminal",
+                        "name": "BANG",
+                        "label": "'!'",
+                        "idx": 0,
+                        "pattern": "!"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "NonTerminal",
+                "name": "preprocUnaryExpression",
+                "idx": 2
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "preprocPrimaryExpression",
+                "idx": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "preprocPrimaryExpression",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "preprocIdentifier",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "LEFT_PAREN",
+                "label": "'('",
+                "idx": 0,
+                "pattern": "("
+              },
+              {
+                "type": "NonTerminal",
+                "name": "preprocLogicalOrExpression",
+                "idx": 0
+              },
+              {
+                "type": "Terminal",
+                "name": "RIGHT_PAREN",
+                "label": "')'",
+                "idx": 0,
+                "pattern": ")"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "preprocLogicalOrExpression",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "logicalAndExpression",
+        "idx": 1
+      },
+      {
+        "type": "Repetition",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "AND_OP",
+            "label": "'&&'",
+            "idx": 0,
+            "pattern": "&&"
+          },
+          {
+            "type": "NonTerminal",
+            "name": "logicalAndExpression",
+            "idx": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
     "name": "typeSpecifier",
     "orgText": "",
     "definition": [
@@ -2428,6 +2644,130 @@
                 "type": "NonTerminal",
                 "name": "typeSpecifierNoPrec",
                 "idx": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "preprocDefine",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "PREPROC",
+        "label": "PREPROC",
+        "idx": 0,
+        "pattern": "#\\w+"
+      },
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "LEFT_PAREN",
+                "label": "'('",
+                "idx": 0,
+                "pattern": "("
+              },
+              {
+                "type": "RepetitionWithSeparator",
+                "idx": 0,
+                "separator": {
+                  "type": "Terminal",
+                  "name": "COMMA",
+                  "label": "','",
+                  "idx": 1,
+                  "pattern": ","
+                },
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "preprocIdentifier",
+                    "idx": 0
+                  }
+                ]
+              },
+              {
+                "type": "Terminal",
+                "name": "RIGHT_PAREN",
+                "label": "')'",
+                "idx": 0,
+                "pattern": ")"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "preprocDir",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "PREPROC",
+        "label": "PREPROC",
+        "idx": 0,
+        "pattern": "#\\w+"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "preprocIdentifier",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "IDENTIFIER",
+                "label": "IDENTIFIER",
+                "idx": 0,
+                "pattern": "\\w[\\w\\d]*"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "KEYWORD",
+                "label": "KEYWORD",
+                "idx": 0,
+                "pattern": "NOT_APPLICABLE"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "BASIC_TYPE",
+                "label": "BASIC_TYPE",
+                "idx": 0,
+                "pattern": "NOT_APPLICABLE"
               }
             ]
           }

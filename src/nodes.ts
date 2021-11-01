@@ -1,6 +1,15 @@
-import { IToken } from "chevrotain"
+import { IToken, tokenLabel } from "chevrotain"
 
-export type Token = IToken
+export interface Token extends IToken {
+  macroSource?: Token
+  // original line number, as parsed from input with applied line continuations
+  // needed by preprocessor to figure out which tokens are in one line
+  lineNoCont?: number
+}
+
+export function getTokenStartLine(token: Token): number {
+  return token.lineNoCont !== undefined ? token.lineNoCont : token.startLine!
+}
 
 export interface BaseNode {
   kind: string
@@ -278,6 +287,22 @@ export interface StructDeclaration extends BaseNode {
   declarators: Declarator[]
 }
 
+export interface PreprocDefine extends BaseNode {
+  kind: "preprocDefine"
+  // params if this a function macro
+  params: Token[] | undefined
+  tokens: Token[] | undefined
+  // node if we successfully parsed one
+  node: Node | undefined
+}
+export interface PreprocDir extends BaseNode {
+  kind: "preprocDir"
+  tokens: Token[] | undefined
+  // node if we successfully parsed one
+  node: Node | undefined
+}
+export type PreprocNode = PreprocDefine | PreprocDir
+
 export type Declaration =
   | FunctionDefinition
   | FunctionPrototype
@@ -318,6 +343,7 @@ export type Node =
   | TranslationUnit
   | TypeQualifier
   | TypeSpecifier
+  | PreprocNode
 
 export class AbstractVisitor<R> {
   protected visit(n: Node | undefined): R | undefined {
@@ -527,6 +553,12 @@ export class AbstractVisitor<R> {
       this.visit(d)
     }
     this.visit(n.arraySpecifier)
+    return
+  }
+  protected preprocDefine(n: PreprocDefine): R | undefined {
+    return
+  }
+  protected preprocDir(n: PreprocDir): R | undefined {
     return
   }
 }
