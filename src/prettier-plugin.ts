@@ -1,12 +1,20 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { AstPath, Doc, format, Plugin, SupportInfo } from "prettier"
-import { builders } from "prettier/doc"
+import {
+  AstPath,
+  Doc,
+  format,
+  ParserOptions,
+  Plugin,
+  SupportInfo,
+} from "prettier"
+import * as doc from "prettier/doc"
 import { IToken, TokenType } from "chevrotain"
 
 import {
   AbstractVisitor,
   BinaryExpression,
+  isExpression,
   isToken,
   Node,
   Token,
@@ -15,8 +23,20 @@ import {
 import { TOKEN } from "./lexer"
 import { parseInput } from "./parser"
 
-const { indentIfBreak, group, indent, join, line, softline, hardline } =
-  builders
+const {
+  utils: { propagateBreaks },
+  printer: { printDocToString },
+  builders: {
+    indentIfBreak,
+    group,
+    indent,
+    join,
+    line,
+    softline,
+    hardline,
+    fill,
+  },
+} = doc
 
 export const CHILDREN_VISITOR: AbstractVisitor<Node[]> & {
   visit(n: Node): Node[]
@@ -134,10 +154,12 @@ function getOpPrecedence(op: TokenType): number {
   }
 }
 
-function getPrecedence(n: Node): number {
+function getPrecedence(n: Node, inMacro: Token[] | undefined): number {
   switch (n.kind) {
     default:
       return 1
+    case "variableExpression":
+      return inMacro?.find((t) => t.image === n.var.image) ? 18 : 1
     case "arrayAccess":
     case "functionCall":
     case "fieldAccess":
@@ -164,6 +186,7 @@ function printBinaryExpression(
   path: AstPath<Node | IToken>,
   print: (path: AstPath<Node | IToken>) => Doc,
   n: BinaryExpression,
+  inMacro: Token[] | undefined,
 ): Doc[] {
   // Binary operation chains with the same operator precedence should either
   // completely break or not at all. E.g. a + b + ccccccccccccc should be
@@ -178,26 +201,53 @@ function printBinaryExpression(
             path,
             print,
             path.getValue() as BinaryExpression,
+            inMacro,
           )
       : print,
     "lhs",
   )
 
   return [
-    paren(lhsDoc, getPrecedence(n.lhs) > getOpPrecedence(n.op.tokenType)),
+    paren(
+      lhsDoc,
+      getPrecedence(n.lhs, inMacro) > getOpPrecedence(n.op.tokenType),
+    ),
     " ",
     path.call(print, "op"),
     line,
     paren(
       path.call(print, "rhs"),
-      getPrecedence(n.rhs) >= getOpPrecedence(n.op.tokenType),
+      getPrecedence(n.rhs, inMacro) >= getOpPrecedence(n.op.tokenType),
     ),
   ]
 }
 
+function glug(doc: Doc, options: ParserOptions<Node | IToken>): string {
+  propagateBreaks(doc)
+  const formatted = printDocToString(
+    doc,
+    Object.assign({}, options, {
+      printWidth: options.printWidth - 2,
+    }),
+  ).formatted
+  console.log("formatted", formatted)
+  return formatted
+    .trim()
+    .replace(
+      /^.*(?=[\r\n])/gm,
+      (substr: string) =>
+        substr + " ".repeat(options.printWidth - 2 - substr.length + 1) + "\\",
+    )
+}
+
 export const printers: Plugin<Node | IToken>["printers"] = {
   "glsl-ast": {
-    print(path, options, print): Doc {
+    print(
+      path,
+      options: ParserOptions<Node | IToken> & { inMacro?: Token[] },
+      print,
+    ): Doc {
+      const inMacro = options.inMacro
       const n = path.getValue()
       if (!n) {
         return []
@@ -347,7 +397,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             return ["[", p(n, "size"), "]"]
           case "arrayAccess":
             return [
-              paren(p(n, "on"), getPrecedence(n.on) > 2),
+              paren(p(n, "on"), getPrecedence(n.on, inMacro) > 2),
               "[",
               p(n, "index"),
               "]",
@@ -453,14 +503,20 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             ])
           case "methodCall":
             return [
-              paren(p(n, "on"), getPrecedence(n.on) > 2),
+              paren(p(n, "on"), getPrecedence(n.on, inMacro) > 2),
               ".",
               p(n, "functionCall"),
             ]
           case "postfixExpression":
-            return [paren(p(n, "on"), getPrecedence(n.on) > 2), p(n, "op")]
+            return [
+              paren(p(n, "on"), getPrecedence(n.on, inMacro) > 2),
+              p(n, "op"),
+            ]
           case "unaryExpression":
-            return [p(n, "op"), paren(p(n, "on"), getPrecedence(n.on) > 3)]
+            return [
+              p(n, "op"),
+              paren(p(n, "on"), getPrecedence(n.on, inMacro) > 3),
+            ]
           case "assignmentExpression": {
             const groupId = Symbol("assignment")
             return group([
@@ -473,16 +529,19 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           }
           case "conditionalExpression":
             return [
-              paren(p(n, "condition"), getPrecedence(n.condition) >= 15),
+              paren(
+                p(n, "condition"),
+                getPrecedence(n.condition, inMacro) >= 15,
+              ),
               indent([line, "? ", p(n, "yes"), line, ": ", p(n, "no")]),
             ]
           case "binaryExpression":
-            return group(printBinaryExpression(path, print, n))
+            return group(printBinaryExpression(path, print, n, inMacro))
           case "expressionStatement":
             return [p(n, "expression"), ";"]
           case "fieldAccess":
             return [
-              paren(p(n, "on"), getPrecedence(n.on) > 2),
+              paren(p(n, "on"), getPrecedence(n.on, inMacro) > 2),
               ".",
               p(n, "field"),
             ]
@@ -495,6 +554,39 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           }
           case "variableExpression":
             return n.var.image
+          case "ppDefine": {
+            options.inMacro = n.params
+            const doc = group([
+              "#define",
+              " ",
+              p(n, "what"),
+              n.params
+                ? ["(", join([", "], path.map(print, "params")), ")"]
+                : "",
+              indent([
+                line,
+                n.node
+                  ? paren(p(n, "node"), isExpression(n.node))
+                  : fill(join(line, path.map(print, "tokens")).parts),
+              ]),
+            ])
+            options.inMacro = undefined
+            return glug(doc, options)
+          }
+          case "ppDir": {
+            return glug(
+              group([
+                n.dir.image,
+                " ",
+                indent(
+                  n.node
+                    ? p(n, "node")
+                    : fill(join(line, path.map(print, "tokens")).parts),
+                ),
+              ]),
+              options,
+            )
+          }
           default:
             throw new Error(
               "unexpected n type " +

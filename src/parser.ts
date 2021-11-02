@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 import {
   EmbeddedActionsParser,
-  EMPTY_ALT,
-  ILexingResult,
+  EOF,
   IRecognitionException,
   IRuleConfig,
   IToken,
@@ -30,9 +29,13 @@ import {
   IterationStatement,
   JumpStatement,
   LayoutQualifier,
-  PreprocDefine,
   Node,
   ParameterDeclaration,
+  PpCall,
+  PpDefine,
+  PpDir,
+  PpExtension,
+  PpNode,
   PrecisionDeclaration,
   SelectionStatement,
   Statement,
@@ -47,8 +50,6 @@ import {
   UnaryExpression,
   UniformBlock,
   WhileStatement,
-  PreprocDir,
-  PreprocNode,
 } from "./nodes"
 import {
   ALL_TOKENS,
@@ -57,7 +58,8 @@ import {
   RESERVED_KEYWORDS,
   TOKEN,
 } from "./lexer"
-import { DEV, ExpandedLocation, invariant, substrContext } from "./util"
+import { DEV, ExpandedLocation, substrContext } from "./util"
+import { applyLineContinuations } from "./preprocessor"
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const VERSION_REGEXP = /\s*#\s*version\s+(\d+)\s+es\s*/
@@ -120,7 +122,7 @@ class GLSLParser extends EmbeddedActionsParser {
     (): Expression =>
       this.LEFT_ASSOC(
         // this.unaryExpression,
-        this.preproc ? this.preprocUnaryExpression : this.unaryExpression,
+        this.preprocessing ? this.ppUnaryExpression : this.unaryExpression,
         TOKEN.MULTIPLICATIVE_OP,
       ),
   )
@@ -814,8 +816,8 @@ class GLSLParser extends EmbeddedActionsParser {
         },
       ]),
   )
-  public preprocUnaryExpression = this.RR(
-    "preprocUnaryExpression",
+  public ppUnaryExpression = this.RR(
+    "ppUnaryExpression",
     (): Expression =>
       this.OR([
         {
@@ -825,11 +827,11 @@ class GLSLParser extends EmbeddedActionsParser {
           ALT: () => {
             const op = this.CONSUME(TOKEN.IDENTIFIER)
             const _var = this.OR1([
-              { ALT: () => this.SUBRULE(this.preprocIdentifier) },
+              { ALT: () => this.SUBRULE(this.ppIdentifier) },
               {
                 ALT: () => {
                   this.CONSUME(TOKEN.LEFT_PAREN)
-                  const _var = this.SUBRULE1(this.preprocIdentifier)
+                  const _var = this.SUBRULE1(this.ppIdentifier)
                   this.CONSUME(TOKEN.RIGHT_PAREN)
                   return _var
                 },
@@ -850,47 +852,44 @@ class GLSLParser extends EmbeddedActionsParser {
               { ALT: () => this.CONSUME(TOKEN.TILDE) },
               { ALT: () => this.CONSUME(TOKEN.BANG) },
             ])
-            const on = this.SUBRULE2(this.preprocUnaryExpression)
+            const on = this.SUBRULE2(this.ppUnaryExpression)
             return { kind: "unaryExpression", op, on }
           },
         },
         {
-          ALT: () => this.SUBRULE(this.preprocPrimaryExpression),
+          ALT: () => this.SUBRULE(this.ppPrimaryExpression),
         },
       ]),
   )
 
-  public preprocPrimaryExpression = this.RR(
-    "preprocPrimaryExpression",
+  public ppPrimaryExpression = this.RR(
+    "ppPrimaryExpression",
     (): Expression =>
       this.OR([
         {
           ALT: () => {
-            const _var = this.SUBRULE(this.preprocIdentifier)
+            const _var = this.SUBRULE(this.ppIdentifier)
             return { kind: "variableExpression", var: _var }
           },
         },
         {
           ALT: () => {
             this.CONSUME(TOKEN.LEFT_PAREN)
-            const expr = this.SUBRULE(this.preprocLogicalOrExpression)
+            const expr = this.SUBRULE(this.ppLogicalOrExpression)
             this.CONSUME(TOKEN.RIGHT_PAREN)
             return expr
           },
         },
       ]),
   )
-  public preprocLogicalOrExpression = this.RR(
-    "preprocLogicalOrExpression",
-    () => {
-      try {
-        this.preproc = true
-        return this.LEFT_ASSOC(this.logicalAndExpression, TOKEN.AND_OP)
-      } finally {
-        this.preproc = false
-      }
-    },
-  )
+  public ppLogicalOrExpression = this.RR("ppLogicalOrExpression", () => {
+    try {
+      this.preprocessing = true
+      return this.LEFT_ASSOC(this.logicalAndExpression, TOKEN.AND_OP)
+    } finally {
+      this.preprocessing = false
+    }
+  })
 
   public typeSpecifier = this.RR("typeSpecifier", (): TypeSpecifier => {
     const precisionQualifier = this.OPTION(() =>
@@ -1095,6 +1094,10 @@ class GLSLParser extends EmbeddedActionsParser {
     (newScope?: boolean): Statement =>
       this.OR<Statement>([
         {
+          ALT: () => this.SUBRULE(this.ppDirective),
+          IGNORE_AMBIGUITIES: true,
+        },
+        {
           // We want "IDENTIFIER ;" to be parsed as a variableExpression, so
           // we add a special rule here.
           ALT: () => {
@@ -1243,6 +1246,7 @@ class GLSLParser extends EmbeddedActionsParser {
     "externalDeclaration",
     (uniformBlock?: boolean, function_?: boolean): Declaration =>
       this.OR([
+        { ALT: () => this.SUBRULE(this.ppDirective) },
         // uniform/interface block
         {
           GATE: uniformBlock
@@ -1352,57 +1356,129 @@ class GLSLParser extends EmbeddedActionsParser {
     args?: [uniformBlock?: boolean, function_?: boolean],
   ) => Declaration
 
-  public preprocDefine = this.RULE("preprocDefine", (): PreprocDefine => {
-    const def = this.CONSUME(TOKEN.PREPROC)
-    this.ACTION(() => invariant(def.image === "#define"))
+  public ppDefine = this.RULE("ppDefine", (): PpDefine => {
+    this.CONSUME(TOKEN.PP_DEFINE)
+    const what = this.CONSUME(TOKEN.IDENTIFIER)
     const isFunctionMacro =
-      def.endOffset === this.LA(1).startOffset &&
-      this.LA(1).tokenType === TOKEN.LEFT_PAREN
-    const params = this.OR([
-      {
-        GATE: () => isFunctionMacro,
-        ALT: () => {
-          this.CONSUME(TOKEN.LEFT_PAREN)
-          const params: Token[] = []
-          this.MANY_SEP({
-            SEP: TOKEN.COMMA,
-            DEF: () => params.push(this.SUBRULE(this.preprocIdentifier)),
-          })
-          this.CONSUME(TOKEN.RIGHT_PAREN)
-          return params
-        },
+      this.LA(1).tokenType === TOKEN.LEFT_PAREN &&
+      what.endOffset! + 1 === this.LA(1).startOffset
+    const params = this.OPTION({
+      GATE: () => isFunctionMacro,
+      DEF: () => {
+        this.CONSUME(TOKEN.LEFT_PAREN)
+        const params: Token[] = []
+        this.MANY_SEP({
+          SEP: TOKEN.COMMA,
+          DEF: () => params.push(this.SUBRULE(this.ppIdentifier)),
+        })
+        this.CONSUME(TOKEN.RIGHT_PAREN)
+        return params
       },
-      {
-        GATE: () => !isFunctionMacro,
-        ALT: () => EMPTY_ALT(undefined),
-      },
-    ])
+    })
     const tokens = this.getTokensOnLine()
-    const d: PreprocDefine = {
-      kind: "preprocDefine",
+    const d: PpDefine = {
+      kind: "ppDefine",
+      what,
       params,
       tokens,
       node: undefined,
     }
-    this.defs.push(d)
+    this.ppDefs.push(d)
     return d
   })
 
-  public preprocDir = this.RR("preprocDir", (): PreprocDir => {
-    const def = this.CONSUME(TOKEN.PREPROC)
-    this.ACTION(() => invariant(def.image === "#if"))
+  public ppCall = this.RR("ppCall", (): PpCall => {
+    const callee = this.CONSUME(TOKEN.IDENTIFIER)
+    this.CONSUME(TOKEN.LEFT_PAREN)
+    const args: { tokens: Token[]; node: Node | undefined }[] = []
+    this.MANY_SEP({
+      SEP: TOKEN.COMMA,
+      DEF: () => {
+        const tokens: Token[] = []
+        this.MANY(() =>
+          this.OR([
+            {
+              ALT: () => tokens.push(...this.SUBRULE(this.ppCallArg)),
+            },
+            {
+              // GATE: () => this.LA(1).tokenType !== TOKEN.COMMA,
+              ALT: () => {
+                tokens.push(this.LA(1))
+                return this.SKIP_TOKEN()
+              },
+            },
+          ]),
+        )
+        args.push({ tokens, node: undefined })
+      },
+      MAX_LOOKAHEAD: 1,
+    })
+    this.CONSUME(TOKEN.RIGHT_PAREN)
+    return { kind: "ppCall", callee, args }
+  })
+
+  public ppCallArg = this.RULE("ppCallArg", (): Token[] => {
+    const tokens = []
+    tokens.push(this.CONSUME(TOKEN.LEFT_PAREN))
+    this.MANY(() =>
+      this.OR([
+        { ALT: () => tokens.push(...this.SUBRULE(this.ppCallArg)) },
+        {
+          // GATE: () => this.LA(1).tokenType !== TOKEN.COMMA,
+          ALT: () => {
+            tokens.push(this.LA(1))
+            return this.SKIP_TOKEN()
+          },
+        },
+      ]),
+    )
+    tokens.push(this.CONSUME(TOKEN.RIGHT_PAREN))
+    this.CONSUME(TOKEN.RIGHT_PAREN)
+
+    const skippedTokens = []
+    this.MANY({
+      GATE: () => this.LA(1).tokenType !== TOKEN.COMMA,
+      DEF: () => skippedTokens.push(this.SKIP_TOKEN()),
+    })
+    this.CONSUME(TOKEN.COMMA)
+    return tokens
+  })
+
+  public ppNone = this.RR("ppNone", (): PpNode => {
+    const dir = this.CONSUME(TOKEN.PP_NONE)
+
+    const d: PpNode = { kind: "ppDir", dir, tokens: [], node: undefined }
+    this.ppDefs.push(d)
+    return d
+  })
+  public ppMulti = this.RR("ppMulti", (): PpNode => {
+    const dir = this.CONSUME(TOKEN.PP_MULTI)
+
     const tokens = this.getTokensOnLine()
-    const d: PreprocDir = {
-      kind: "preprocDir",
-      tokens,
-      node: undefined,
-    }
-    this.defs.push(d)
+    const d: PpNode = { kind: "ppDir", dir, tokens, node: undefined }
+    this.ppDefs.push(d)
     return d
   })
+  public ppExtension = this.RR("ppExtension", (): PpExtension => {
+    this.CONSUME(TOKEN.PP_EXTENSION)
+    const extension = this.CONSUME(TOKEN.IDENTIFIER)
+    this.CONSUME(TOKEN.COLON)
+    const behavior = this.CONSUME1(TOKEN.IDENTIFIER)
+    return { kind: "ppExtension", extension, behavior }
+  })
+  public ppDirective = this.RR(
+    "ppDirective",
+    (): PpNode =>
+      this.OR([
+        { ALT: () => this.SUBRULE(this.ppDefine) },
+        { ALT: () => this.SUBRULE(this.ppExtension) },
+        { ALT: () => this.SUBRULE(this.ppNone) },
+        { ALT: () => this.SUBRULE(this.ppMulti) },
+      ]),
+  )
 
-  public preprocIdentifier = this.RR(
-    "preprocIdentifier",
+  public ppIdentifier = this.RR(
+    "ppIdentifier",
     (): Token =>
       this.OR([
         { ALT: () => this.CONSUME(TOKEN.IDENTIFIER) },
@@ -1423,8 +1499,8 @@ class GLSLParser extends EmbeddedActionsParser {
   }
 
   protected backtracking!: boolean
-  private defs: PreprocNode[] = []
-  private preproc!: boolean
+  public ppDefs: (PpDefine | PpDir)[] = []
+  private preprocessing!: boolean
 
   public constructor() {
     super(ALL_TOKENS, { skipValidations: !DEV })
@@ -1434,9 +1510,9 @@ class GLSLParser extends EmbeddedActionsParser {
 
   public reset() {
     super.reset()
-    this.defs = []
+    this.ppDefs = []
     this.backtracking = false
-    this.preproc = false
+    this.preprocessing = false
   }
 
   protected LEFT_ASSOC(rule: (idx: number) => Expression, tok: TokenType) {
@@ -1501,6 +1577,10 @@ class GLSLParser extends EmbeddedActionsParser {
       n.lastToken = this.LA(0)
     }
   }
+
+  public isAtEof(): boolean {
+    return this.LA(1).tokenType === EOF
+  }
 }
 
 // ONLY ONCE
@@ -1534,7 +1614,9 @@ export function shortDesc(node: Node | IToken) {
       }`
 }
 
-export function parseInput(input: string): TranslationUnit {
+export function parseInput(originalInput: string): TranslationUnit {
+  const { result: input, changes } = applyLineContinuations(originalInput)
+
   const lexingResult = GLSL_LEXER.tokenize(input)
   checkLexingErrors(input, lexingResult)
 
@@ -1563,6 +1645,28 @@ export function parseInput(input: string): TranslationUnit {
   GLSL_PARSER.input = lexingResult.tokens
   const result = GLSL_PARSER.translationUnit()
   checkParsingErrors(input, GLSL_PARSER.errors)
+
+  const ppDefs = GLSL_PARSER.ppDefs
+
+  function tryParse(
+    tokens: Token[],
+    rule: (glslParser: GLSLParser) => Node,
+  ): Node | undefined {
+    GLSL_PARSER.input = tokens
+    const result = rule(GLSL_PARSER)
+    if (GLSL_PARSER.isAtEof() && GLSL_PARSER.errors.length === 0) {
+      return result
+    } else {
+      return undefined
+    }
+  }
+
+  for (const ppDef of ppDefs) {
+    ppDef.node =
+      tryParse(ppDef.tokens, (p) => p.externalDeclaration(0, [true, true])) ??
+      tryParse(ppDef.tokens, (p) => p.statement()) ??
+      tryParse(ppDef.tokens, (p) => p.expression())
+  }
 
   result.comments = lexingResult.groups.COMMENTS
   return result

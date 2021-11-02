@@ -162,9 +162,43 @@ export namespace TOKEN {
     pattern: /\/\*[\s\S]*?\*\//,
     group: "COMMENTS",
   })
-  export const PREPROC = createToken({
-    name: "PREPROC",
-    pattern: /#\w+/,
+  export const PP = createToken({ name: "PP", pattern: Lexer.NA })
+  export const PP_INVALID = createToken({ name: "PP_INVALID", pattern: /\w+/ })
+  export const PP_DEFINE = createToken({
+    name: "PP_DEFINE",
+    pattern: "#define",
+    categories: PP,
+    longer_alt: PP_INVALID,
+  })
+  export const PP_NONE = createToken({
+    name: "PP_NONE",
+    pattern: /#(else|endif)/,
+    categories: PP,
+    longer_alt: PP_INVALID,
+  })
+  export const PP_DEF = createToken({
+    name: "PP_DEF",
+    pattern: /#(ifdef|ifndef|undef)/,
+    categories: PP,
+    longer_alt: PP_INVALID,
+  })
+  export const PP_MULTI = createToken({
+    name: "PP_MULTI",
+    pattern: /#(if|elsif|error|pragma|line)/,
+    categories: PP,
+    longer_alt: PP_INVALID,
+  })
+  export const PP_EXTENSION = createToken({
+    name: "PP_EXTENSION",
+    pattern: "#extension",
+    categories: PP,
+    longer_alt: PP_INVALID,
+  })
+  export const PP_HASH = createToken({
+    name: "PP_HASH",
+    pattern: "#",
+    categories: PP,
+    longer_alt: PP_INVALID,
   })
 
   // ASSIGNMENT OPERATORS
@@ -564,10 +598,12 @@ export namespace TOKEN {
 }
 // IDENTIFIER needs to go last, but must be declared first
 // so it can be referenced in longerAlt
-export const ALL_TOKENS = pull(Object.values(TOKEN), TOKEN.IDENTIFIER).flatMap(
-  (x) => (Array.isArray(x) ? x : [x]),
-)
-ALL_TOKENS.push(TOKEN.IDENTIFIER)
+export const ALL_TOKENS = pull(
+  Object.values(TOKEN),
+  TOKEN.IDENTIFIER,
+  TOKEN.PP_INVALID,
+).flatMap((x) => (Array.isArray(x) ? x : [x]))
+ALL_TOKENS.push(TOKEN.IDENTIFIER, TOKEN.PP_INVALID)
 
 export const GLSL_LEXER = new Lexer(ALL_TOKENS, { ensureOptimizations: DEV })
 

@@ -210,6 +210,23 @@ export type Expression =
   | ConstantExpression
   | VariableExpression
 
+export function isExpression(n: Node): n is Expression {
+  return [
+    "arrayAccess",
+    "assignmentExpression",
+    "binaryExpression",
+    "conditionalExpression",
+    "fieldAccess",
+    "functionCall",
+    "methodCall",
+    "postfixExpression",
+    "unaryExpression",
+    "commaExpression",
+    "constantExpression",
+    "variableExpression",
+  ].includes(n.kind)
+}
+
 export interface InitDeclaratorListDeclaration extends BaseNode {
   kind: "initDeclaratorListDeclaration"
   fsType: FullySpecifiedType
@@ -287,21 +304,33 @@ export interface StructDeclaration extends BaseNode {
   declarators: Declarator[]
 }
 
-export interface PreprocDefine extends BaseNode {
-  kind: "preprocDefine"
+export interface PpDefine extends BaseNode {
+  kind: "ppDefine"
+  what: Token
   // params if this a function macro
   params: Token[] | undefined
-  tokens: Token[] | undefined
+  tokens: Token[]
   // node if we successfully parsed one
   node: Node | undefined
 }
-export interface PreprocDir extends BaseNode {
-  kind: "preprocDir"
-  tokens: Token[] | undefined
+export interface PpExtension extends BaseNode {
+  kind: "ppExtension"
+  extension: Token
+  behavior: Token
+}
+export interface PpDir extends BaseNode {
+  dir: Token
+  kind: "ppDir"
+  tokens: Token[]
   // node if we successfully parsed one
   node: Node | undefined
 }
-export type PreprocNode = PreprocDefine | PreprocDir
+export interface PpCall extends BaseNode {
+  kind: "ppCall"
+  callee: Token
+  args: { tokens: Token[]; node: Node | undefined }[]
+}
+export type PpNode = PpDefine | PpDir | PpExtension | PpCall
 
 export type Declaration =
   | FunctionDefinition
@@ -310,6 +339,7 @@ export type Declaration =
   | PrecisionDeclaration
   | InvariantDeclaration
   | UniformBlock
+  | PpNode
 export type JumpStatement =
   | ReturnStatement
   | ContinueStatement
@@ -328,6 +358,7 @@ export type Statement =
   | SelectionStatement
   | SwitchStatement
   | InitDeclaratorListDeclaration
+  | PpNode
 export type Node =
   | ArraySpecifier
   | Declaration
@@ -343,7 +374,7 @@ export type Node =
   | TranslationUnit
   | TypeQualifier
   | TypeSpecifier
-  | PreprocNode
+  | PpNode
 
 export class AbstractVisitor<R> {
   protected visit(n: Node | undefined): R | undefined {
@@ -555,10 +586,14 @@ export class AbstractVisitor<R> {
     this.visit(n.arraySpecifier)
     return
   }
-  protected preprocDefine(n: PreprocDefine): R | undefined {
+  protected ppDefine(n: PpDefine): R | undefined {
+    this.visit(n.node)
     return
   }
-  protected preprocDir(n: PreprocDir): R | undefined {
+  protected ppDir(n: PpDir): R | undefined {
+    return
+  }
+  protected ppExtension(n: PpExtension): R | undefined {
     return
   }
 }
