@@ -40,6 +40,25 @@ test("function macro", () => {
   expect(images(preproc(source))).toEqual(images(lex(`vec3 v = vec3(1);`)))
 })
 
+test("if macro", () => {
+  const source = `
+  #if HW_PERFORMANCE==0
+  float f;
+  #endif
+  `
+  expect(images(preproc(source))).toEqual(images(lex(`float f;`)))
+})
+test("if-else macro", () => {
+  const source = `
+  #if HW_PERFORMANCE==1
+  float f;
+  #else
+  float b;
+  #endif
+  `
+  expect(images(preproc(source))).toEqual(images(lex(`float b;`)))
+})
+
 test("preproc works", () => {
   const source = `#version 300 es
 #define MAX3(genType) genType max3(genType a, genType b, genType c) {\\

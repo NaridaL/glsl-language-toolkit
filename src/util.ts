@@ -3,9 +3,9 @@ import "colors"
 
 export const DEV = process.env.NODE_ENV !== "production"
 
-export function invariant(x: unknown): void {
+export function invariant(x: unknown, message = ""): void {
   if (DEV && !x) {
-    throw new Error()
+    throw new Error(message)
   }
 }
 

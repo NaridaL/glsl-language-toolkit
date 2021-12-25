@@ -1,4 +1,3 @@
-import { IToken } from "chevrotain"
 import { Token } from "./nodes"
 import { lex, TOKEN } from "./lexer"
 
@@ -291,6 +290,7 @@ export function preprocMacros(tokens: Token[]): void {
             }
           }
         }
+      } else if (token.image === "#if") {
       } else {
         markError(token, "unknown preprocessor directive " + token.image)
       }

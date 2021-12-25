@@ -1,12 +1,5 @@
 /* eslint-disable @typescript-eslint/member-ordering */
-import {
-  EmbeddedActionsParser,
-  EOF,
-  IRecognitionException,
-  IRuleConfig,
-  IToken,
-  TokenType,
-} from "chevrotain"
+import { EmbeddedActionsParser, EOF, IRecognitionException, IRuleConfig, IToken, TokenType } from "chevrotain"
 
 import {
   ArraySpecifier,
@@ -51,13 +44,7 @@ import {
   UniformBlock,
   WhileStatement,
 } from "./nodes"
-import {
-  ALL_TOKENS,
-  checkLexingErrors,
-  GLSL_LEXER,
-  RESERVED_KEYWORDS,
-  TOKEN,
-} from "./lexer"
+import { ALL_TOKENS, checkLexingErrors, GLSL_LEXER, RESERVED_KEYWORDS, TOKEN } from "./lexer"
 import { DEV, ExpandedLocation, substrContext } from "./util"
 import { applyLineContinuations } from "./preprocessor"
 
@@ -1206,7 +1193,22 @@ class GLSLParser extends EmbeddedActionsParser {
     const declarations: Declaration[] = []
     this.AT_LEAST_ONE(() =>
       declarations.push(
-        this.SUBRULE(this.externalDeclaration, { ARGS: [true, true] }),
+        this.OR({
+          MAX_LOOKAHEAD: 1,
+          DEF: [
+            {
+              ALT: () =>
+                this.SUBRULE(this.externalDeclaration, { ARGS: [true, true] }),
+            },
+            {
+              GATE: () => this.LA(1).image === "#define",
+              ALT: () => this.SUBRULE(this.ppDefine),
+            },
+            {
+              ALT: () => this.SUBRULE(this.ppNone),
+            },
+          ],
+        }),
       ),
     )
     return { kind: "translationUnit", declarations }
@@ -1356,7 +1358,7 @@ class GLSLParser extends EmbeddedActionsParser {
     args?: [uniformBlock?: boolean, function_?: boolean],
   ) => Declaration
 
-  public ppDefine = this.RULE("ppDefine", (): PpDefine => {
+  public ppDefine = this.RR("ppDefine", (): PpDefine => {
     this.CONSUME(TOKEN.PP_DEFINE)
     const what = this.CONSUME(TOKEN.IDENTIFIER)
     const isFunctionMacro =
@@ -1500,6 +1502,9 @@ class GLSLParser extends EmbeddedActionsParser {
 
   protected backtracking!: boolean
   public ppDefs: (PpDefine | PpDir)[] = []
+
+  // Whether we are currently parsing a preproc expression,
+  // e.g. the condition of an #if.
   private preprocessing!: boolean
 
   public constructor() {

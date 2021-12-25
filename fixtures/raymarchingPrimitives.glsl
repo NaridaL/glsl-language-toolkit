@@ -251,8 +251,8 @@ float sdCappedCone(vec3 p, vec3 a, vec3 b, float ra, float rb)
 
     float s = (cbx < 0.0 && cay < 0.0) ? -1.0 : 1.0;
 
-    return s*sqrt( min(cax*cax + cay*cay*baba,
-    cbx*cbx + cby*cby*baba) );
+    return s*sqrt(min(cax*cax + cay*cay*baba,
+    cbx*cbx + cby*cby*baba));
 }
 
 // c is the sin/cos of the desired cone angle
@@ -617,7 +617,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
     vec3 tot = vec3(0.0);
     #if AA>1
-    for (int m=ZERO; m<AA; m++ )
+    for (int m=ZERO; m<AA; m++)
     for (int n=ZERO; n<AA; n++)
     {
         // pixel coordinates
