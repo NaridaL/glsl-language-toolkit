@@ -42,10 +42,10 @@ import {
   VariableExpression,
   WhileStatement,
 } from "./nodes"
-import { TOKEN } from "./lexer"
+import { doOp, TOKEN } from "./lexer"
 import { applyBuiltinFunction, Matrix } from "./builtins"
-import { parseInput, shortDesc } from "./parser"
-import { allDefined, assertNever, ccorrect, ExpandedLocation } from "./util"
+import { parseInput } from "./parser"
+import { allDefined, assertNever, ccorrect, CheckError, mapExpandedLocation } from "./util"
 import { ERRORS } from "./errors"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
@@ -84,31 +84,7 @@ namespace BasicType {
   export const UINT: NormalizedType = { kind: "basic", type: TOKEN.UINT }
 }
 
-export interface CheckError {
-  where: Token | Node
-  loc: ExpandedLocation
-  code: string
-  message: string
-  error: Error
-}
-
 let errors: CheckError[] = []
-
-function mapExpandedLocation(n: Token | Node): ExpandedLocation {
-  if (isToken(n)) {
-    return n as ExpandedLocation
-  } else {
-    if (!n.firstToken) {
-      throw new Error(n.kind)
-    }
-    return {
-      startLine: n.firstToken.startLine!,
-      startColumn: n.firstToken.startColumn!,
-      endLine: n.lastToken!.endLine!,
-      endColumn: n.lastToken!.endColumn!,
-    }
-  }
-}
 
 function markError(
   where: Token | Node,
@@ -117,6 +93,7 @@ function markError(
 ) {
   const message = code + ": " + ERRORS[code] + args.join(" ")
   errors.push({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     loc: mapExpandedLocation(where),
     where,
     code,
@@ -245,56 +222,6 @@ function getComponentType(t: TokenType): TokenType | undefined {
 }
 
 type TypeAndValue = { type: NormalizedType; value: any }
-
-function doOp(op: TokenType, a: any, b: any) {
-  switch (op) {
-    case TOKEN.PLUS:
-      return a + b
-    case TOKEN.DASH:
-      return a - b
-
-    case TOKEN.STAR:
-      return a * b
-    case TOKEN.PERCENT:
-      return a % b
-    case TOKEN.SLASH:
-      return a / b
-
-    case TOKEN.LEFT_OP:
-      return a << b
-    case TOKEN.RIGHT_OP:
-      return a >> b
-
-    case TOKEN.EQ_OP:
-      return a === b
-    case TOKEN.NE_OP:
-      return a !== b
-    case TOKEN.LE_OP:
-      return a <= b
-    case TOKEN.GE_OP:
-      return a >= b
-    case TOKEN.LEFT_ANGLE:
-      return a < b
-    case TOKEN.RIGHT_ANGLE:
-      return a > b
-
-    case TOKEN.XOR_OP:
-      return a !== b
-    case TOKEN.AND_OP:
-      return a && b
-    case TOKEN.OR_OP:
-      return a || b
-
-    case TOKEN.AMPERSAND:
-      return a & b
-    case TOKEN.CARET:
-      return a ^ b
-    case TOKEN.VERTICAL_BAR:
-      return a | b
-    default:
-      throw new Error()
-  }
-}
 
 function evaluateBinaryOp(
   op: TokenType,
@@ -705,7 +632,7 @@ interface FunctionBinding {
     result: NormalizedType
     def: FunctionDefinition | FunctionPrototype
   }[]
-  builtin: boolean
+  builtIn: boolean
 }
 
 interface StructBinding {
@@ -812,7 +739,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     | (NormalizedType | undefined)[]
     | undefined = undefined
 
-  private doingBuiltins = false
+  private doingBuiltIns = false
 
   protected get scope() {
     const s = last(this.scopes)
@@ -823,9 +750,9 @@ class BinderVisitor extends AbstractVisitor<any> {
   }
 
   public builtins(n: TranslationUnit): void {
-    this.doingBuiltins = true
+    this.doingBuiltIns = true
     this.translationUnit(n)
-    this.doingBuiltins = false
+    this.doingBuiltIns = false
   }
 
   public bind(u: TranslationUnit): void {
@@ -948,7 +875,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     }
     this.pushScope()
     super.translationUnit(n)
-    if (this.doingBuiltins) {
+    if (this.doingBuiltIns) {
       this.BUILTIN_SCOPE = this.scope
     }
     const f = (x: NormalizedType) => (x as BasicType)?.type?.PATTERN || "FAIL"
@@ -991,9 +918,9 @@ class BinderVisitor extends AbstractVisitor<any> {
       this.visit(n.body)
     }
     this.popScope()
-    if (!this.doingBuiltins) {
+    if (!this.doingBuiltIns) {
       const b = this.resolve(n.name.image)
-      if (b?.kind === "function" && b.builtin) {
+      if (b?.kind === "function" && b.builtIn) {
         markError(n.name, "S0054")
       }
     }
@@ -1012,11 +939,11 @@ class BinderVisitor extends AbstractVisitor<any> {
       def = this.scope.defs[n.name.image] = {
         kind: "function",
         overloads: [],
-        builtin: this.doingBuiltins,
+        builtIn: this.doingBuiltIns,
       }
     }
 
-    if (this.doingBuiltins) {
+    if (this.doingBuiltIns) {
       const genTypes =
         getGenTypes(n.returnType.typeSpecifier) ||
         n.params.map((p) => getGenTypes(p.typeSpecifier)).find(Boolean)
@@ -1159,6 +1086,7 @@ function getMatrixDimensions(
       return undefined
   }
 }
+
 function getConstantType(t: TokenType): TokenType {
   switch (t) {
     case TOKEN.INTCONSTANT:
@@ -1439,6 +1367,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     }
     return super.uniformBlock(n)
   }
+
   protected structSpecifier(n: StructSpecifier): NormalizedType | undefined {
     if (!n.declarations.length) {
       markError(n, "struct specifiers need at least one member")

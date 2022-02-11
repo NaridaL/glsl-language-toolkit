@@ -56,6 +56,11 @@ const VERSION_REGEXP = /\s*#\s*version\s+(\d+)\s+es\s*/
 // variableExpression or an initDeclaratorList of type "struct i" with no
 // declarations. As neither of these is a useful construct, we always parse
 
+export function ilog<T>(x: T): T {
+  console.log(x)
+  return x
+}
+
 // ambiguous declarations/statements as TODO.
 class GLSLParser extends EmbeddedActionsParser {
   //SPEC variable_identifier:
@@ -854,22 +859,29 @@ class GLSLParser extends EmbeddedActionsParser {
     (): Expression =>
       this.OR([
         {
-          ALT: () => {
-            const _var = this.SUBRULE(this.ppIdentifier)
-            return { kind: "variableExpression", var: _var }
-          },
+          ALT: () => ({
+            kind: "variableExpression",
+            var: this.SUBRULE(this.ppIdentifier),
+          }),
+        },
+        {
+          ALT: () => ({
+            kind: "constantExpression",
+            _const: this.CONSUME(TOKEN.INTCONSTANT),
+          }),
         },
         {
           ALT: () => {
             this.CONSUME(TOKEN.LEFT_PAREN)
-            const expr = this.SUBRULE(this.ppLogicalOrExpression)
+            const expr = this.SUBRULE(this.ppConstantExpression)
             this.CONSUME(TOKEN.RIGHT_PAREN)
             return expr
           },
         },
       ]),
   )
-  public ppLogicalOrExpression = this.RR("ppLogicalOrExpression", () => {
+
+  public ppConstantExpression = this.RR("ppLogicalOrExpression", () => {
     try {
       this.preprocessing = true
       return this.LEFT_ASSOC(this.logicalAndExpression, TOKEN.AND_OP)
@@ -1193,22 +1205,7 @@ class GLSLParser extends EmbeddedActionsParser {
     const declarations: Declaration[] = []
     this.AT_LEAST_ONE(() =>
       declarations.push(
-        this.OR({
-          MAX_LOOKAHEAD: 1,
-          DEF: [
-            {
-              ALT: () =>
-                this.SUBRULE(this.externalDeclaration, { ARGS: [true, true] }),
-            },
-            {
-              GATE: () => this.LA(1).image === "#define",
-              ALT: () => this.SUBRULE(this.ppDefine),
-            },
-            {
-              ALT: () => this.SUBRULE(this.ppNone),
-            },
-          ],
-        }),
+        this.SUBRULE(this.externalDeclaration, { ARGS: [true, true] }),
       ),
     )
     return { kind: "translationUnit", declarations }
@@ -1248,6 +1245,7 @@ class GLSLParser extends EmbeddedActionsParser {
     "externalDeclaration",
     (uniformBlock?: boolean, function_?: boolean): Declaration =>
       this.OR([
+        { ALT: () => this.SUBRULE(this.ppCall) },
         { ALT: () => this.SUBRULE(this.ppDirective) },
         // uniform/interface block
         {
@@ -1353,10 +1351,7 @@ class GLSLParser extends EmbeddedActionsParser {
           },
         },
       ]),
-  ) as (
-    idxInCallingRule: number | undefined,
-    args?: [uniformBlock?: boolean, function_?: boolean],
-  ) => Declaration
+  )
 
   public ppDefine = this.RR("ppDefine", (): PpDefine => {
     this.CONSUME(TOKEN.PP_DEFINE)
@@ -1398,18 +1393,22 @@ class GLSLParser extends EmbeddedActionsParser {
       DEF: () => {
         const tokens: Token[] = []
         this.MANY(() =>
-          this.OR([
-            {
-              ALT: () => tokens.push(...this.SUBRULE(this.ppCallArg)),
-            },
-            {
-              // GATE: () => this.LA(1).tokenType !== TOKEN.COMMA,
-              ALT: () => {
-                tokens.push(this.LA(1))
-                return this.SKIP_TOKEN()
+          this.OR({
+            // IGNORE_AMBIGUITIES: true,
+            DEF: [
+              {
+                ALT: () => {
+                  const tt = this.SUBRULE(this.ppCallArg)
+                  this.ACTION(() => tokens.push(...tt))
+                },
               },
-            },
-          ]),
+              { ALT: () => tokens.push(this.CONSUME(TOKEN.BASIC_TYPE)) },
+              { ALT: () => tokens.push(this.CONSUME(TOKEN.ASSIGN_OP)) },
+              { ALT: () => tokens.push(this.CONSUME(TOKEN.SHIFT_OP)) },
+              { ALT: () => tokens.push(this.CONSUME(TOKEN.CONSTANT)) },
+              { ALT: () => tokens.push(this.CONSUME(TOKEN.KEYWORD)) },
+            ],
+          }),
         )
         args.push({ tokens, node: undefined })
       },
@@ -1424,7 +1423,12 @@ class GLSLParser extends EmbeddedActionsParser {
     tokens.push(this.CONSUME(TOKEN.LEFT_PAREN))
     this.MANY(() =>
       this.OR([
-        { ALT: () => tokens.push(...this.SUBRULE(this.ppCallArg)) },
+        {
+          ALT: () => {
+            const tt = this.SUBRULE(this.ppCallArg)
+            this.ACTION(() => tokens.push(...tt))
+          },
+        },
         {
           // GATE: () => this.LA(1).tokenType !== TOKEN.COMMA,
           ALT: () => {
@@ -1435,26 +1439,28 @@ class GLSLParser extends EmbeddedActionsParser {
       ]),
     )
     tokens.push(this.CONSUME(TOKEN.RIGHT_PAREN))
-    this.CONSUME(TOKEN.RIGHT_PAREN)
 
-    const skippedTokens = []
-    this.MANY({
-      GATE: () => this.LA(1).tokenType !== TOKEN.COMMA,
-      DEF: () => skippedTokens.push(this.SKIP_TOKEN()),
-    })
-    this.CONSUME(TOKEN.COMMA)
     return tokens
   })
 
   public ppNone = this.RR("ppNone", (): PpNode => {
-    const dir = this.CONSUME(TOKEN.PP_NONE)
+    const dir = this.OR([
+      { ALT: () => this.CONSUME(TOKEN.PP_ELSE) },
+      { ALT: () => this.CONSUME(TOKEN.PP_ENDIF) },
+    ])
 
     const d: PpNode = { kind: "ppDir", dir, tokens: [], node: undefined }
     this.ppDefs.push(d)
     return d
   })
   public ppMulti = this.RR("ppMulti", (): PpNode => {
-    const dir = this.CONSUME(TOKEN.PP_MULTI)
+    const dir = this.OR([
+      { ALT: () => this.CONSUME(TOKEN.PP_IF) },
+      { ALT: () => this.CONSUME(TOKEN.PP_ELIF) },
+      { ALT: () => this.CONSUME(TOKEN.PP_ERROR) },
+      { ALT: () => this.CONSUME(TOKEN.PP_PRAGMA) },
+      { ALT: () => this.CONSUME(TOKEN.PP_LINE) },
+    ])
 
     const tokens = this.getTokensOnLine()
     const d: PpNode = { kind: "ppDir", dir, tokens, node: undefined }
@@ -1568,12 +1574,12 @@ class GLSLParser extends EmbeddedActionsParser {
     }
   }
 
-  protected RR<T extends Node | IToken>(
+  protected RR<F extends (...args: any[]) => any>(
     name: string,
-    implementation: (...implArgs: any[]) => T,
-    config?: IRuleConfig<T>,
-  ): (idxInCallingRule?: number, ...args: any[]) => T {
-    return super.RULE(name, this.ANNOTATE(implementation), config)
+    implementation: F,
+    config?: IRuleConfig<ReturnType<F>>,
+  ): F {
+    return super.RULE(name, this.ANNOTATE(implementation), config) as F
   }
 
   protected FINALIZE(n: Node, firstToken: IToken): void {
@@ -1591,7 +1597,10 @@ class GLSLParser extends EmbeddedActionsParser {
 // ONLY ONCE
 export const GLSL_PARSER = new GLSLParser()
 
-function checkParsingErrors(input: string, errors: IRecognitionException[]) {
+export function checkParsingErrors(
+  input: string,
+  errors: IRecognitionException[],
+) {
   if (errors.length > 0) {
     throw new Error(
       "PARSE ERROR: " +
@@ -1668,7 +1677,7 @@ export function parseInput(originalInput: string): TranslationUnit {
 
   for (const ppDef of ppDefs) {
     ppDef.node =
-      tryParse(ppDef.tokens, (p) => p.externalDeclaration(0, [true, true])) ??
+      tryParse(ppDef.tokens, (p) => p.externalDeclaration(true, true)) ??
       tryParse(ppDef.tokens, (p) => p.statement()) ??
       tryParse(ppDef.tokens, (p) => p.expression())
   }

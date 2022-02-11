@@ -9,12 +9,12 @@
 </style>
 
 
-<link rel='stylesheet' href='https://unpkg.com/chevrotain@9.1.0/diagrams/diagrams.css'>
+<link rel='stylesheet' href='https://unpkg.com/chevrotain@10.0.0/diagrams/diagrams.css'>
 
-<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/vendor/railroad-diagrams.js'></script>
-<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/diagrams_builder.js'></script>
-<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/diagrams_behavior.js'></script>
-<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/main.js'></script>
+<script src='https://unpkg.com/chevrotain@10.0.0/diagrams/vendor/railroad-diagrams.js'></script>
+<script src='https://unpkg.com/chevrotain@10.0.0/diagrams/src/diagrams_builder.js'></script>
+<script src='https://unpkg.com/chevrotain@10.0.0/diagrams/src/diagrams_behavior.js'></script>
+<script src='https://unpkg.com/chevrotain@10.0.0/diagrams/src/main.js'></script>
 
 <div id="diagrams" align="center"></div>    
 
@@ -1253,7 +1253,7 @@
   },
   {
     "type": "Rule",
-    "name": "preprocUnaryExpression",
+    "name": "ppUnaryExpression",
     "orgText": "",
     "definition": [
       {
@@ -1279,7 +1279,7 @@
                     "definition": [
                       {
                         "type": "NonTerminal",
-                        "name": "preprocIdentifier",
+                        "name": "ppIdentifier",
                         "idx": 0
                       }
                     ]
@@ -1296,7 +1296,7 @@
                       },
                       {
                         "type": "NonTerminal",
-                        "name": "preprocIdentifier",
+                        "name": "ppIdentifier",
                         "idx": 1
                       },
                       {
@@ -1371,7 +1371,7 @@
               },
               {
                 "type": "NonTerminal",
-                "name": "preprocUnaryExpression",
+                "name": "ppUnaryExpression",
                 "idx": 2
               }
             ]
@@ -1381,7 +1381,7 @@
             "definition": [
               {
                 "type": "NonTerminal",
-                "name": "preprocPrimaryExpression",
+                "name": "ppPrimaryExpression",
                 "idx": 0
               }
             ]
@@ -1392,7 +1392,7 @@
   },
   {
     "type": "Rule",
-    "name": "preprocPrimaryExpression",
+    "name": "ppPrimaryExpression",
     "orgText": "",
     "definition": [
       {
@@ -1404,7 +1404,7 @@
             "definition": [
               {
                 "type": "NonTerminal",
-                "name": "preprocIdentifier",
+                "name": "ppIdentifier",
                 "idx": 0
               }
             ]
@@ -1421,7 +1421,7 @@
               },
               {
                 "type": "NonTerminal",
-                "name": "preprocLogicalOrExpression",
+                "name": "ppLogicalOrExpression",
                 "idx": 0
               },
               {
@@ -1439,7 +1439,7 @@
   },
   {
     "type": "Rule",
-    "name": "preprocLogicalOrExpression",
+    "name": "ppLogicalOrExpression",
     "orgText": "",
     "definition": [
       {
@@ -2007,6 +2007,16 @@
             "type": "Alternative",
             "definition": [
               {
+                "type": "NonTerminal",
+                "name": "ppDirective",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
                 "type": "Terminal",
                 "name": "IDENTIFIER",
                 "label": "IDENTIFIER",
@@ -2098,16 +2108,6 @@
               {
                 "type": "NonTerminal",
                 "name": "compoundStatement",
-                "idx": 0
-              }
-            ]
-          },
-          {
-            "type": "Alternative",
-            "definition": [
-              {
-                "type": "NonTerminal",
-                "name": "preprocDir",
                 "idx": 0
               }
             ]
@@ -2343,40 +2343,9 @@
         "idx": 0,
         "definition": [
           {
-            "type": "Alternation",
-            "idx": 0,
-            "definition": [
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "NonTerminal",
-                    "name": "externalDeclaration",
-                    "idx": 0
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "NonTerminal",
-                    "name": "preprocDefine",
-                    "idx": 0
-                  }
-                ]
-              },
-              {
-                "type": "Alternative",
-                "definition": [
-                  {
-                    "type": "NonTerminal",
-                    "name": "preprocDir",
-                    "idx": 0
-                  }
-                ]
-              }
-            ]
+            "type": "NonTerminal",
+            "name": "externalDeclaration",
+            "idx": 0
           }
         ]
       }
@@ -2505,6 +2474,26 @@
         "type": "Alternation",
         "idx": 0,
         "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "ppCall",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "ppDirective",
+                "idx": 0
+              }
+            ]
+          },
           {
             "type": "Alternative",
             "definition": [
@@ -2694,16 +2683,238 @@
   },
   {
     "type": "Rule",
-    "name": "preprocDefine",
+    "name": "ppDefine",
     "orgText": "",
     "definition": [
       {
         "type": "Terminal",
-        "name": "PREPROC",
-        "label": "PREPROC",
+        "name": "PP_DEFINE",
+        "label": "PP_DEFINE",
         "idx": 0,
-        "pattern": "#\\w+"
+        "pattern": "#define"
       },
+      {
+        "type": "Terminal",
+        "name": "IDENTIFIER",
+        "label": "IDENTIFIER",
+        "idx": 0,
+        "pattern": "\\w[\\w\\d]*"
+      },
+      {
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "LEFT_PAREN",
+            "label": "'('",
+            "idx": 0,
+            "pattern": "("
+          },
+          {
+            "type": "RepetitionWithSeparator",
+            "idx": 0,
+            "separator": {
+              "type": "Terminal",
+              "name": "COMMA",
+              "label": "','",
+              "idx": 1,
+              "pattern": ","
+            },
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "ppIdentifier",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Terminal",
+            "name": "RIGHT_PAREN",
+            "label": "')'",
+            "idx": 0,
+            "pattern": ")"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "ppCall",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "IDENTIFIER",
+        "label": "IDENTIFIER",
+        "idx": 0,
+        "pattern": "\\w[\\w\\d]*"
+      },
+      {
+        "type": "Terminal",
+        "name": "LEFT_PAREN",
+        "label": "'('",
+        "idx": 0,
+        "pattern": "("
+      },
+      {
+        "type": "RepetitionWithSeparator",
+        "idx": 0,
+        "separator": {
+          "type": "Terminal",
+          "name": "COMMA",
+          "label": "','",
+          "idx": 1,
+          "pattern": ","
+        },
+        "definition": [
+          {
+            "type": "Repetition",
+            "idx": 0,
+            "definition": [
+              {
+                "type": "Alternation",
+                "idx": 0,
+                "definition": [
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "NonTerminal",
+                        "name": "ppCallArg",
+                        "idx": 0
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "Terminal",
+                        "name": "BASIC_TYPE",
+                        "label": "BASIC_TYPE",
+                        "idx": 0,
+                        "pattern": "NOT_APPLICABLE"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "Terminal",
+                        "name": "ASSIGN_OP",
+                        "label": "ASSIGN_OP",
+                        "idx": 0,
+                        "pattern": "NOT_APPLICABLE"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "Terminal",
+                        "name": "SHIFT_OP",
+                        "label": "SHIFT_OP",
+                        "idx": 0,
+                        "pattern": "NOT_APPLICABLE"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "Terminal",
+                        "name": "CONSTANT",
+                        "label": "CONSTANT",
+                        "idx": 0,
+                        "pattern": "NOT_APPLICABLE"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "Terminal",
+                        "name": "KEYWORD",
+                        "label": "KEYWORD",
+                        "idx": 0,
+                        "pattern": "NOT_APPLICABLE"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "RIGHT_PAREN",
+        "label": "')'",
+        "idx": 0,
+        "pattern": ")"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "ppCallArg",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "LEFT_PAREN",
+        "label": "'('",
+        "idx": 0,
+        "pattern": "("
+      },
+      {
+        "type": "Repetition",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternation",
+            "idx": 0,
+            "definition": [
+              {
+                "type": "Alternative",
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "ppCallArg",
+                    "idx": 0
+                  }
+                ]
+              },
+              {
+                "type": "Alternative",
+                "definition": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Terminal",
+        "name": "RIGHT_PAREN",
+        "label": "')'",
+        "idx": 0,
+        "pattern": ")"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "ppNone",
+    "orgText": "",
+    "definition": [
       {
         "type": "Alternation",
         "idx": 0,
@@ -2713,41 +2924,24 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "LEFT_PAREN",
-                "label": "'('",
+                "name": "PP_ELSE",
+                "label": "PP_ELSE",
                 "idx": 0,
-                "pattern": "("
-              },
-              {
-                "type": "RepetitionWithSeparator",
-                "idx": 0,
-                "separator": {
-                  "type": "Terminal",
-                  "name": "COMMA",
-                  "label": "','",
-                  "idx": 1,
-                  "pattern": ","
-                },
-                "definition": [
-                  {
-                    "type": "NonTerminal",
-                    "name": "preprocIdentifier",
-                    "idx": 0
-                  }
-                ]
-              },
-              {
-                "type": "Terminal",
-                "name": "RIGHT_PAREN",
-                "label": "')'",
-                "idx": 0,
-                "pattern": ")"
+                "pattern": "#else"
               }
             ]
           },
           {
             "type": "Alternative",
-            "definition": []
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "PP_ENDIF",
+                "label": "PP_ENDIF",
+                "idx": 0,
+                "pattern": "#endif"
+              }
+            ]
           }
         ]
       }
@@ -2755,21 +2949,168 @@
   },
   {
     "type": "Rule",
-    "name": "preprocDir",
+    "name": "ppMulti",
     "orgText": "",
     "definition": [
       {
-        "type": "Terminal",
-        "name": "PREPROC",
-        "label": "PREPROC",
+        "type": "Alternation",
         "idx": 0,
-        "pattern": "#\\w+"
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "PP_IF",
+                "label": "PP_IF",
+                "idx": 0,
+                "pattern": "#if"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "PP_ELIF",
+                "label": "PP_ELIF",
+                "idx": 0,
+                "pattern": "#elif"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "PP_ERROR",
+                "label": "PP_ERROR",
+                "idx": 0,
+                "pattern": "#error"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "PP_PRAGMA",
+                "label": "PP_PRAGMA",
+                "idx": 0,
+                "pattern": "#pragma"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "PP_LINE",
+                "label": "PP_LINE",
+                "idx": 0,
+                "pattern": "#line"
+              }
+            ]
+          }
+        ]
       }
     ]
   },
   {
     "type": "Rule",
-    "name": "preprocIdentifier",
+    "name": "ppExtension",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "PP_EXTENSION",
+        "label": "PP_EXTENSION",
+        "idx": 0,
+        "pattern": "#extension"
+      },
+      {
+        "type": "Terminal",
+        "name": "IDENTIFIER",
+        "label": "IDENTIFIER",
+        "idx": 0,
+        "pattern": "\\w[\\w\\d]*"
+      },
+      {
+        "type": "Terminal",
+        "name": "COLON",
+        "label": "':'",
+        "idx": 0,
+        "pattern": ":"
+      },
+      {
+        "type": "Terminal",
+        "name": "IDENTIFIER",
+        "label": "IDENTIFIER",
+        "idx": 1,
+        "pattern": "\\w[\\w\\d]*"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "ppDirective",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Alternation",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "ppDefine",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "ppExtension",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "ppNone",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "ppMulti",
+                "idx": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "ppIdentifier",
     "orgText": "",
     "definition": [
       {

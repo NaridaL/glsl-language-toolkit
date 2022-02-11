@@ -1,5 +1,6 @@
 import { Many } from "lodash"
 import "colors"
+import { isToken, Node, Token } from "./nodes"
 
 export const DEV = process.env.NODE_ENV !== "production"
 
@@ -42,6 +43,30 @@ export interface ExpandedLocation {
   endLine: number
   startColumn: number
   endColumn: number
+}
+
+export function mapExpandedLocation(n: Token | Node): ExpandedLocation {
+  if (isToken(n)) {
+    return n as ExpandedLocation
+  } else {
+    if (!n.firstToken) {
+      throw new Error(n.kind)
+    }
+    return {
+      startLine: n.firstToken.startLine!,
+      startColumn: n.firstToken.startColumn!,
+      endLine: n.lastToken!.endLine!,
+      endColumn: n.lastToken!.endColumn!,
+    }
+  }
+}
+
+export interface CheckError {
+  where: Token | Node
+  loc: ExpandedLocation
+  code: string
+  message: string
+  error: Error
 }
 
 export function substrContext(input: string, token: ExpandedLocation): string {

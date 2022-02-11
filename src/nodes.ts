@@ -1,4 +1,4 @@
-import { IToken, tokenLabel } from "chevrotain"
+import { IToken } from "chevrotain"
 
 export interface Token extends IToken {
   macroSource?: Token
@@ -79,10 +79,12 @@ export interface PostfixExpression extends BaseNode {
   on: Expression
   op: Token
 }
+
 export interface VariableExpression extends BaseNode {
   kind: "variableExpression"
   var: Token
 }
+
 export interface ConstantExpression extends BaseNode {
   kind: "constantExpression"
   _const: Token
@@ -177,14 +179,15 @@ export interface WhileStatement extends BaseNode {
 export interface ForStatement extends BaseNode {
   kind: "forStatement"
   initExpression: Expression | undefined
-  conditionExpression: Expression | InitDeclaratorListDeclaration
-  loopExpression: Expression
+  conditionExpression: Expression | InitDeclaratorListDeclaration | undefined
+  loopExpression: Expression | undefined
   statement: Statement
 }
 
 export interface ExpressionStatement extends BaseNode {
   kind: "expressionStatement"
-  expression: Expression
+  // optional, is could be a simple semicolon statement
+  expression: Expression | undefined
 }
 
 export interface UniformBlock extends BaseNode {
@@ -313,11 +316,13 @@ export interface PpDefine extends BaseNode {
   // node if we successfully parsed one
   node: Node | undefined
 }
+
 export interface PpExtension extends BaseNode {
   kind: "ppExtension"
   extension: Token
   behavior: Token
 }
+
 export interface PpDir extends BaseNode {
   dir: Token
   kind: "ppDir"
@@ -325,11 +330,13 @@ export interface PpDir extends BaseNode {
   // node if we successfully parsed one
   node: Node | undefined
 }
+
 export interface PpCall extends BaseNode {
   kind: "ppCall"
   callee: Token
   args: { tokens: Token[]; node: Node | undefined }[]
 }
+
 export type PpNode = PpDefine | PpDir | PpExtension | PpCall
 
 export type Declaration =
@@ -380,20 +387,24 @@ export class AbstractVisitor<R> {
   protected visit(n: Node | undefined): R | undefined {
     return n && (this[n.kind] as (n: Node) => R | undefined)(n)
   }
+
   protected arraySpecifier(n: ArraySpecifier): R | undefined {
     this.visit(n.size)
     return
   }
+
   protected binaryExpression(n: BinaryExpression): R | undefined {
     this.visit(n.lhs)
     this.visit(n.rhs)
     return
   }
+
   protected methodCall(n: MethodCall): R | undefined {
     this.visit(n.on)
     this.visit(n.functionCall)
     return
   }
+
   protected functionCall(n: FunctionCall): R | undefined {
     this.visit(n.callee)
     for (const a of n.args) {
@@ -401,45 +412,54 @@ export class AbstractVisitor<R> {
     }
     return
   }
+
   protected arrayAccess(n: ArrayAccess): R | undefined {
     this.visit(n.on)
     this.visit(n.index)
     return
   }
+
   protected translationUnit(n: TranslationUnit): R | undefined {
     for (const d of n.declarations) {
       this.visit(d)
     }
     return
   }
+
   protected assignmentExpression(n: AssignmentExpression): R | undefined {
     this.visit(n.lhs)
     this.visit(n.rhs)
     return
   }
+
   protected fieldAccess(n: FieldAccess): R | undefined {
     this.visit(n.on)
     return
   }
+
   protected conditionalExpression(n: ConditionalExpression): R | undefined {
     this.visit(n.condition)
     this.visit(n.yes)
     this.visit(n.no)
     return
   }
+
   protected postfixExpression(n: PostfixExpression): R | undefined {
     this.visit(n.on)
     return
   }
+
   protected commaExpression(n: CommaExpression): R | undefined {
     this.visit(n.lhs)
     this.visit(n.rhs)
     return
   }
+
   protected unaryExpression(n: UnaryExpression): R | undefined {
     this.visit(n.on)
     return
   }
+
   protected functionDefinition(n: FunctionDefinition): R | undefined {
     this.visit(n.returnType)
     for (const p of n.params) {
@@ -448,6 +468,7 @@ export class AbstractVisitor<R> {
     this.visit(n.body)
     return
   }
+
   protected functionPrototype(n: FunctionPrototype): R | undefined {
     this.visit(n.returnType)
     for (const p of n.params) {
@@ -455,11 +476,13 @@ export class AbstractVisitor<R> {
     }
     return
   }
+
   protected parameterDeclaration(n: ParameterDeclaration): R | undefined {
     this.visit(n.arraySpecifier)
     this.visit(n.typeSpecifier)
     return
   }
+
   protected typeSpecifier(n: TypeSpecifier): R | undefined {
     if (isNode(n.typeSpecifierNonArray)) {
       this.visit(n.typeSpecifierNonArray)
@@ -467,40 +490,49 @@ export class AbstractVisitor<R> {
     this.visit(n.arraySpecifier)
     return
   }
+
   protected compoundStatement(n: CompoundStatement): R | undefined {
     for (const n1 of n.statements) {
       this.visit(n1)
     }
     return
   }
+
   protected returnStatement(n: ReturnStatement): R | undefined {
     this.visit(n.what)
     return
   }
+
   protected continueStatement(_n: ContinueStatement): R | undefined {
     return
   }
+
   protected breakStatement(_n: BreakStatement): R | undefined {
     return
   }
+
   protected discardStatement(_n: DiscardStatement): R | undefined {
     return
   }
+
   protected declarator(n: Declarator): R | undefined {
     this.visit(n.arraySpecifier)
     this.visit(n.init)
     return
   }
+
   protected doWhileStatement(n: DoWhileStatement): R | undefined {
     this.visit(n.statement)
     this.visit(n.conditionExpression)
     return
   }
+
   protected whileStatement(n: WhileStatement): R | undefined {
     this.visit(n.conditionExpression)
     this.visit(n.statement)
     return
   }
+
   protected forStatement(n: ForStatement): R | undefined {
     this.visit(n.initExpression)
     this.visit(n.conditionExpression)
@@ -508,10 +540,12 @@ export class AbstractVisitor<R> {
     this.visit(n.statement)
     return
   }
+
   protected expressionStatement(n: ExpressionStatement): R | undefined {
     this.visit(n.expression)
     return
   }
+
   protected initDeclaratorListDeclaration(
     n: InitDeclaratorListDeclaration,
   ): R | undefined {
@@ -521,50 +555,61 @@ export class AbstractVisitor<R> {
     }
     return
   }
+
   protected precisionDeclaration(n: PrecisionDeclaration): R | undefined {
     this.visit(n.typeSpecifierNoPrec)
     return
   }
+
   protected selectionStatement(n: SelectionStatement): R | undefined {
     this.visit(n.condition)
     this.visit(n.yes)
     this.visit(n.no)
     return
   }
+
   protected storageQualifier(_n: StorageQualifier): R | undefined {
     return
   }
+
   protected switchStatement(n: SwitchStatement): R | undefined {
     this.visit(n.initExpression)
     this.visit(n.body)
     return
   }
+
   protected caseLabel(n: CaseLabel): R | undefined {
     this.visit(n._case)
     return
   }
+
   protected fullySpecifiedType(n: FullySpecifiedType): R | undefined {
     this.visit(n.typeQualifier)
     this.visit(n.typeSpecifier)
     return
   }
+
   protected typeQualifier(n: TypeQualifier): R | undefined {
     this.visit(n.storageQualifier)
     this.visit(n.layoutQualifier)
     return
   }
+
   protected structSpecifier(n: StructSpecifier): R | undefined {
     for (const d of n.declarations) {
       this.visit(d)
     }
     return
   }
+
   protected layoutQualifier(_n: LayoutQualifier): R | undefined {
     return
   }
+
   protected invariantDeclaration(_n: InvariantDeclaration): R | undefined {
     return
   }
+
   protected structDeclaration(n: StructDeclaration): R | undefined {
     this.visit(n.fsType)
     for (const d of n.declarators) {
@@ -572,12 +617,15 @@ export class AbstractVisitor<R> {
     }
     return
   }
+
   protected variableExpression(_n: VariableExpression): R | undefined {
     return
   }
+
   protected constantExpression(_n: ConstantExpression): R | undefined {
     return
   }
+
   protected uniformBlock(n: UniformBlock): R | undefined {
     this.visit(n.typeQualifier)
     for (const d of n.declarations) {
@@ -586,13 +634,16 @@ export class AbstractVisitor<R> {
     this.visit(n.arraySpecifier)
     return
   }
+
   protected ppDefine(n: PpDefine): R | undefined {
     this.visit(n.node)
     return
   }
+
   protected ppDir(n: PpDir): R | undefined {
     return
   }
+
   protected ppExtension(n: PpExtension): R | undefined {
     return
   }
@@ -601,6 +652,7 @@ export class AbstractVisitor<R> {
 export function isToken(x: Token | Node): x is Token {
   return "tokenType" in x
 }
+
 export function isNode(x: Token | Node): x is Node {
   return "kind" in x
 }

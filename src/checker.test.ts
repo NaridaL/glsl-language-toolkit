@@ -151,7 +151,7 @@ describe("expected errors", () => {
   test("S0042: function must return correct type", () => {
     glsl("int f() { return `1.`; }", ["S0042"])
   })
-  test("S0054: redefining builtin", () =>
+  test("S0054: redefining built-in", () =>
     glsl("void `min`(int i) {}", ["S0054"]))
   test("S0057", () => glslExpr("switch (`true`) {}", ["S0057"]))
   test("S0027: const parameter cannot be l-value", () =>
@@ -229,7 +229,7 @@ describe("expected errors", () => {
   test("S0034: Variable cannot be declared invariant", () =>
     glsl("`invariant` in float f;", ["S0034"]))
 
-  test("too many args to builtin", () =>
+  test("too many args to built-in", () =>
     glslExpr("`min(.2, .3, .5)`", ["no matching overload for params"]))
   test("struct definition cannot be constructor", () =>
     glslExpr("`struct G { int i; }`(2)", [
@@ -419,7 +419,7 @@ describe("/*constant expressions", () => {
     test("vec4(1, 2, 3, 4).bb", isFloat([3, 3]))
   })
 
-  describe("builtin functions*/", () => {
+  describe("built-in functions*/", () => {
     test("radians(30.)", isFloat(Math.PI / 6))
     test("radians(vec2(60))", isFloat([Math.PI / 3, Math.PI / 3]))
     test("degrees(2.)", isFloat(360 / Math.PI))

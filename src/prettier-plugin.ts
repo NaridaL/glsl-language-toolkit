@@ -587,6 +587,24 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               options,
             )
           }
+          case "ppCall": {
+            return [
+              n.callee.image,
+              "(",
+              path.map(
+                (
+                  path: AstPath<Node | IToken>,
+                  index: number,
+                  value: { tokens: Token[]; node: Node | undefined }[],
+                ): doc.builders.Doc => {
+                  console.log("vaaa", value)
+                  return value[index].tokens.map((t) => t.image)
+                },
+                "args",
+              ),
+              ")",
+            ]
+          }
           default:
             throw new Error(
               "unexpected n type " +
@@ -597,7 +615,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
         }
       } catch (e) {
         console.error(
-          "error parsing " + JSON.stringify(n).substr(0, 100) + "\n",
+          "error printing " + JSON.stringify(n).substr(0, 100) + "\n",
         )
         throw e
       }

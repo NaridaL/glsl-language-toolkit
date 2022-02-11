@@ -29,6 +29,8 @@ float ndot(vec2 a, vec2 b) { return a.x * b.x - a.y * b.y; }
     a + b;                                                                     \
     return max(a, max(b, c));                                                  \
   }
+MAX3(float)
+MAX3(vec3)
 genType max3(genType a, genType b, genType c) {
   /* comment here */
   a + b;

@@ -164,42 +164,21 @@ export namespace TOKEN {
   })
   export const PP = createToken({ name: "PP", pattern: Lexer.NA })
   export const PP_INVALID = createToken({ name: "PP_INVALID", pattern: /\w+/ })
-  export const PP_DEFINE = createToken({
-    name: "PP_DEFINE",
-    pattern: "#define",
-    categories: PP,
-    longer_alt: PP_INVALID,
-  })
-  export const PP_NONE = createToken({
-    name: "PP_NONE",
-    pattern: /#(else|endif)/,
-    categories: PP,
-    longer_alt: PP_INVALID,
-  })
-  export const PP_DEF = createToken({
-    name: "PP_DEF",
-    pattern: /#(ifdef|ifndef|undef)/,
-    categories: PP,
-    longer_alt: PP_INVALID,
-  })
-  export const PP_MULTI = createToken({
-    name: "PP_MULTI",
-    pattern: /#(if|elsif|error|pragma|line)/,
-    categories: PP,
-    longer_alt: PP_INVALID,
-  })
-  export const PP_EXTENSION = createToken({
-    name: "PP_EXTENSION",
-    pattern: "#extension",
-    categories: PP,
-    longer_alt: PP_INVALID,
-  })
-  export const PP_HASH = createToken({
-    name: "PP_HASH",
-    pattern: "#",
-    categories: PP,
-    longer_alt: PP_INVALID,
-  })
+  const createPP = (name: string, pattern: string) =>
+    createToken({ name, pattern, categories: PP, longer_alt: PP_INVALID })
+  export const PP_DEFINE = createPP("PP_DEFINE", "#define")
+  export const PP_UNDEF = createPP("PP_UNDEF", "#undef")
+  export const PP_ENDIF = createPP("PP_ENDIF", "#endif")
+  export const PP_ELSE = createPP("PP_ELSE", "#else")
+  export const PP_IFDEF = createPP("PP_IFDEF", "#ifdef")
+  export const PP_IFNDEF = createPP("PP_IFNDEF", "#ifndef")
+  export const PP_IF = createPP("PP_IF", "#if")
+  export const PP_ELIF = createPP("PP_ELIF", "#elif")
+  export const PP_ERROR = createPP("PP_ERROR", "#error")
+  export const PP_PRAGMA = createPP("PP_PRAGMA", "#pragma")
+  export const PP_LINE = createPP("PP_LINE", "#line")
+  export const PP_EXTENSION = createPP("PP_EXTENSION", "#extension")
+  export const PP_HASH = createPP("PP_HASH", "#")
 
   // ASSIGNMENT OPERATORS
   export const MULASSIGN = createToken({
@@ -633,4 +612,54 @@ export function lex(input: string) {
   const result = GLSL_LEXER.tokenize(input)
   checkLexingErrors(input, result)
   return result.tokens
+}
+
+export function doOp(op: TokenType, a: any, b: any) {
+  switch (op) {
+    case TOKEN.PLUS:
+      return a + b
+    case TOKEN.DASH:
+      return a - b
+
+    case TOKEN.STAR:
+      return a * b
+    case TOKEN.PERCENT:
+      return a % b
+    case TOKEN.SLASH:
+      return a / b
+
+    case TOKEN.LEFT_OP:
+      return a << b
+    case TOKEN.RIGHT_OP:
+      return a >> b
+
+    case TOKEN.EQ_OP:
+      return a === b
+    case TOKEN.NE_OP:
+      return a !== b
+    case TOKEN.LE_OP:
+      return a <= b
+    case TOKEN.GE_OP:
+      return a >= b
+    case TOKEN.LEFT_ANGLE:
+      return a < b
+    case TOKEN.RIGHT_ANGLE:
+      return a > b
+
+    case TOKEN.XOR_OP:
+      return a !== b
+    case TOKEN.AND_OP:
+      return a && b
+    case TOKEN.OR_OP:
+      return a || b
+
+    case TOKEN.AMPERSAND:
+      return a & b
+    case TOKEN.CARET:
+      return a ^ b
+    case TOKEN.VERTICAL_BAR:
+      return a | b
+    default:
+      throw new Error()
+  }
 }
