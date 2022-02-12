@@ -64,12 +64,12 @@ test("#if-#else macro", () => {
   `
   expect(images(preproc(source))).toEqual(images(lex(`float b;`)))
 })
-test("#if-#elsif macro", () => {
+test("#if-#elif macro", () => {
   const source = `
   #define HW_PERFORMANCE 0
   #if HW_PERFORMANCE==1
   float f;
-  #elsif HW_PERFORMANCE == 0
+  #elif HW_PERFORMANCE == 0
   float b;
   #else
   int x;
@@ -91,7 +91,6 @@ test("argument prescan; unshielded commas", () => {
     #define bar(x) lose(x)
     #define lose(x) (1 + (x))
     bar(foo)`
-  throw new Error("expect error")
   expect(images(preproc(source))).toEqual(images(lex(`(1 + (foo))`)))
 })
 test("self-referential macro is not replaced infinitely", () => {
@@ -163,6 +162,15 @@ MAX3(vec3)
       `),
     ),
   )
+})
+test("directives may have whitespace everywhere", () => {
+  // "\x20" is just a simple space, encoded here so editors don't remove it.
+  const source = `  #  version    300   es\x20\x20   
+    #  define G 1
+    # ifdef G
+    float f;
+    #endif`
+  expect(images(preproc(source))).toEqual(images(lex(`float f;`)))
 })
 
 test("applyLineContinuation", () => {

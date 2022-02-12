@@ -175,6 +175,7 @@ export namespace TOKEN {
   export const PP_IF = createPP("PP_IF", "#if")
   export const PP_ELIF = createPP("PP_ELIF", "#elif")
   export const PP_ERROR = createPP("PP_ERROR", "#error")
+  export const PP_VERSION = createPP("PP_VERSION", "#version")
   export const PP_PRAGMA = createPP("PP_PRAGMA", "#pragma")
   export const PP_LINE = createPP("PP_LINE", "#line")
   export const PP_EXTENSION = createPP("PP_EXTENSION", "#extension")

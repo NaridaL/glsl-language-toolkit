@@ -456,13 +456,13 @@ export function preprocMacros(
           i = lastTokenOnLine + 1
           recurse(keptLineBlock)
           while (tokens[i].tokenType === TOKEN.PP_ELIF) {
-            const keepElifLineBlock = false
+            let keepElifLineBlock = false
             if (outputting && !keptLineBlock) {
               // eval elif condition
               const [newI, conditionValue] =
                 parseAndEvalPPConstantExpressionOnLine(i)
               i = newI
-              keptLineBlock = conditionValue !== 0
+              keepElifLineBlock = conditionValue !== 0
             }
             keptLineBlock ||= keepElifLineBlock
             recurse(keepElifLineBlock)
@@ -481,6 +481,7 @@ export function preprocMacros(
           }
         } else if (
           token.tokenType === TOKEN.PP_ENDIF ||
+          token.tokenType === TOKEN.PP_ELIF ||
           token.tokenType === TOKEN.PP_ELSE
         ) {
           return
