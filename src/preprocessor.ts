@@ -269,6 +269,15 @@ const BUILT_IN_MACROS = [
   "GL_ES",
 ] as ReadonlyArray<string>
 
+function makeIntConstantToken(image: string, token: Token): Token {
+  return Object.assign({}, token, {
+    image: image,
+    tokenType: TOKEN.INTCONSTANT,
+    tokenTypeIdx: TOKEN.INTCONSTANT.tokenTypeIdx!,
+    macroSource: token,
+  })
+}
+
 export function preprocMacros(
   tokens: Token[],
   start = 0,
@@ -496,14 +505,13 @@ export function preprocMacros(
         }
       } else if (outputting) {
         const token = tokens[i]
-        let didReplacement = false
+        let replacement
         if (
           isPreprocIdentifier(token) &&
           !(i < blockUntil && token.image === blockToken)
         ) {
           const definition = definitions[token.image]
           if (definition) {
-            let replacement
             const start = i
             if (definition.kind === "object") {
               i++
@@ -528,23 +536,31 @@ export function preprocMacros(
                 )
               }
             }
-            if (replacement) {
-              const deleteCount = i - start
-              tokens.splice(start, deleteCount, ...replacement)
-              didReplacement = true
-              if (i >= blockUntil) {
-                // we are outside the previous replacement
-                blockToken = token.image
-                blockUntil = start + replacement.length
-              } else {
-                // extends previous block range so we don't replace the original thing when it was called indirectly
-                blockUntil += replacement.length - deleteCount
-              }
-              i = start - 1
+          } else if (token.image === "__LINE__") {
+            i++
+            replacement = [makeIntConstantToken("" + token.startLine, token)]
+          } else if (token.image === "GL_ES") {
+            i++
+            replacement = [makeIntConstantToken("1", token)]
+          } else if (token.image === "__VERSION__") {
+            i++
+            replacement = [makeIntConstantToken("300", token)]
+          }
+          if (replacement) {
+            const deleteCount = i - start
+            tokens.splice(start, deleteCount, ...replacement)
+            if (i >= blockUntil) {
+              // we are outside the previous replacement
+              blockToken = token.image
+              blockUntil = start + replacement.length
+            } else {
+              // extends previous block range so we don't replace the original thing when it was called indirectly
+              blockUntil += replacement.length - deleteCount
             }
+            i = start - 1
           }
         }
-        if (!didReplacement) {
+        if (!replacement) {
           result.push(token)
         }
       }

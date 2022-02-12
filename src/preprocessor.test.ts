@@ -1,4 +1,5 @@
 import "./index"
+import expect from "expect"
 import { lex } from "./lexer"
 import { applyLineContinuations, preproc } from "./preprocessor"
 import { Token } from "./nodes"
@@ -42,6 +43,22 @@ test("function macro", () => {
   vec3 v = V(1);
   `
   expect(images(preproc(source))).toEqual(images(lex(`vec3 v = vec3(1);`)))
+})
+
+describe("built-in macros", () => {
+  test("__LINE__", () => {
+    const source = `
+    #if __LINE__ == 2
+    float f = __LINE__;
+    #endif`
+    expect(images(preproc(source))).toEqual(images(lex(`float f = 3;`)))
+  })
+  test("GL_ES", () => {
+    expect(images(preproc("GL_ES"))).toEqual(images(lex(`1`)))
+  })
+  test("__VERSION__", () => {
+    expect(images(preproc("__VERSION__"))).toEqual(images(lex(`300`)))
+  })
 })
 
 test("#if macro", () => {
@@ -135,7 +152,7 @@ test("example from c++ standard", () => {
     f(2 * (2+(3,4)-0,1)) | f(2 * (~ 5)) & f(2 * (0,1))^m(0,1);
     int i[] = { 1, 2, 3, 4, 5, };
   `
-  //expect(images(preproc(source))).toEqual(images(lex(output)))
+  expect(images(preproc(source))).toEqual(images(lex(output)))
 })
 
 test("preproc works", () => {
@@ -169,7 +186,9 @@ test("directives may have whitespace everywhere", () => {
     #  define G 1
     # ifdef G
     float f;
-    #endif`
+    #\\
+en\\
+dif`
   expect(images(preproc(source))).toEqual(images(lex(`float f;`)))
 })
 
