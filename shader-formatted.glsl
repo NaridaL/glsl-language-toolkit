@@ -12,11 +12,11 @@
 //    https://www.shadertoy.com/playlist/43cXRl
 // and
 //    http://iquilezles.org/www/articles/distfunctions/distfunctions.htm
-#if HW_PERFORMANCE == 0
+if HW_PERFORMANCE == 0
 #define AA (1)
-#else
+else
 #define AA (2) // make this 2 or 3 for antialiasing
-#endif
+endif
 //------------------------------------------------------------------
 float dot2(vec2 v) { return dot(v, v); }
 float dot2(vec3 v) { return dot(v, v); }
@@ -411,7 +411,7 @@ float sdOctahedron(vec3 p, float s) {
   p = abs(p);
   float m = p.x + p.y + p.z - s;
   // exact distance
-  #if 0
+  if 0
   vec3 o = min(3.0 * p - m, 0.0);
   o = max(
     6.0 * p -
@@ -423,9 +423,9 @@ float sdOctahedron(vec3 p, float s) {
   return length(
     p - s * o / (o.x + o.y + o.z)
   );
-  #endif
+  endif
   // exact distance
-  #if 1
+  if 1
   vec3 q;
   if (3.0 * p.x < m) q = p.xyz;
   else if (3.0 * p.y < m) q = p.yzx;
@@ -440,11 +440,11 @@ float sdOctahedron(vec3 p, float s) {
   return length(
     vec3(q.x, q.y - s + k, q.z - k)
   );
-  #endif
+  endif
   // bound, not exact
-  #if 0
+  if 0
   return m * 0.57735027;
-  #endif
+  endif
 }
 float sdPyramid(vec3 p, float h) {
   float m2 = h * h + 0.25;
@@ -892,7 +892,7 @@ float calcSoftshadow(
 }
 // http://iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
 vec3 calcNormal(vec3 pos) {
-  #if 0
+  if 0
   vec2 e = vec2(1.0, -1.0) *
     0.5773 *
     0.0005;
@@ -902,7 +902,7 @@ vec3 calcNormal(vec3 pos) {
     e.yxy * map(pos + e.yxy).x +
     e.xxx * map(pos + e.xxx).x
   );
-  #else
+  else
   // inspired by tdhooper and klems - a way to prevent the compiler from inlining map() 4 times
   vec3 n = vec3(0.0);
   for (int i = ZERO;i < 4; i++) {
@@ -918,7 +918,7 @@ vec3 calcNormal(vec3 pos) {
     //if( n.x+n.y+n.z>100.0 ) break;
   }
   return normalize(n);
-  #endif
+  endif
 }
 float calcAO(vec3 pos, vec3 nor) {
   float occ = 0.0;
@@ -1166,7 +1166,7 @@ void mainImage(
   // camera-to-world transformation
   mat3 ca = setCamera(ro, ta, 0.0);
   vec3 tot = vec3(0.0);
-  #if AA > 1
+  if AA > 1
   for (int m = ZERO;m < AA; m++)
     for (int n = ZERO;n < AA; n++) {
       // pixel coordinates
@@ -1179,11 +1179,11 @@ void mainImage(
       vec2 p = (2.0 * (fragCoord + o) -
         iResolution.xy) /
         iResolution.y;
-      #else
+      else
       vec2 p = (2.0 * fragCoord -
         iResolution.xy) /
         iResolution.y;
-      #endif
+      endif
       // focal length
       const float fl = 2.5;
       // ray direction
@@ -1214,9 +1214,9 @@ void mainImage(
       // gamma
       col = pow(col, vec3(0.4545));
       tot += col;
-      #if AA > 1
+      if AA > 1
     }
   tot /= float(AA * AA);
-  #endif
+  endif
   fragColor = vec4(tot, 1.0);
 }

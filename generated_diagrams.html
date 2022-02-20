@@ -1414,6 +1414,18 @@
             "definition": [
               {
                 "type": "Terminal",
+                "name": "INTCONSTANT",
+                "label": "INTCONSTANT",
+                "idx": 0,
+                "pattern": "0x[\\da-f]+|\\d+"
+              }
+            ]
+          },
+          {
+            "type": "Alternative",
+            "definition": [
+              {
+                "type": "Terminal",
                 "name": "LEFT_PAREN",
                 "label": "'('",
                 "idx": 0,
@@ -2688,10 +2700,17 @@
     "definition": [
       {
         "type": "Terminal",
-        "name": "PP_DEFINE",
-        "label": "PP_DEFINE",
+        "name": "HASH",
+        "label": "HASH",
         "idx": 0,
-        "pattern": "#define"
+        "pattern": "#"
+      },
+      {
+        "type": "Terminal",
+        "name": "DEFINE",
+        "label": "DEFINE",
+        "idx": 0,
+        "pattern": "define"
       },
       {
         "type": "Terminal",
@@ -2916,6 +2935,13 @@
     "orgText": "",
     "definition": [
       {
+        "type": "Terminal",
+        "name": "HASH",
+        "label": "HASH",
+        "idx": 0,
+        "pattern": "#"
+      },
+      {
         "type": "Alternation",
         "idx": 0,
         "definition": [
@@ -2924,10 +2950,10 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "PP_ELSE",
-                "label": "PP_ELSE",
+                "name": "ELSE",
+                "label": "'else'",
                 "idx": 0,
-                "pattern": "#else"
+                "pattern": "else"
               }
             ]
           },
@@ -2936,10 +2962,10 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "PP_ENDIF",
-                "label": "PP_ENDIF",
+                "name": "ENDIF",
+                "label": "ENDIF",
                 "idx": 0,
-                "pattern": "#endif"
+                "pattern": "endif"
               }
             ]
           }
@@ -2953,6 +2979,13 @@
     "orgText": "",
     "definition": [
       {
+        "type": "Terminal",
+        "name": "HASH",
+        "label": "HASH",
+        "idx": 0,
+        "pattern": "#"
+      },
+      {
         "type": "Alternation",
         "idx": 0,
         "definition": [
@@ -2961,10 +2994,10 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "PP_IF",
-                "label": "PP_IF",
+                "name": "IF",
+                "label": "'if'",
                 "idx": 0,
-                "pattern": "#if"
+                "pattern": "if"
               }
             ]
           },
@@ -2973,10 +3006,10 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "PP_ELIF",
-                "label": "PP_ELIF",
+                "name": "ELIF",
+                "label": "ELIF",
                 "idx": 0,
-                "pattern": "#elif"
+                "pattern": "elif"
               }
             ]
           },
@@ -2985,10 +3018,10 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "PP_ERROR",
-                "label": "PP_ERROR",
+                "name": "ERROR",
+                "label": "ERROR",
                 "idx": 0,
-                "pattern": "#error"
+                "pattern": "error"
               }
             ]
           },
@@ -2997,10 +3030,10 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "PP_PRAGMA",
-                "label": "PP_PRAGMA",
+                "name": "PRAGMA",
+                "label": "PRAGMA",
                 "idx": 0,
-                "pattern": "#pragma"
+                "pattern": "pragma"
               }
             ]
           },
@@ -3009,10 +3042,10 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "PP_LINE",
-                "label": "PP_LINE",
+                "name": "LINE",
+                "label": "LINE",
                 "idx": 0,
-                "pattern": "#line"
+                "pattern": "line"
               }
             ]
           }
@@ -3027,10 +3060,17 @@
     "definition": [
       {
         "type": "Terminal",
-        "name": "PP_EXTENSION",
-        "label": "PP_EXTENSION",
+        "name": "HASH",
+        "label": "HASH",
         "idx": 0,
-        "pattern": "#extension"
+        "pattern": "#"
+      },
+      {
+        "type": "Terminal",
+        "name": "EXTENSION",
+        "label": "EXTENSION",
+        "idx": 0,
+        "pattern": "extension"
       },
       {
         "type": "Terminal",

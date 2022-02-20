@@ -163,23 +163,20 @@ export namespace TOKEN {
     group: "COMMENTS",
   })
   export const PP = createToken({ name: "PP", pattern: Lexer.NA })
-  export const PP_INVALID = createToken({ name: "PP_INVALID", pattern: /\w+/ })
   const createPP = (name: string, pattern: string) =>
-    createToken({ name, pattern, categories: PP, longer_alt: PP_INVALID })
-  export const PP_DEFINE = createPP("PP_DEFINE", "#define")
-  export const PP_UNDEF = createPP("PP_UNDEF", "#undef")
-  export const PP_ENDIF = createPP("PP_ENDIF", "#endif")
-  export const PP_ELSE = createPP("PP_ELSE", "#else")
-  export const PP_IFDEF = createPP("PP_IFDEF", "#ifdef")
-  export const PP_IFNDEF = createPP("PP_IFNDEF", "#ifndef")
-  export const PP_IF = createPP("PP_IF", "#if")
-  export const PP_ELIF = createPP("PP_ELIF", "#elif")
-  export const PP_ERROR = createPP("PP_ERROR", "#error")
-  export const PP_VERSION = createPP("PP_VERSION", "#version")
-  export const PP_PRAGMA = createPP("PP_PRAGMA", "#pragma")
-  export const PP_LINE = createPP("PP_LINE", "#line")
-  export const PP_EXTENSION = createPP("PP_EXTENSION", "#extension")
-  export const PP_HASH = createPP("PP_HASH", "#")
+    createToken({ name, pattern, categories: PP, longer_alt: IDENTIFIER })
+  export const DEFINE = createPP("DEFINE", "define")
+  export const UNDEF = createPP("UNDEF", "undef")
+  export const ENDIF = createPP("ENDIF", "endif")
+  export const IFDEF = createPP("IFDEF", "ifdef")
+  export const IFNDEF = createPP("IFNDEF", "ifndef")
+  export const ELIF = createPP("ELIF", "elif")
+  export const ERROR = createPP("ERROR", "error")
+  export const VERSION = createPP("VERSION", "version")
+  export const PRAGMA = createPP("PRAGMA", "pragma")
+  export const LINE = createPP("LINE", "line")
+  export const EXTENSION = createPP("EXTENSION", "extension")
+  export const HASH = createToken({ name: "HASH", pattern: "#" })
 
   // ASSIGNMENT OPERATORS
   export const MULASSIGN = createToken({
@@ -578,12 +575,10 @@ export namespace TOKEN {
 }
 // IDENTIFIER needs to go last, but must be declared first
 // so it can be referenced in longerAlt
-export const ALL_TOKENS = pull(
-  Object.values(TOKEN),
-  TOKEN.IDENTIFIER,
-  TOKEN.PP_INVALID,
-).flatMap((x) => (Array.isArray(x) ? x : [x]))
-ALL_TOKENS.push(TOKEN.IDENTIFIER, TOKEN.PP_INVALID)
+export const ALL_TOKENS = pull(Object.values(TOKEN), TOKEN.IDENTIFIER).flatMap(
+  (x) => (Array.isArray(x) ? x : [x]),
+)
+ALL_TOKENS.push(TOKEN.IDENTIFIER)
 
 export const GLSL_LEXER = new Lexer(ALL_TOKENS, { ensureOptimizations: DEV })
 
@@ -597,10 +592,10 @@ export function checkLexingErrors(input: string, lexingResult: ILexingResult) {
               e.message +
               ":\n" +
               substrContext(input, {
-                startLine: e.line,
-                startColumn: e.column,
-                endLine: e.line,
-                endColumn: e.column + e.length,
+                startLine: e.line!,
+                startColumn: e.column!,
+                endLine: e.line!,
+                endColumn: e.column! + e.length,
               }),
           )
           // .map((e) => e.message)

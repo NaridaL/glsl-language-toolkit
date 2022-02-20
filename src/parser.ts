@@ -881,10 +881,10 @@ class GLSLParser extends EmbeddedActionsParser {
       ]),
   )
 
-  public ppConstantExpression = this.RR("ppLogicalOrExpression", () => {
+  public ppConstantExpression = this.RR("ppConstantExpression", () => {
     try {
       this.preprocessing = true
-      return this.LEFT_ASSOC(this.logicalAndExpression, TOKEN.AND_OP)
+      return this.LEFT_ASSOC(this.logicalAndExpression, TOKEN.OR_OP)
     } finally {
       this.preprocessing = false
     }
@@ -1354,7 +1354,8 @@ class GLSLParser extends EmbeddedActionsParser {
   )
 
   public ppDefine = this.RR("ppDefine", (): PpDefine => {
-    this.CONSUME(TOKEN.PP_DEFINE)
+    this.CONSUME(TOKEN.HASH)
+    this.CONSUME(TOKEN.DEFINE)
     const what = this.CONSUME(TOKEN.IDENTIFIER)
     const isFunctionMacro =
       this.LA(1).tokenType === TOKEN.LEFT_PAREN &&
@@ -1444,9 +1445,10 @@ class GLSLParser extends EmbeddedActionsParser {
   })
 
   public ppNone = this.RR("ppNone", (): PpNode => {
+    this.CONSUME(TOKEN.HASH)
     const dir = this.OR([
-      { ALT: () => this.CONSUME(TOKEN.PP_ELSE) },
-      { ALT: () => this.CONSUME(TOKEN.PP_ENDIF) },
+      { ALT: () => this.CONSUME(TOKEN.ELSE) },
+      { ALT: () => this.CONSUME(TOKEN.ENDIF) },
     ])
 
     const d: PpNode = { kind: "ppDir", dir, tokens: [], node: undefined }
@@ -1454,12 +1456,13 @@ class GLSLParser extends EmbeddedActionsParser {
     return d
   })
   public ppMulti = this.RR("ppMulti", (): PpNode => {
+    this.CONSUME(TOKEN.HASH)
     const dir = this.OR([
-      { ALT: () => this.CONSUME(TOKEN.PP_IF) },
-      { ALT: () => this.CONSUME(TOKEN.PP_ELIF) },
-      { ALT: () => this.CONSUME(TOKEN.PP_ERROR) },
-      { ALT: () => this.CONSUME(TOKEN.PP_PRAGMA) },
-      { ALT: () => this.CONSUME(TOKEN.PP_LINE) },
+      { ALT: () => this.CONSUME(TOKEN.IF) },
+      { ALT: () => this.CONSUME(TOKEN.ELIF) },
+      { ALT: () => this.CONSUME(TOKEN.ERROR) },
+      { ALT: () => this.CONSUME(TOKEN.PRAGMA) },
+      { ALT: () => this.CONSUME(TOKEN.LINE) },
     ])
 
     const tokens = this.getTokensOnLine()
@@ -1468,7 +1471,8 @@ class GLSLParser extends EmbeddedActionsParser {
     return d
   })
   public ppExtension = this.RR("ppExtension", (): PpExtension => {
-    this.CONSUME(TOKEN.PP_EXTENSION)
+    this.CONSUME(TOKEN.HASH)
+    this.CONSUME(TOKEN.EXTENSION)
     const extension = this.CONSUME(TOKEN.IDENTIFIER)
     this.CONSUME(TOKEN.COLON)
     const behavior = this.CONSUME1(TOKEN.IDENTIFIER)

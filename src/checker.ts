@@ -1488,12 +1488,14 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
 
   protected forStatement(n: ForStatement): NormalizedType | undefined {
     this.visit(n.initExpression)
-    const cType = this.visit(n.conditionExpression)
+    if (n.conditionExpression) {
+      const cType = this.visit(n.conditionExpression)
+      if (typeNotEquals(cType, BasicType.BOOL)) {
+        markError(n.conditionExpression, "S0003")
+      }
+    }
     this.visit(n.loopExpression)
     this.visit(n.statement)
-    if (typeNotEquals(cType, BasicType.BOOL)) {
-      markError(n.conditionExpression, "S0003")
-    }
     return
   }
 

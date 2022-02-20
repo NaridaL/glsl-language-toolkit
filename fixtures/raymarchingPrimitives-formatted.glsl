@@ -38,7 +38,9 @@ genType max3(genType a, genType b, genType c) {
 }
 float sdPlane(vec3 p) {
   return p.y;
+
   1 / MUL(1 + 2, 3);
+
   ADD(1, 2) * 2;
 }
 float sdSphere(vec3 p, float s) { return length(p) - s; }
@@ -49,6 +51,7 @@ float sdBox(vec3 p, vec3 b) {
 float sdBoundingBox(vec3 p, vec3 b, float e) {
   p = abs(p) - b;
   vec3 q = abs(p + e) - e;
+
   return min(
     min(
       length(max(vec3(p.x, q.y, q.z), 0.0)) + min(max(p.x, max(q.y, q.z)), 0.0),
@@ -75,6 +78,7 @@ float sdCappedTorus(vec3 p, vec2 sc, float ra, float rb) {
 }
 float sdHexPrism(vec3 p, vec2 h) {
   vec3 q = abs(p);
+
   const vec3 k = vec3(-0.8660254, 0.5, 0.57735);
   p = abs(p);
   p.xy -= 2.0 * min(dot(k.xy, p.xy), 0.0) * k.xy;
@@ -107,11 +111,14 @@ float sdCapsule(vec3 p, vec3 a, vec3 b, float r) {
 }
 float sdRoundCone(vec3 p, float r1, float r2, float h) {
   vec2 q = vec2(length(p.xz), p.y);
+
   float b = (r1 - r2) / h;
   float a = sqrt(1.0 - b * b);
   float k = dot(q, vec2(-b, a));
+
   if (k < 0.0) return length(q) - r1;
   if (k > a * h) return length(q - vec2(0.0, h)) - r2;
+
   return dot(q, vec2(a, b)) - r1;
 }
 float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2) {
@@ -121,6 +128,7 @@ float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2) {
   float rr = r1 - r2;
   float a2 = l2 - rr * rr;
   float il2 = 1.0 / l2;
+
   // sampling dependant computations
   vec3 pa = p - a;
   float y = dot(pa, ba);
@@ -128,6 +136,7 @@ float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2) {
   float x2 = dot2(pa * l2 - ba * y);
   float y2 = y * y * l2;
   float z2 = z * z * l2;
+
   // single square root!
   float k = sign(rr) * rr * rr * x2;
   if (sign(z) * a2 * z2 > k) return sqrt(x2 + z2) * il2 - r2;
@@ -157,6 +166,7 @@ float sdCylinder(vec3 p, vec3 a, vec3 b, float r) {
   vec3 ba = b - a;
   float baba = dot(ba, ba);
   float paba = dot(pa, ba);
+
   float x = length(pa * baba - ba * paba) - r * baba;
   float y = abs(paba - baba * 0.5) - baba * 0.5;
   float x2 = x * x;
@@ -170,6 +180,7 @@ float sdCylinder(vec3 p, vec3 a, vec3 b, float r) {
 float sdCone(vec3 p, vec2 c, float h) {
   vec2 q = h * vec2(c.x, -c.y) / c.y;
   vec2 w = vec2(length(p.xz), p.y);
+
   vec2 a = w - q * clamp(dot(w, q) / dot(q, q), 0.0, 1.0);
   vec2 b = w - q * vec2(clamp(w.x / q.x, 0.0, 1.0), 1.0);
   float k = sign(q.y);
@@ -179,6 +190,7 @@ float sdCone(vec3 p, vec2 c, float h) {
 }
 float sdCappedCone(vec3 p, float h, float r1, float r2) {
   vec2 q = vec2(length(p.xz), p.y);
+
   vec2 k1 = vec2(r2, h);
   vec2 k2 = vec2(r2 - r1, 2.0 * h);
   vec2 ca = vec2(q.x - min(q.x, q.y < 0.0 ? r1 : r2), abs(q.y) - h);
@@ -191,14 +203,20 @@ float sdCappedCone(vec3 p, vec3 a, vec3 b, float ra, float rb) {
   float baba = dot(b - a, b - a);
   float papa = dot(p - a, p - a);
   float paba = dot(p - a, b - a) / baba;
+
   float x = sqrt(papa - paba * paba * baba);
+
   float cax = max(0.0, x - (paba < 0.5 ? ra : rb));
   float cay = abs(paba - 0.5) - 0.5;
+
   float k = rba * rba + baba;
   float f = clamp((rba * (x - ra) + paba * baba) / k, 0.0, 1.0);
+
   float cbx = x - ra - f * rba;
   float cby = paba - f;
+
   float s = cbx < 0.0 && cay < 0.0 ? -1.0 : 1.0;
+
   return s *
   sqrt(min(cax * cax + cay * cay * baba, cbx * cbx + cby * cby * baba));
 }
@@ -212,6 +230,7 @@ float sdSolidAngle(vec3 pos, vec2 c, float ra) {
 float sdOctahedron(vec3 p, float s) {
   p = abs(p);
   float m = p.x + p.y + p.z - s;
+
   // exact distance
   #if 0
   vec3 o = min(3.0 * p - m, 0.0);
@@ -236,18 +255,24 @@ float sdOctahedron(vec3 p, float s) {
 }
 float sdPyramid(vec3 p, float h) {
   float m2 = h * h + 0.25;
+
   // symmetry
   p.xz = abs(p.xz);
   p.xz = p.z > p.x ? p.zx : p.xz;
   p.xz -= 0.5;
+
   // project into face plane (2D)
   vec3 q = vec3(p.z, h * p.y - 0.5 * p.x, h * p.x + 0.5 * p.y);
+
   float s = max(-q.x, 0.0);
   float t = clamp((q.y - 0.5 * p.z) / (m2 + 0.25), 0.0, 1.0);
+
   float a = m2 * (q.x + s) * (q.x + s) + q.y * q.y;
   float b = m2 * (q.x + 0.5 * t) * (q.x + 0.5 * t) +
     (q.y - m2 * t) * (q.y - m2 * t);
+
   float d2 = min(q.y, -q.x * m2 - q.y * 0.5) > 0.0 ? 0.0 : min(a, b);
+
   // recover 3D and scale, and add sign
   return sqrt((d2 + q.z * q.z) / m2) * sign(max(q.z, -p.y));
   ;
@@ -272,11 +297,10 @@ vec2 opU(vec2 d1, vec2 d2) { return d1.x < d2.x ? d1 : d2; }
 //------------------------------------------------------------------
 vec2 map(vec3 pos) {
   vec2 res = vec2(1e10, 0.0);
+
   { res = opU(res, vec2(sdSphere(pos - vec3(-2.0, 0.25, 0.0), 0.25), 26.9)); }
   // bounding box
-  if (
-    sdBox(pos - vec3(0.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x
-  ) {
+  if (sdBox(pos - vec3(0.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x) {
     // more primitives
     res = opU(
       res,
@@ -306,9 +330,7 @@ vec2 map(vec3 pos) {
     );
   }
   // bounding box
-  if (
-    sdBox(pos - vec3(1.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x
-  ) {
+  if (sdBox(pos - vec3(1.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x) {
     // more primitives
     res = opU(
       res,
@@ -348,9 +370,7 @@ vec2 map(vec3 pos) {
     );
   }
   // bounding box
-  if (
-    sdBox(pos - vec3(-1.0, 0.35, -1.0), vec3(0.35, 0.35, 2.5)) < res.x
-  ) {
+  if (sdBox(pos - vec3(-1.0, 0.35, -1.0), vec3(0.35, 0.35, 2.5)) < res.x) {
     // more primitives
     res = opU(res, vec2(sdPyramid(pos - vec3(-1.0, -0.6, -3.0), 1.0), 13.56));
     res = opU(
@@ -377,9 +397,7 @@ vec2 map(vec3 pos) {
     );
   }
   // bounding box
-  if (
-    sdBox(pos - vec3(2.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x
-  ) {
+  if (sdBox(pos - vec3(2.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x) {
     // more primitives
     res = opU(
       res,
@@ -441,31 +459,28 @@ vec2 iBox(vec3 ro, vec3 rd, vec3 rad) {
 }
 vec2 raycast(vec3 ro, vec3 rd) {
   vec2 res = vec2(-1.0, -1.0);
+
   float tmin = 1.0;
   float tmax = 20.0;
+
   // raytrace floor plane
   float tp1 = (0.0 - ro.y) / rd.y;
-  if (
-    tp1 > 0.0
-  ) {
+  if (tp1 > 0.0) {
     tmax = min(tmax, tp1);
     res = vec2(tp1, 1.0);
   }
   //else return res;
   // raymarch primitives
   vec2 tb = iBox(ro - vec3(0.0, 0.4, -0.5), rd, vec3(2.5, 0.41, 3.0));
-  if (
-    tb.x < tb.y && tb.y > 0.0 && tb.x < tmax
-  ) {
+  if (tb.x < tb.y && tb.y > 0.0 && tb.x < tmax) {
     //return vec2(tb.x,2.0);
     tmin = max(tb.x, tmin);
     tmax = min(tb.y, tmax);
+
     float t = tmin;
-    for (int i = 0;i < 70 && t < tmax; i++) {
+    for (int i = 0; i < 70 && t < tmax; i++) {
       vec2 h = map(ro + rd * t);
-      if (
-        abs(h.x) < 0.0001 * t
-      ) {
+      if (abs(h.x) < 0.0001 * t) {
         res = vec2(t, h.y);
         break;
       }
@@ -479,9 +494,10 @@ float calcSoftshadow(vec3 ro, vec3 rd, float mint, float tmax) {
   // bounding volume
   float tp = (0.8 - ro.y) / rd.y;
   if (tp > 0.0) tmax = min(tmax, tp);
+
   float res = 1.0;
   float t = mint;
-  for (int i = ZERO;i < 24; i++) {
+  for (int i = ZERO; i < 24; i++) {
     float h = map(ro + rd * t).x;
     float s = clamp(8.0 * h / t, 0.0, 1.0);
     res = min(res, s * s * (3.0 - 2.0 * s));
@@ -503,7 +519,7 @@ vec3 calcNormal(vec3 pos) {
   #else
   // inspired by tdhooper and klems - a way to prevent the compiler from inlining map() 4 times
   vec3 n = vec3(0.0);
-  for (int i = ZERO;i < 4; i++) {
+  for (int i = ZERO; i < 4; i++) {
     vec3 e = 0.5773 * (2.0 * vec3(i + 3 >> 1 & 1, i >> 1 & 1, i & 1) - 1.0);
     n += e * map(pos + 0.0005 * e).x;
     //if( n.x+n.y+n.z>100.0 ) break;
@@ -514,7 +530,7 @@ vec3 calcNormal(vec3 pos) {
 float calcAO(vec3 pos, vec3 nor) {
   float occ = 0.0;
   float sca = 1.0;
-  for (int i = ZERO;i < 5; i++) {
+  for (int i = ZERO; i < 5; i++) {
     float h = 0.01 + 0.12 * float(i) / 4.0;
     float d = map(pos + h * nor).x;
     occ += (h - d) * sca;
@@ -538,32 +554,34 @@ float checkersGradBox(vec2 p, vec2 dpdx, vec2 dpdy) {
 vec3 render(vec3 ro, vec3 rd, vec3 rdx, vec3 rdy) {
   // background
   vec3 col = vec3(0.7, 0.7, 0.9) - max(rd.y, 0.0) * 0.3;
+
   // raycast scene
   vec2 res = raycast(ro, rd);
   float t = res.x;
   float m = res.y;
-  if (
-    m > -0.5
-  ) {
+  if (m > -0.5) {
     vec3 pos = ro + t * rd;
     vec3 nor = m < 1.5 ? vec3(0.0, 1.0, 0.0) : calcNormal(pos);
     vec3 ref = reflect(rd, nor);
+
     // material
     col = 0.2 + 0.2 * sin(m * 2.0 + vec3(0.0, 1.0, 2.0));
     float ks = 1.0;
-    if (
-      m < 1.5
-    ) {
+
+    if (m < 1.5) {
       // project pixel footprint into the plane
       vec3 dpdx = ro.y * (rd / rd.y - rdx / rdx.y);
       vec3 dpdy = ro.y * (rd / rd.y - rdy / rdy.y);
+
       float f = checkersGradBox(3.0 * pos.xz, 3.0 * dpdx.xz, 3.0 * dpdy.xz);
       col = 0.15 + f * vec3(0.05);
       ks = 0.4;
     }
     // lighting
     float occ = calcAO(pos, nor);
+
     vec3 lin = vec3(0.0);
+
     // sun
     {
       vec3 lig = normalize(vec3(-0.5, 0.4, -0.6));
@@ -603,6 +621,7 @@ vec3 render(vec3 ro, vec3 rd, vec3 rdx, vec3 rdy) {
       lin += col * 0.25 * dif * vec3(1.0, 1.0, 1.0);
     }
     col = lin;
+
     col = mix(col, vec3(0.7, 0.7, 0.9), 1.0 - exp(-0.0001 * t * t * t));
   }
   return vec3(clamp(col, 0.0, 1.0));
@@ -617,6 +636,7 @@ mat3 setCamera(vec3 ro, vec3 ta, float cr) {
 void mainImage(out vec4 fragColor, vec2 fragCoord) {
   vec2 mo = iMouse.xy / iResolution.xy;
   float time = 32.0 + iTime * 1.5;
+
   // camera
   vec3 ta = vec3(0.5, -0.5, -0.6);
   vec3 ro = ta +
@@ -627,10 +647,11 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
     );
   // camera-to-world transformation
   mat3 ca = setCamera(ro, ta, 0.0);
+
   vec3 tot = vec3(0.0);
   #if AA > 1
-  for (int m = ZERO;m < AA; m++)
-    for (int n = ZERO;n < AA; n++) {
+  for (int m = ZERO; m < AA; m++)
+    for (int n = ZERO; n < AA; n++) {
       // pixel coordinates
       vec2 o = vec2(float(m), float(n)) / float(AA) - 0.5;
       vec2 p = (2.0 * (fragCoord + o) - iResolution.xy) / iResolution.y;
@@ -639,8 +660,10 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
       #endif
       // focal length
       const float fl = 2.5;
+
       // ray direction
       vec3 rd = ca * normalize(vec3(p, fl));
+
       // ray differentials
       vec2 px = (2.0 * (fragCoord + vec2(1.0, 0.0)) - iResolution.xy) /
         iResolution.y;
@@ -648,12 +671,15 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
         iResolution.y;
       vec3 rdx = ca * normalize(vec3(px, fl));
       vec3 rdy = ca * normalize(vec3(py, fl));
+
       // render
       vec3 col = render(ro, rd, rdx, rdy);
+
       // gain
       // col = col*3.0/(2.5+col);
       // gamma
       col = pow(col, vec3(0.4545));
+
       tot += col;
       #if AA > 1
     }

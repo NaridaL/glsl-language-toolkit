@@ -3,7 +3,7 @@
   "declarations": [
     {
       "kind": "ppDir",
-      "dir": "PP_IF(#if) 1616-1618",
+      "dir": "IF(if) 1617-1618",
       "tokens": [
         "IDENTIFIER(HW_PERFORMANCE) 1620-1633",
         "EQ_OP(==) 1634-1635",
@@ -27,7 +27,7 @@
         "firstToken": "IDENTIFIER(HW_PERFORMANCE) 1620-1633",
         "lastToken": "INTCONSTANT(0) 1636-1636"
       },
-      "firstToken": "PP_IF(#if) 1616-1618",
+      "firstToken": "HASH(#) 1616-1616",
       "lastToken": "INTCONSTANT(0) 1636-1636"
     },
     {
@@ -42,15 +42,15 @@
         "firstToken": "INTCONSTANT(1) 1649-1649",
         "lastToken": "INTCONSTANT(1) 1649-1649"
       },
-      "firstToken": "PP_DEFINE(#define) 1638-1644",
+      "firstToken": "HASH(#) 1638-1638",
       "lastToken": "INTCONSTANT(1) 1649-1649"
     },
     {
       "kind": "ppDir",
-      "dir": "PP_ELSE(#else) 1651-1655",
+      "dir": "ELSE(else) 1652-1655",
       "tokens": [],
-      "firstToken": "PP_ELSE(#else) 1651-1655",
-      "lastToken": "PP_ELSE(#else) 1651-1655"
+      "firstToken": "HASH(#) 1651-1651",
+      "lastToken": "ELSE(else) 1652-1655"
     },
     {
       "kind": "ppDefine",
@@ -64,15 +64,15 @@
         "firstToken": "INTCONSTANT(2) 1668-1668",
         "lastToken": "INTCONSTANT(2) 1668-1668"
       },
-      "firstToken": "PP_DEFINE(#define) 1657-1663",
+      "firstToken": "HASH(#) 1657-1657",
       "lastToken": "INTCONSTANT(2) 1668-1668"
     },
     {
       "kind": "ppDir",
-      "dir": "PP_ENDIF(#endif) 1706-1711",
+      "dir": "ENDIF(endif) 1707-1711",
       "tokens": [],
-      "firstToken": "PP_ENDIF(#endif) 1706-1711",
-      "lastToken": "PP_ENDIF(#endif) 1706-1711"
+      "firstToken": "HASH(#) 1706-1706",
+      "lastToken": "ENDIF(endif) 1707-1711"
     },
     {
       "kind": "functionDefinition",
@@ -372,7 +372,7 @@
         "firstToken": "LEFT_PAREN(() 1953-1953",
         "lastToken": "RIGHT_PAREN()) 1961-1961"
       },
-      "firstToken": "PP_DEFINE(#define) 1935-1941",
+      "firstToken": "HASH(#) 1935-1935",
       "lastToken": "RIGHT_PAREN()) 1961-1961"
     },
     {
@@ -411,7 +411,7 @@
         "firstToken": "LEFT_PAREN(() 1983-1983",
         "lastToken": "RIGHT_PAREN()) 1991-1991"
       },
-      "firstToken": "PP_DEFINE(#define) 1964-1970",
+      "firstToken": "HASH(#) 1964-1964",
       "lastToken": "RIGHT_PAREN()) 1992-1992"
     },
     {
@@ -588,7 +588,7 @@
         "firstToken": "IDENTIFIER(genType) 2022-2028",
         "lastToken": "RIGHT_BRACE(}) 2152-2152"
       },
-      "firstToken": "PP_DEFINE(#define) 1996-2002",
+      "firstToken": "HASH(#) 1996-1996",
       "lastToken": "RIGHT_BRACE(}) 2152-2152"
     },
     {
@@ -11358,7 +11358,7 @@
           },
           {
             "kind": "ppDir",
-            "dir": "PP_IF(#if) 8209-8211",
+            "dir": "IF(if) 8210-8211",
             "tokens": [
               "INTCONSTANT(0) 8213-8213"
             ],
@@ -11368,7 +11368,7 @@
               "firstToken": "INTCONSTANT(0) 8213-8213",
               "lastToken": "INTCONSTANT(0) 8213-8213"
             },
-            "firstToken": "PP_IF(#if) 8209-8211",
+            "firstToken": "HASH(#) 8209-8209",
             "lastToken": "INTCONSTANT(0) 8213-8213"
           },
           {
@@ -11704,14 +11704,14 @@
           },
           {
             "kind": "ppDir",
-            "dir": "PP_ENDIF(#endif) 8352-8357",
+            "dir": "ENDIF(endif) 8353-8357",
             "tokens": [],
-            "firstToken": "PP_ENDIF(#endif) 8352-8357",
-            "lastToken": "PP_ENDIF(#endif) 8352-8357"
+            "firstToken": "HASH(#) 8352-8352",
+            "lastToken": "ENDIF(endif) 8353-8357"
           },
           {
             "kind": "ppDir",
-            "dir": "PP_IF(#if) 8386-8388",
+            "dir": "IF(if) 8387-8388",
             "tokens": [
               "INTCONSTANT(1) 8390-8390"
             ],
@@ -11721,7 +11721,7 @@
               "firstToken": "INTCONSTANT(1) 8390-8390",
               "lastToken": "INTCONSTANT(1) 8390-8390"
             },
-            "firstToken": "PP_IF(#if) 8386-8388",
+            "firstToken": "HASH(#) 8386-8386",
             "lastToken": "INTCONSTANT(1) 8390-8390"
           },
           {
@@ -12189,14 +12189,14 @@
           },
           {
             "kind": "ppDir",
-            "dir": "PP_ENDIF(#endif) 8636-8641",
+            "dir": "ENDIF(endif) 8637-8641",
             "tokens": [],
-            "firstToken": "PP_ENDIF(#endif) 8636-8641",
-            "lastToken": "PP_ENDIF(#endif) 8636-8641"
+            "firstToken": "HASH(#) 8636-8636",
+            "lastToken": "ENDIF(endif) 8637-8641"
           },
           {
             "kind": "ppDir",
-            "dir": "PP_IF(#if) 8672-8674",
+            "dir": "IF(if) 8673-8674",
             "tokens": [
               "INTCONSTANT(0) 8676-8676"
             ],
@@ -12206,7 +12206,7 @@
               "firstToken": "INTCONSTANT(0) 8676-8676",
               "lastToken": "INTCONSTANT(0) 8676-8676"
             },
-            "firstToken": "PP_IF(#if) 8672-8674",
+            "firstToken": "HASH(#) 8672-8672",
             "lastToken": "INTCONSTANT(0) 8676-8676"
           },
           {
@@ -12234,10 +12234,10 @@
           },
           {
             "kind": "ppDir",
-            "dir": "PP_ENDIF(#endif) 8707-8712",
+            "dir": "ENDIF(endif) 8708-8712",
             "tokens": [],
-            "firstToken": "PP_ENDIF(#endif) 8707-8712",
-            "lastToken": "PP_ENDIF(#endif) 8707-8712"
+            "firstToken": "HASH(#) 8707-8707",
+            "lastToken": "ENDIF(endif) 8708-8712"
           }
         ],
         "newScope": false,
@@ -14329,7 +14329,7 @@
         "firstToken": "IDENTIFIER(min) 9941-9943",
         "lastToken": "RIGHT_PAREN()) 9954-9954"
       },
-      "firstToken": "PP_DEFINE(#define) 9927-9933",
+      "firstToken": "HASH(#) 9927-9927",
       "lastToken": "RIGHT_PAREN()) 9955-9955"
     },
     {
@@ -20392,7 +20392,7 @@
         "statements": [
           {
             "kind": "ppDir",
-            "dir": "PP_IF(#if) 14542-14544",
+            "dir": "IF(if) 14543-14544",
             "tokens": [
               "INTCONSTANT(0) 14546-14546"
             ],
@@ -20402,7 +20402,7 @@
               "firstToken": "INTCONSTANT(0) 14546-14546",
               "lastToken": "INTCONSTANT(0) 14546-14546"
             },
-            "firstToken": "PP_IF(#if) 14542-14544",
+            "firstToken": "HASH(#) 14542-14542",
             "lastToken": "INTCONSTANT(0) 14546-14546"
           },
           {
@@ -20766,10 +20766,10 @@
           },
           {
             "kind": "ppDir",
-            "dir": "PP_ELSE(#else) 14737-14741",
+            "dir": "ELSE(else) 14738-14741",
             "tokens": [],
-            "firstToken": "PP_ELSE(#else) 14737-14741",
-            "lastToken": "PP_ELSE(#else) 14737-14741"
+            "firstToken": "HASH(#) 14737-14737",
+            "lastToken": "ELSE(else) 14738-14741"
           },
           {
             "kind": "initDeclaratorListDeclaration",
@@ -21154,10 +21154,10 @@
           },
           {
             "kind": "ppDir",
-            "dir": "PP_ENDIF(#endif) 15089-15094",
+            "dir": "ENDIF(endif) 15090-15094",
             "tokens": [],
-            "firstToken": "PP_ENDIF(#endif) 15089-15094",
-            "lastToken": "PP_ENDIF(#endif) 15089-15094"
+            "firstToken": "HASH(#) 15089-15089",
+            "lastToken": "ENDIF(endif) 15090-15094"
           }
         ],
         "newScope": false,
@@ -26166,7 +26166,7 @@
           },
           {
             "kind": "ppDir",
-            "dir": "PP_IF(#if) 18954-18956",
+            "dir": "IF(if) 18955-18956",
             "tokens": [
               "IDENTIFIER(AA) 18958-18959",
               "RIGHT_ANGLE(>) 18960-18960",
@@ -26190,7 +26190,7 @@
               "firstToken": "IDENTIFIER(AA) 18958-18959",
               "lastToken": "INTCONSTANT(1) 18961-18961"
             },
-            "firstToken": "PP_IF(#if) 18954-18956",
+            "firstToken": "HASH(#) 18954-18954",
             "lastToken": "INTCONSTANT(1) 18961-18961"
           },
           {
@@ -26524,10 +26524,10 @@
                   },
                   {
                     "kind": "ppDir",
-                    "dir": "PP_ELSE(#else) 19198-19202",
+                    "dir": "ELSE(else) 19199-19202",
                     "tokens": [],
-                    "firstToken": "PP_ELSE(#else) 19198-19202",
-                    "lastToken": "PP_ELSE(#else) 19198-19202"
+                    "firstToken": "HASH(#) 19198-19198",
+                    "lastToken": "ELSE(else) 19199-19202"
                   },
                   {
                     "kind": "initDeclaratorListDeclaration",
@@ -26609,10 +26609,10 @@
                   },
                   {
                     "kind": "ppDir",
-                    "dir": "PP_ENDIF(#endif) 19275-19280",
+                    "dir": "ENDIF(endif) 19276-19280",
                     "tokens": [],
-                    "firstToken": "PP_ENDIF(#endif) 19275-19280",
-                    "lastToken": "PP_ENDIF(#endif) 19275-19280"
+                    "firstToken": "HASH(#) 19275-19275",
+                    "lastToken": "ENDIF(endif) 19276-19280"
                   },
                   {
                     "kind": "initDeclaratorListDeclaration",
@@ -27236,7 +27236,7 @@
                   },
                   {
                     "kind": "ppDir",
-                    "dir": "PP_IF(#if) 19904-19906",
+                    "dir": "IF(if) 19905-19906",
                     "tokens": [
                       "IDENTIFIER(AA) 19908-19909",
                       "RIGHT_ANGLE(>) 19910-19910",
@@ -27260,7 +27260,7 @@
                       "firstToken": "IDENTIFIER(AA) 19908-19909",
                       "lastToken": "INTCONSTANT(1) 19911-19911"
                     },
-                    "firstToken": "PP_IF(#if) 19904-19906",
+                    "firstToken": "HASH(#) 19904-19904",
                     "lastToken": "INTCONSTANT(1) 19911-19911"
                   }
                 ],
@@ -27324,10 +27324,10 @@
           },
           {
             "kind": "ppDir",
-            "dir": "PP_ENDIF(#endif) 19948-19953",
+            "dir": "ENDIF(endif) 19949-19953",
             "tokens": [],
-            "firstToken": "PP_ENDIF(#endif) 19948-19953",
-            "lastToken": "PP_ENDIF(#endif) 19948-19953"
+            "firstToken": "HASH(#) 19948-19948",
+            "lastToken": "ENDIF(endif) 19949-19953"
           },
           {
             "kind": "expressionStatement",
@@ -27380,7 +27380,7 @@
       "lastToken": "RIGHT_BRACE(}) 19988-19988"
     }
   ],
-  "firstToken": "PP_IF(#if) 1616-1618",
+  "firstToken": "HASH(#) 1616-1616",
   "lastToken": "RIGHT_BRACE(}) 19988-19988",
   "comments": [
     "LINE_COMMENT(// The MIT License) 0-17",

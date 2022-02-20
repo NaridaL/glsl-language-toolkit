@@ -7,6 +7,7 @@ import {
   ParserOptions,
   Plugin,
   SupportInfo,
+  util,
 } from "prettier"
 import * as doc from "prettier/doc"
 import { IToken, TokenType } from "chevrotain"
@@ -22,6 +23,7 @@ import {
 } from "./nodes"
 import { TOKEN } from "./lexer"
 import { parseInput } from "./parser"
+import isNextLineEmpty = util.isNextLineEmpty
 
 const {
   utils: { propagateBreaks },
@@ -62,6 +64,12 @@ export const languages: SupportInfo["languages"] = [
   { name: "glsl", parsers: ["glsl-parser"] },
 ]
 
+function locEnd(node: Node | IToken) {
+  return (
+    isToken(node) ? node : (node as unknown as { lastToken: IToken }).lastToken
+  ).endOffset!
+}
+
 export const parsers: Plugin<Node | IToken>["parsers"] = {
   "glsl-parse": {
     parse(text, parsers, options) {
@@ -77,13 +85,7 @@ export const parsers: Plugin<Node | IToken>["parsers"] = {
           : (node as unknown as { firstToken: IToken }).firstToken
       ).startOffset
     },
-    locEnd(node: Node | IToken) {
-      return (
-        isToken(node)
-          ? node
-          : (node as unknown as { lastToken: IToken }).lastToken
-      ).endOffset!
-    },
+    locEnd,
   },
 }
 
@@ -418,13 +420,22 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             ])
 
           ///////// STATEMENTS
-          case "compoundStatement":
-            return group([
-              "{",
-              indent([line, join(hardline, path.map(print, "statements"))]),
-              line,
-              "}",
-            ])
+          case "compoundStatement": {
+            const x: Doc = [line]
+
+            path.each((path, index, statements) => {
+              const value = path.getValue()
+              if (index !== 0) {
+                x.push(hardline)
+              }
+              x.push(print(path))
+              if (isNextLineEmpty(options.originalText, value, locEnd)) {
+                x.push(hardline)
+              }
+            }, "statements")
+
+            return group(["{", indent(x), line, "}"])
+          }
           case "returnStatement": {
             const what = p(n, "what")
             return ["return", " ", what, ";"]
@@ -435,11 +446,8 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "selectionStatement":
             return [
               group([
-                "if",
-                " ",
-                "(",
-                indent([softline, p(n, "condition")]),
-                softline,
+                "if (",
+                group([indent([softline, p(n, "condition")]), softline]),
                 ") ",
                 p(n, "yes"),
               ]),
@@ -461,7 +469,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                 indent([
                   softline,
                   p(n, "initExpression"),
-                  softline,
+                  line,
                   p(n, "conditionExpression"),
                   tok(n, TOKEN.SEMICOLON),
                   line,
@@ -576,6 +584,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "ppDir": {
             return glug(
               group([
+                "#",
                 n.dir.image,
                 " ",
                 indent(

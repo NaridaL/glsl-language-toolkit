@@ -4,7 +4,6 @@ import { readFileSync } from "fs"
 import expect from "expect"
 import prettier from "prettier"
 import * as prettierPlugin from "./prettier-plugin"
-import { parseInput } from "./parser"
 
 function fmt(source: string, printWidth = 80): string {
   return prettier.format(source, {
@@ -14,6 +13,7 @@ function fmt(source: string, printWidth = 80): string {
     printWidth,
   })
 }
+
 function testFormat(
   source: string,
   expected: string,

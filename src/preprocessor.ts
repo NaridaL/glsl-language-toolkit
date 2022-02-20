@@ -1,4 +1,6 @@
-import { tokenMatcher } from "chevrotain"
+import { EOF, tokenMatcher } from "chevrotain"
+import { noop } from "lodash"
+
 import {
   AbstractVisitor,
   BinaryExpression,
@@ -12,9 +14,19 @@ import { doOp, lex, TOKEN } from "./lexer"
 import { checkParsingErrors, GLSL_PARSER } from "./parser"
 import { CheckError, mapExpandedLocation } from "./util"
 
+type MarkErrorFunc = (code: string, where: Token, message: string) => void
 type int32 = number
 const PREPROC_EVALUATOR = new (class extends AbstractVisitor<int32> {
-  public eval(n: Node) {
+  private markError: MarkErrorFunc = noop
+  private isDefined!: (macroName: string) => boolean
+
+  public eval(
+    n: Node,
+    isDefined: (macroName: string) => boolean,
+    markError: MarkErrorFunc,
+  ) {
+    this.isDefined = isDefined
+    this.markError = markError
     return super.visit(n)!
   }
 
@@ -23,10 +35,6 @@ const PREPROC_EVALUATOR = new (class extends AbstractVisitor<int32> {
       throw new Error("XX")
     }
     return +n._const.image
-  }
-
-  isDefined(macroName: string) {
-    return false
   }
 
   protected unaryExpression(n: UnaryExpression): int32 {
@@ -40,27 +48,33 @@ const PREPROC_EVALUATOR = new (class extends AbstractVisitor<int32> {
         return ~this.visit(n.on)!
       case TOKEN.BANG:
         return +!this.visit(n.on)!
+      case TOKEN.PLUS:
+        return this.visit(n.on)!
       default:
-        throw new Error()
+        throw new Error(n.op.tokenType.name)
     }
   }
 
   protected binaryExpression(n: BinaryExpression): int32 {
-    const l = this.visit(n.lhs)
-    const r = this.visit(n.rhs)
-    return doOp(n.op.tokenType, l, r) | 0
+    const l = this.visit(n.lhs)!
+    switch (n.op.tokenType) {
+      case TOKEN.AND_OP:
+        return l && this.visit(n.rhs)!
+      case TOKEN.OR_OP:
+        return l || this.visit(n.rhs)!
+      default: {
+        const r = this.visit(n.rhs)
+        return doOp(n.op.tokenType, l, r) | 0
+      }
+    }
   }
 
   protected variableExpression(_n: VariableExpression): int32 | undefined {
     // We have already preprocessed the ppConstantExpression at this point.
     // If there are any "variables" left, it means they were not defined. This
     // is not valid in GLSL ES 3.0, so we output an error.
-    this.markError(_n.var, "Undefined identifier")
+    this.markError("P0001", _n.var, "undefined identifier " + _n.var.image)
     return 0
-  }
-
-  private markError(_var: Token, undefinedIdentifier: string): void {
-    // TODO
   }
 })()
 
@@ -147,11 +161,17 @@ export function fixLocations(tokens: Token[], changes: SourceMap[]): void {
 
   for (const change of changes) {
     // skip tokens before this change
-    while (tokens[tokensIdx].endOffset! < change.newOffset) {
+    while (
+      tokens[tokensIdx] &&
+      tokens[tokensIdx].endOffset! < change.newOffset
+    ) {
       tokensIdx++
     }
     // fix location on all tokens inside this location
-    while (tokens[tokensIdx].startOffset < change.newOffset + change.length) {
+    while (
+      tokens[tokensIdx] &&
+      tokens[tokensIdx].startOffset < change.newOffset + change.length
+    ) {
       fixLocation(tokens[tokensIdx], change)
       tokensIdx++
     }
@@ -278,11 +298,17 @@ function makeIntConstantToken(image: string, token: Token): Token {
   })
 }
 
+type StartEnd = [start: number, end: number]
+
 export function preprocMacros(
   tokens: Token[],
   start = 0,
   definitions: MacroDefinitions = {},
   errors: CheckError[] = [],
+  // After replacement of a macro, we want to avoid recursively replacing
+  // the same macro infinitely.
+  blockedReplacements: { macroName: string; start: number; end: number }[] = [],
+  blockedReplacementsOffset = 0,
 ): Token[] {
   const result: Token[] = []
 
@@ -315,30 +341,41 @@ export function preprocMacros(
   ): [newI: number, result: number] {
     const end = getLastTokenOnLine(i) + 1
     const input = tokens.slice(i + 1, end)
-    const preprocessedInput = preprocMacros(input, 0, definitions, errors)
+    const preprocessedInput = preprocMacros(
+      input,
+      0,
+      definitions,
+      errors,
+      blockedReplacements,
+      blockedReplacementsOffset + i + 1,
+    )
     GLSL_PARSER.input = preprocessedInput
     const ast = GLSL_PARSER.ppConstantExpression()
     checkParsingErrors("", GLSL_PARSER.errors)
-    const conditionValue = PREPROC_EVALUATOR.eval(ast)
+    const conditionValue = PREPROC_EVALUATOR.eval(
+      ast,
+      (macro) => !!definitions[macro],
+      markError,
+    )
     return [end, conditionValue]
   }
 
   function parseMacroArgs(
     tokens: Token[],
     start: number,
-  ): [newI: number, args: Token[][]] {
+  ): [newI: number, args: StartEnd[]] {
     let i = start
-    const params: Token[][] = []
-    let currentParam: Token[] = []
-    let depth = 0
     i++ // skip LEFT_PAREN
+    const params: StartEnd[] = []
+    let currentParamStart = i
+    let depth = 0
     while (i < tokens.length) {
       const t = tokens[i]
       if (depth === 0 && t.tokenType === TOKEN.COMMA) {
-        params.push(currentParam)
-        currentParam = []
+        params.push([currentParamStart, i])
+        currentParamStart = i + 1
       } else if (depth === 0 && t.tokenType === TOKEN.RIGHT_PAREN) {
-        params.push(currentParam)
+        params.push([currentParamStart, i])
         i++
         return [i, params]
       } else {
@@ -347,85 +384,139 @@ export function preprocMacros(
         } else if (t.tokenType === TOKEN.RIGHT_PAREN) {
           depth--
         }
-        currentParam.push(t)
       }
       i++
     }
     throw new Error()
   }
 
-  // After replacement of a macro, we want to avoid recursively replacing
-  // the same macro infinitely. With these vars, we block the replacement.
-  let blockToken = ""
-  let blockUntil = 0
-
   let i = 0
+
+  // la = lookahead
+  function la(by = 0): Token {
+    return tokens[i + by] ?? EOF
+  }
+
+  function preprocIfBlock(outputting: boolean): void {
+    let keptLineBlock = false
+    const lastTokenOnLine = getLastTokenOnLine(i)
+    if (outputting) {
+      if (la().image === "if") {
+        const [newI, conditionValue] = parseAndEvalPPConstantExpressionOnLine(i)
+        i = newI
+        keptLineBlock = conditionValue !== 0
+      } else {
+        if (lastTokenOnLine !== i + 1) {
+          markError(
+            "P0001",
+            la(),
+            "#ifdef/#ifndef must have exactly one argument",
+          )
+        }
+        const argToken = tokens[i + 1]
+        keptLineBlock =
+          !!definitions[argToken.image] === (la().image === "ifdef")
+      }
+    }
+    i = lastTokenOnLine + 1
+    recurse(keptLineBlock)
+    while (la().image === "elif") {
+      let keepElifLineBlock = false
+      if (outputting && !keptLineBlock) {
+        // eval elif condition
+        const [newI, conditionValue] = parseAndEvalPPConstantExpressionOnLine(i)
+        i = newI
+        keepElifLineBlock = conditionValue !== 0
+      }
+      keptLineBlock ||= keepElifLineBlock
+      recurse(keepElifLineBlock)
+    }
+    if (la().image === "else") {
+      i++
+      // todo: expect no tokens until end of line
+      recurse(outputting && !keptLineBlock)
+    }
+    if (la().image !== "endif") {
+      throw new Error("should not be possible to reach this")
+    }
+  }
+
+  function preprocDefineBlock(): void {
+    const lastTokenOnLine = getLastTokenOnLine(i)
+    if (lastTokenOnLine === i) {
+      // TODO: two arguments?
+      markError("P0001", la(), "#define needs at least one argument")
+    } else {
+      const name = tokens[i + 1]
+      if (name.image.startsWith("GL_")) {
+        markError("P0001", name, "macro name starting with GL_ is not allowed")
+      }
+      if (BUILT_IN_MACROS.includes(name.image)) {
+        markError("P0001", name, "cannot redefine built-in macro")
+      } else {
+        // function macro if no space between name and LEFT_PAREN
+        const isFunctionMacro =
+          tokens.length > i + 2 &&
+          tokens[i + 2].tokenType === TOKEN.LEFT_PAREN &&
+          tokens[i + 1].endOffset === tokens[i + 2].startOffset - 1
+        if (isFunctionMacro) {
+          const params = []
+          let j = i + 3
+          if (isPreprocIdentifier(tokens[j])) {
+            params.push(tokens[j].image)
+            j++
+            while (tokens[j].tokenType === TOKEN.COMMA) {
+              j++
+              if (!isPreprocIdentifier(tokens[j])) {
+                markError("P0001", tokens[j], "expected ',' or ')")
+                break
+              }
+              params.push(tokens[j].image)
+              j++
+            }
+          }
+          if (tokens[j].tokenType !== TOKEN.RIGHT_PAREN) {
+            markError("P0001", tokens[j], "expected ',' or ')'")
+          }
+          j++
+          definitions[name.image] = {
+            kind: "function",
+            params,
+            tokens: tokens.slice(j, lastTokenOnLine + 1),
+          }
+        } else {
+          definitions[name.image] = {
+            kind: "object",
+            tokens: tokens.slice(i + 2, lastTokenOnLine + 1),
+          }
+        }
+      }
+      i = lastTokenOnLine
+    }
+  }
 
   function recurse(outputting: boolean): void {
     for (; i < tokens.length; i++) {
-      const token = tokens[i]
-
-      if (tokenMatcher(token, TOKEN.PP)) {
-        if (outputting && token.tokenType === TOKEN.PP_DEFINE) {
+      if (tokenMatcher(la(), TOKEN.HASH)) {
+        if (i > 0 && la(-1).endLine === la().startLine) {
+          markError(
+            "P0001",
+            la(),
+            "preprocessor directives may only be preceded by whitespace",
+          )
+        }
+        const lastTokenOnLine = getLastTokenOnLine(i)
+        if (lastTokenOnLine === i) {
+          // no tokens, returns
+          continue
+        }
+        i++
+        if (outputting && la().image === "define") {
+          preprocDefineBlock()
+        } else if (outputting && la().image === "undef") {
           const lastTokenOnLine = getLastTokenOnLine(i)
           if (lastTokenOnLine === i) {
-            // TODO: two arguments?
-            markError("P0001", token, "#define needs at least one argument")
-          } else {
-            const name = tokens[i + 1]
-            if (name.image.startsWith("GL_")) {
-              markError(
-                "P0001",
-                name,
-                "macro name starting with GL_ is not allowed",
-              )
-            }
-            if (BUILT_IN_MACROS.includes(name.image)) {
-              markError("P0001", name, "cannot redefine built-in macro")
-            } else {
-              // function macro if no space between name and LEFT_PAREN
-              const isFunctionMacro =
-                tokens.length > i + 2 &&
-                tokens[i + 2].tokenType === TOKEN.LEFT_PAREN &&
-                tokens[i + 1].endOffset === tokens[i + 2].startOffset - 1
-              if (isFunctionMacro) {
-                const params = []
-                let j = i + 3
-                if (isPreprocIdentifier(tokens[j])) {
-                  params.push(tokens[j].image)
-                  j++
-                  while (tokens[j].tokenType === TOKEN.COMMA) {
-                    j++
-                    if (!isPreprocIdentifier(tokens[j])) {
-                      markError("P0001", tokens[j], "expected ',' or ')")
-                      break
-                    }
-                    params.push(tokens[j].image)
-                    j++
-                  }
-                }
-                if (tokens[j].tokenType !== TOKEN.RIGHT_PAREN) {
-                  markError("P0001", tokens[j], "expected ',' or ')'")
-                }
-                j++
-                definitions[name.image] = {
-                  kind: "function",
-                  params,
-                  tokens: tokens.slice(j, lastTokenOnLine + 1),
-                }
-              } else {
-                definitions[name.image] = {
-                  kind: "object",
-                  tokens: tokens.slice(i + 2, lastTokenOnLine + 1),
-                }
-              }
-            }
-            i = lastTokenOnLine
-          }
-        } else if (outputting && token.tokenType === TOKEN.PP_UNDEF) {
-          const lastTokenOnLine = getLastTokenOnLine(i)
-          if (lastTokenOnLine === i) {
-            markError("P0001", token, "#undef needs exactly one parameter")
+            markError("P0001", la(), "#undef needs exactly one parameter")
           } else {
             const name = tokens[i + 1]
             if (BUILT_IN_MACROS.includes(name.image)) {
@@ -435,84 +526,43 @@ export function preprocMacros(
             }
             i = lastTokenOnLine
           }
+        } else if (la().image === "version" || la().image === "pragma") {
+          // just skip over it
+          i = getLastTokenOnLine(i)
         } else if (
-          token.tokenType === TOKEN.PP_IF ||
-          token.tokenType === TOKEN.PP_IFDEF ||
-          token.tokenType === TOKEN.PP_IFNDEF
+          la().image === "if" ||
+          la().image === "ifdef" ||
+          la().image === "ifndef"
         ) {
-          let keptLineBlock = false
-          const lastTokenOnLine = getLastTokenOnLine(i)
-          if (outputting) {
-            if (token.tokenType === TOKEN.PP_IF) {
-              const [newI, conditionValue] =
-                parseAndEvalPPConstantExpressionOnLine(i)
-              i = newI
-              keptLineBlock = conditionValue !== 0
-            } else {
-              if (lastTokenOnLine !== i + 1) {
-                markError(
-                  "P0001",
-                  token,
-                  "#ifdef/#ifndef must have exactly one argument",
-                )
-              }
-              const argToken = tokens[i + 1]
-              keptLineBlock =
-                !!definitions[argToken.image] ===
-                (token.tokenType === TOKEN.PP_IFDEF)
-            }
-          }
-          i = lastTokenOnLine + 1
-          recurse(keptLineBlock)
-          while (tokens[i].tokenType === TOKEN.PP_ELIF) {
-            let keepElifLineBlock = false
-            if (outputting && !keptLineBlock) {
-              // eval elif condition
-              const [newI, conditionValue] =
-                parseAndEvalPPConstantExpressionOnLine(i)
-              i = newI
-              keepElifLineBlock = conditionValue !== 0
-            }
-            keptLineBlock ||= keepElifLineBlock
-            recurse(keepElifLineBlock)
-          }
-          if (tokens[i].tokenType === TOKEN.PP_ELSE) {
-            i++
-            // todo: expect no tokens until end of line
-            recurse(outputting && !keptLineBlock)
-          }
-          if (tokens[i].tokenType !== TOKEN.PP_ENDIF) {
-            markError(
-              "P0001",
-              tokens[i],
-              `Unexpected TOKEN ${tokens[i].image}, expected #endif`,
-            )
-          }
+          preprocIfBlock(outputting)
         } else if (
-          token.tokenType === TOKEN.PP_ENDIF ||
-          token.tokenType === TOKEN.PP_ELIF ||
-          token.tokenType === TOKEN.PP_ELSE
+          la().image === "endif" ||
+          la().image === "elif" ||
+          la().image === "else"
         ) {
           return
-        } else if (token.tokenType === TOKEN.PP_INVALID) {
+        } else {
           markError(
             "P0001",
-            token,
-            "unknown preprocessor directive " + token.image,
+            la(),
+            `unknown preprocessor directive '${la().image}'`,
           )
-        } else {
-          throw new Error(token.image)
         }
       } else if (outputting) {
-        const token = tokens[i]
+        const token = la()
         let replacement
         if (
           isPreprocIdentifier(token) &&
-          !(i < blockUntil && token.image === blockToken)
+          !blockedReplacements.some(
+            ({ macroName, start, end }) =>
+              token.image === macroName &&
+              start <= blockedReplacementsOffset + i &&
+              blockedReplacementsOffset + i < end,
+          )
         ) {
           const definition = definitions[token.image]
+          const start = i
           if (definition) {
-            const start = i
             if (definition.kind === "object") {
               i++
               replacement = definition.tokens.map((t) =>
@@ -524,14 +574,34 @@ export function preprocMacros(
                 tokens[i + 1].tokenType === TOKEN.LEFT_PAREN
               ) {
                 i++
-                let args
-                ;[i, args] = parseMacroArgs(tokens, i)
-                args = args.map((argTokens) =>
-                  preprocMacros(argTokens, 0, definitions, errors),
+                const [newI, args] = parseMacroArgs(tokens, i)
+                i = newI
+                const preprocArgs = args.map(([s, e]) =>
+                  s === e
+                    ? []
+                    : preprocMacros(
+                        tokens.slice(s, e),
+                        0,
+                        definitions,
+                        errors,
+                        blockedReplacements,
+                        blockedReplacementsOffset + s,
+                      ),
                 )
+                if (
+                  definition.params.length === 0
+                    ? args[0][0] !== args[0][1]
+                    : definition.params.length !== args.length
+                ) {
+                  markError(
+                    "P0001",
+                    token,
+                    `incorrect number of arguments, expected ${definition.params.length}, was ${args.length}`,
+                  )
+                }
                 replacement = performFunctionMacroInlining(
                   definition,
-                  args,
+                  preprocArgs,
                   token,
                 )
               }
@@ -549,14 +619,19 @@ export function preprocMacros(
           if (replacement) {
             const deleteCount = i - start
             tokens.splice(start, deleteCount, ...replacement)
-            if (i >= blockUntil) {
-              // we are outside the previous replacement
-              blockToken = token.image
-              blockUntil = start + replacement.length
-            } else {
-              // extends previous block range so we don't replace the original thing when it was called indirectly
-              blockUntil += replacement.length - deleteCount
+            // Extend previous block ranges, so we don't replace the original
+            // thing when it was called indirectly.
+            for (const k of blockedReplacements) {
+              if (blockedReplacementsOffset + i < k.end) {
+                k.end += replacement.length - deleteCount
+                // todo remove if past
+              }
             }
+            blockedReplacements.push({
+              macroName: token.image,
+              start: blockedReplacementsOffset + start,
+              end: blockedReplacementsOffset + start + replacement.length,
+            })
             i = start - 1
           }
         }

@@ -647,9 +647,13 @@ export class AbstractVisitor<R> {
   protected ppExtension(n: PpExtension): R | undefined {
     return
   }
+
+  protected ppCall(n: PpCall): R | undefined {
+    return
+  }
 }
 
-export function isToken(x: Token | Node): x is Token {
+export function isToken(x: IToken | Node): x is IToken {
   return "tokenType" in x
 }
 

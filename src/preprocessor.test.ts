@@ -1,15 +1,24 @@
 import "./index"
 import expect from "expect"
-import { lex } from "./lexer"
 import { applyLineContinuations, preproc } from "./preprocessor"
 import { Token } from "./nodes"
+import { lex } from "./lexer"
 
 const images = (toks: Token[]) => toks.map((t) => t.image)
 
+function testPreproc(source: string, expected: string): void {
+  const img = images(preproc(source))
+  console.log(img.join(" "))
+  expect(img).toEqual(images(lex(expected)))
+}
+
 test("preproc directives may only be preceded by whitespace", () => {
   expect(() => preproc("int i; #define AA 2")).toThrow(
-    "preproc directives may only be preceded by whitespace",
+    "preprocessor directives may only be preceded by whitespace",
   )
+})
+test("preproc directives may preceded by comment", () => {
+  testPreproc("/* int i; */ #define AA 2", "")
 })
 test("macro name starting with GL_ is not allowed", () => {
   expect(() => preproc("#define GL_TEST")).toThrow(
@@ -26,6 +35,21 @@ test("cannot undefine built-in macro", () => {
     "cannot undefine built-in macro",
   )
 })
+test("cannot use undefined macro in pp-constant-expression", () => {
+  expect(() =>
+    preproc(`#if FOO
+  #endif`),
+  ).toThrow("undefined identifier")
+})
+
+test("pp-constant-expressions", () => {
+  testPreproc(
+    `#if ( ~ - + ! 3 != 32 ) || NOT_DEFINED
+    x
+    #endif`,
+    "x",
+  )
+})
 
 test("object macro", () => {
   const source = `
@@ -33,16 +57,47 @@ test("object macro", () => {
   
   vec3 v = X;
   `
-  expect(images(preproc(source))).toEqual(images(lex(`vec3 v = vec3(1.);`)))
+  testPreproc(source, `vec3 v = vec3(1.);`)
 })
 
-test("function macro", () => {
-  const source = `
-  #define V(X) vec3(X)
-  
-  vec3 v = V(1);
-  `
-  expect(images(preproc(source))).toEqual(images(lex(`vec3 v = vec3(1);`)))
+describe("function macros", () => {
+  test("0 params, 0 args is valid", () => {
+    testPreproc(
+      `
+          #define FOO() BAR()
+          FOO()`,
+      `BAR()`,
+    )
+  })
+  test("0 params, 1 arg is invalid", () => {
+    expect(() =>
+      preproc(`#define FOO() x
+        FOO(a)`),
+    ).toThrow("incorrect number of arguments, expected 0, was 1")
+  })
+  test("1 param, 1 arg is valid", () => {
+    const source = `
+      #define V(X) vec3(X)
+      
+      vec3 v = V(1);`
+    testPreproc(source, `vec3 v = vec3(1);`)
+  })
+  test("1 param, 0 args is valid (empty token list)", () => {
+    testPreproc(
+      `
+      #define V(X) vec3(X)
+      vec3 v = V();
+    `,
+      `vec3 v = vec3();`,
+    )
+  })
+  test("1 param, 2 args is invalid", () => {
+    expect(() =>
+      preproc(`
+        #define FOO(x) x
+        FOO(a,b)`),
+    ).toThrow("incorrect number of arguments, expected 1, was 2")
+  })
 })
 
 describe("built-in macros", () => {
@@ -51,13 +106,13 @@ describe("built-in macros", () => {
     #if __LINE__ == 2
     float f = __LINE__;
     #endif`
-    expect(images(preproc(source))).toEqual(images(lex(`float f = 3;`)))
+    testPreproc(source, `float f = 3;`)
   })
   test("GL_ES", () => {
-    expect(images(preproc("GL_ES"))).toEqual(images(lex(`1`)))
+    testPreproc("GL_ES", `1`)
   })
   test("__VERSION__", () => {
-    expect(images(preproc("__VERSION__"))).toEqual(images(lex(`300`)))
+    testPreproc("__VERSION__", `300`)
   })
 })
 
@@ -68,7 +123,7 @@ test("#if macro", () => {
   float f;
   #endif
   `
-  expect(images(preproc(source))).toEqual(images(lex(`float f;`)))
+  testPreproc(source, `float f;`)
 })
 test("#if-#else macro", () => {
   const source = `
@@ -76,10 +131,11 @@ test("#if-#else macro", () => {
   #if HW_PERFORMANCE==1
   float f;
   #else
+  #define bar
   float b;
   #endif
   `
-  expect(images(preproc(source))).toEqual(images(lex(`float b;`)))
+  testPreproc(source, `float b;`)
 })
 test("#if-#elif macro", () => {
   const source = `
@@ -92,14 +148,24 @@ test("#if-#elif macro", () => {
   int x;
   #endif
   `
-  expect(images(preproc(source))).toEqual(images(lex(`float b;`)))
+  testPreproc(source, `float b;`)
+})
+test("#ifdef macro", () => {
+  testPreproc(
+    `#ifdef FOO
+      a
+      #else
+      b
+      #endif`,
+    "b",
+  )
 })
 test("argument prescan; nested calls", () => {
   // See case 1 https://gcc.gnu.org/onlinedocs/cpp/Argument-Prescan.html#Argument-Prescan
   const source = `
   #define f(x) (x + 1)
   f(f(1))`
-  expect(images(preproc(source))).toEqual(images(lex(`((1 + 1) + 1)`)))
+  testPreproc(source, `((1 + 1) + 1)`)
 })
 test("argument prescan; unshielded commas", () => {
   // See case 3 https://gcc.gnu.org/onlinedocs/cpp/Argument-Prescan.html#Argument-Prescan
@@ -108,22 +174,38 @@ test("argument prescan; unshielded commas", () => {
     #define bar(x) lose(x)
     #define lose(x) (1 + (x))
     bar(foo)`
-  expect(images(preproc(source))).toEqual(images(lex(`(1 + (foo))`)))
+  expect(() => preproc(source)).toThrow(
+    "incorrect number of arguments, expected 1, was 2",
+  )
 })
 test("self-referential macro is not replaced infinitely", () => {
   // See https://gcc.gnu.org/onlinedocs/cpp/Self-Referential-Macros.html#Self-Referential-Macros
   const source = `#define foo (4 + foo)
     foo`
-  expect(images(preproc(source))).toEqual(images(lex(`(4 + foo)`)))
+  testPreproc(source, `(4 + foo)`)
+})
+test("self-referential macro is not replaced infinitely 2", () => {
+  // See https://gcc.gnu.org/onlinedocs/cpp/Self-Referential-Macros.html#Self-Referential-Macros
+  const source = `#define foo (4 + foo)
+    #define bar foo
+    bar`
+  const expected = `(4 + foo)`
+  testPreproc(source, expected)
+})
+test("self-referential macro is not replaced infinitely as macro param", () => {
+  // See https://gcc.gnu.org/onlinedocs/cpp/Self-Referential-Macros.html#Self-Referential-Macros
+  const source = `#define foo (4 + foo)
+    #define bar(x) x
+    bar(foo)`
+  const expected = `(4 + foo)`
+  testPreproc(source, expected)
 })
 test("indirect self-referential macro is not replaced infinitely", () => {
   const source = `#define x (4 + y)
     #define y (2 * x)
     x
     y`
-  expect(images(preproc(source))).toEqual(
-    images(lex(`(4 + (2 * x)) (2 * (4 + y))`)),
-  )
+  testPreproc(source, `(4 + (2 * x)) (2 * (4 + y))`)
 })
 test("example from c++ standard", () => {
   // adapted from https://eel.is/c++draft/cpp.rescan
@@ -150,34 +232,35 @@ test("example from c++ standard", () => {
   const output = `
     f(2 * (y+1)) + f(2 * (f(2 * (z[0])))) % f(2 * (0)) + t(1);
     f(2 * (2+(3,4)-0,1)) | f(2 * (~ 5)) & f(2 * (0,1))^m(0,1);
-    int i[] = { 1, 2, 3, 4, 5, };
+    int i[] = { 1, 2, 3, 4, , , 5, , };
   `
-  expect(images(preproc(source))).toEqual(images(lex(output)))
+  testPreproc(source, output)
 })
 
 test("preproc works", () => {
-  const source = `#version 300 es
-#define MAX3(genType) genType max3(genType a, genType b, genType c) {\\
-return max(a, max(b, c));\\
-}
-
-MAX3(float)
-MAX3(vec3)
-
-#pragma glslify: export(max3)
-`
-  expect(images(preproc(source))).toEqual(
-    images(
-      lex(`
-      
+  ;`
+  #define f(x) g(f(2), 
+  #define g(a, b) a 
+  f(2) 3)
+  `
+  testPreproc(
+    `#version 300 es
+    #define MAX3(genType) genType max3(genType a, genType b, genType c) {\\
+    return max(a, max(b, c));\\
+    }
+    
+    MAX3(float)
+    MAX3(vec3)
+    
+    #pragma glslify: export(max3)`,
+    `
       float max3(float a, float b, float c) {
         return max(a, max(b, c));
       }
       vec3 max3(vec3 a, vec3 b, vec3 c) {
         return max(a, max(b, c)); 
       }
-      `),
-    ),
+     `,
   )
 })
 test("directives may have whitespace everywhere", () => {
@@ -189,7 +272,7 @@ test("directives may have whitespace everywhere", () => {
     #\\
 en\\
 dif`
-  expect(images(preproc(source))).toEqual(images(lex(`float f;`)))
+  testPreproc(source, `float f;`)
 })
 
 test("applyLineContinuation", () => {
