@@ -1,0 +1,111 @@
+---
+scopeName: source.abc
+patterns:
+  - include: "#expression"
+vars:
+  #  newLineCont: '\\\n' # TODO fix
+  newLineCont: ''
+repository:
+  expression:
+    patterns:
+      #      - include: "#letter"
+      - include: "#paren-expression"
+      #      - include: '#single-line-comment-consuming-line-ending'
+      - name: comment.line.double-slash.glsl
+        begin: '//'
+        end: '(?<!\\)\n'
+        #        end: x
+        #        match: //.*
+      - name: comment.block.slash-star.glsl
+        begin: '/\*'
+        end: '\*/'
+        #        end: x
+        #        match: //.*
+      - name: keyword.operator.assignment.glsl
+        match: \*=|/=|%=|\+=|-=|<<=|>>=|&=|\^=|\|=|=
+      - name: keyword.operator.bitwise.shift.glsl
+        match: <<|>>
+      - name: keyword.operator.comparison.glsl
+        match: ==|!=
+      - name: keyword.operator.unary.glsl
+        match: --|\+\+
+      - name: keyword.operator.relational.glsl
+        match: <=|>=|<|>
+      - name: constant.numeric.decimal.glsl
+        match: ((\d+\.\d*|\.\d+)(e[+-]?\d+)?|\d+e[+-]?\d+)f?
+      - name: constant.numeric.integer.glsl
+        match: (0x[\da-fA-F]+|\d+)[uU]?
+      - name: keyword.operator.logical.glsl
+        match: \!|&&|\|\|
+      - name: keyword.operator.bitwise.glsl
+        match: \&|~|\^|\|
+      - name: keyword.operator.arithmetic.glsl
+        match: '%|\*|/|-|\+'
+      - name: invalid.illegal.glsl
+        #      - name: keyword.invalid.glsl
+        match: active|asm|atomic_uint|attribute|cast|class|coherent|common|double|dvec2|dvec3|dvec4|enum|extern|external|filter|fixed|fvec2|fvec3|fvec4|goto|half|hvec2|hvec3|hvec4|iimage1D|iimage1DArray|iimage2D|iimage2DArray|iimage3D|iimageBuffer|iimageCube|image1D|image1DArray|image2D|image2DArray|image3D|imageBuffer|imageCube|inline|input|interface|isampler1D|isampler1DArray|isampler2DMS|isampler2DMSArray|isampler2DRect|isamplerBuffer|long|namespace|noinline|noperspective|output|partition|patch|public|readonly|resource|restrict|sample|sampler1D|sampler1DArray|sampler1DArrayShadow|sampler1DShadow|sampler2DMS|sampler2DMSArray|sampler2DRect|sampler2DRectShadow|sampler3DRect|samplerBuffer|short|sizeof|static|subroutine|superp|template|this|typedef|uimage1D|uimage1DArray|uimage2D|uimage2DArray|uimage3D|uimageBuffer|uimageCube|union|unsigned|usampler1D|usampler1DArray|usampler2DMS|usampler2DMSArray|usampler2DRect|usamplerBuffer|using|varying|volatile|volatile|writeonly
+      - name: keyword.precision.glsl
+        match: '\b(lowp|mediump|highp)\b'
+      - name: keyword.basictype.glsl
+        match: '\b(bool|bvec2|bvec3|bvec4|float|int|isampler2D|isampler2DArray|isampler3D|isamplerCube|ivec2|ivec3|ivec4|mat2|mat2x3|mat2x4|mat3|mat3x2|mat3x4|mat4|mat4x2|mat4x3|sampler2D|sampler2DArray|sampler2DArrayShadow|sampler2DShadow|sampler3D|samplerCube|samplerCubeShadow|uint|usampler2D|usampler2DArray|usampler3D|usamplerCube|uvec2|uvec3|uvec4|vec2|vec3|vec4)\b'
+
+      - name: keyword.control.switch.glsl
+        match: \b(case|default|switch)\b
+      - name: keyword.control.conditional.glsl
+        match: \b(else|if)\b
+      - name: keyword.control.loop.glsl
+        match: \b(for|while|do)\b
+      - name: keyword.control.flow.glsl
+        match: \b(return|continue|break|discard)\b
+      - name: keyword.control.other.glsl
+        match: const|uniform|layout|centroid|flat|smooth|precision|invariant|inout|out|in|void|struct
+      - name: punctuation.terminator.statement.glsl
+        match: ';'
+      - name: punctuation.separator.glsl
+        match: '\.'
+      - name: meta.preprocessor
+        match: '\\\n'
+      - name: meta.preprocessor
+        match: '#\s*(define|if|ifdef|ifndef|else|endif)'
+        #        end: '(?=not)possible'
+      #        while: '\\$'
+
+      # builting-functions
+      - name: support.function.glsl
+        match: '\b(radians|degrees|sin|cos|tan|asin|acos|atan|atan|sinh|cosh|tanh|asinh|acosh|atanh|pow|exp|log|exp2|log2|sqrt|inversesqrt|abs|sign|floor|trunc|round|roundEven|ceil|fract|mod|modf|min|max|clamp|mix|step|smoothstep|isnan|isinf|floatBitsToInt|floatBitsToUint|intBitsToFloat|uintBitsToFloat|packSnorm2x16|unpackSnorm2x16|packUnorm2x16|unpackUnorm2x16|packHalf2x16|unpackHalf2x16|length|distance|dot|cross|normalize|faceforward|reflect|refract|matrixCompMult|outerProduct|transpose|determinant|inverse|lessThan|lessThanEqual|greaterThan|greaterThanEqual|equal|notEqual|any|all|not|textureSize|texture|textureProj|textureLod|textureOffset|texelFetch|texelFetchOffset|textureProjOffset|textureLodOffset|textureProjLod|textureProjLodOffset|textureGrad|textureGradOffset|textureProjGrad|textureProjGradOffset|dFdx|dFdy|fwidth)\b'
+
+      # builtin variables
+      - name: support.variable.glsl
+        match: gl_MaxVertexAttribs|gl_MaxVertexUniformVectors|gl_MaxVertexOutputVectors|gl_MaxFragmentInputVectors|gl_MaxVertexTextureImageUnits|gl_MaxCombinedTextureImageUnits|gl_MaxTextureImageUnits|gl_MaxFragmentUniformVectors|gl_MaxDrawBuffers|gl_MinProgramTexelOffset|gl_MaxProgramTexelOffset|gl_FragCoord|gl_FrontFacing|gl_FragDepth|gl_PointCoord|gl_HelperInvocation
+
+      - name: identifier
+        match: '[a-zA-Z][a-zA-Z\d]*'
+      #      - name: comment
+      #        match: /\*.*?(?:\*/|$)
+
+
+single-line-comment-consuming-line-ending:
+  begin: (^[ \t]+)?((//))
+  beginCaptures:
+    '1': { name: punctuation.whitespace.comment.leading.ts }
+    '2': { name: comment.line.double-slash.ts }
+    '3': { name: punctuation.definition.comment.ts }
+    '4': { name: storage.type.internaldeclaration.ts }
+    '5': { name: punctuation.decorator.internaldeclaration.ts }
+  end: (?=^)
+  contentName: comment.line.double-slash.glsl
+letter:
+  match: a|b|c
+  name: keyword.letter
+  paren-expression:
+    begin: "\\("
+    end: "\\)"
+    beginCaptures:
+      '0':
+        name: punctuation.paren.open
+    endCaptures:
+      '0':
+        name: punctuation.paren.close
+    name: expression.group
+    patterns:
+      - include: "#expression"

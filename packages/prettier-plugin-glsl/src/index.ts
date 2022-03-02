@@ -1,4 +1,5 @@
 export * from "./lexer"
 export * from "./parser"
 export * from "./checker"
+export * from "./nodes"
 export { allDefined } from "./util"

@@ -10,7 +10,9 @@
   "parserOptions": {
     "ecmaVersion": 6,
     "sourceType": "module",
-    "project": "tsconfig.json"
+    "project": [
+      "test.tsconfig.json"
+    ]
   },
   "plugins": [
     "@typescript-eslint",
@@ -24,10 +26,13 @@
     "semi": "off",
     "import/order": "warn",
     "yoda": "warn",
-    "@typescript-eslint/no-unused-vars": ["warn", {
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_"
-    }],
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
     "@typescript-eslint/no-unsafe-argument": "off",
     "@typescript-eslint/member-ordering": "warn",
     "@typescript-eslint/no-explicit-any": "off",

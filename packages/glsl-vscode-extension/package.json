@@ -1,0 +1,95 @@
+{
+  "name": "glsl-vscode-extension",
+  "description": "VSCode part of a language server",
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "version": "0.0.1",
+  "publisher": "vscode",
+  "categories": [
+    "Snippets"
+  ],
+  "keywords": [
+    "multi-root ready"
+  ],
+  "engines": {
+    "vscode": "^1.43.0"
+  },
+  "activationEvents": [
+    "onLanguage:glsl"
+  ],
+  "main": "./out/extension",
+  "contributes": {
+    "languages": [
+      {
+        "id": "glsl",
+        "extensions": [
+          ".glsl",
+          ".glslx",
+          ".frag",
+          ".vert"
+        ],
+        "aliases": [
+          "GLSL"
+        ],
+        "configuration": "./glsl.language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "glsl",
+        "scopeName": "source.abc",
+        "path": "./syntaxes/glsl.tmGrammar.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "glsl",
+        "path": "snippets/glsl.snippets.json"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Example configuration",
+      "properties": {
+        "glslLanguageServer.maxNumberOfProblems": {
+          "scope": "resource",
+          "type": "number",
+          "default": 100,
+          "description": "Controls the maximum number of problems produced by the server."
+        },
+        "glslLanguageServer.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "on",
+          "description": "Traces the communication between VS Code and the language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "clean": "",
+    "watch": "",
+    "watch-": "watch \"js-yaml syntaxes/glsl.tmGrammar.yaml > syntaxes/glsl.tmGrammar.json\" ./syntaxes --wait 1",
+    "watch-snippets": "watch \"js-yaml snippets/glsl.snippets.yaml > snippets/glsl.snippets.json\" ./snippets --wait 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/vscode-extension-samples"
+  },
+  "dependencies": {
+    "glsl-lsp-server": "../glsl-lsp-server",
+    "vscode-languageclient": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.19",
+    "@types/vscode": "^1.52.0",
+    "@vscode/test-electron": "^1.6.1",
+    "js-yaml": "^4.1.0",
+    "watch": "^1.0.2"
+  }
+}

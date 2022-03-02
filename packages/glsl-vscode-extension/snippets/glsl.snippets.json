@@ -1,0 +1,102 @@
+{
+  "for loop": {
+    "prefix": [
+      "for",
+      "fori"
+    ],
+    "body": [
+      "for (int ${1:i} = 0; ${1:i} < ${2}; ${1:i}++) {",
+      "  $0",
+      "}"
+    ]
+  },
+  "for array loop": {
+    "prefix": [
+      "forarr",
+      "farr"
+    ],
+    "body": [
+      "for (int ${1:i} = 0; ${1:i} < ${2:arr}.length; ${1:i}++) {",
+      "  ${2:arr}[${1:i}]$0",
+      "}"
+    ]
+  },
+  "struct": {
+    "prefix": [
+      "struct"
+    ],
+    "body": [
+      "struct ${1:name} {",
+      "  ${2:float} ${3:foo};",
+      "}"
+    ]
+  },
+  "vec2": {
+    "prefix": [
+      "v2",
+      "vec2",
+      "vv"
+    ],
+    "body": "vec2(${1:0}, ${2:0})"
+  },
+  "vec3": {
+    "prefix": [
+      "v",
+      "v3",
+      "vec3 vvv"
+    ],
+    "body": [
+      "vec3(${1:0}, ${2:0}, ${3:0})"
+    ]
+  },
+  "vec4": {
+    "prefix": [
+      "v4",
+      "vec4",
+      "vvvv"
+    ]
+  },
+  "glslify export": {
+    "prefix": [
+      "export",
+      "exportify"
+    ],
+    "body": [
+      "#pragma glslify: export($0)"
+    ]
+  },
+  "glslify import": {
+    "prefix": [
+      "import",
+      "importify"
+    ],
+    "body": [
+      "#pragma glslify: $1 = require(${2:./})"
+    ]
+  },
+  "SQRT2": {
+    "body": [
+      "const float SQRT2 = 1.4142135623730951;"
+    ]
+  },
+  "PI": {
+    "body": [
+      "const float PI = 3.141592653589793;"
+    ]
+  },
+  "SQRT1_2": {
+    "body": [
+      "const float SQRT1_2 = 0.7071067811865476;"
+    ]
+  },
+  "gamma correction": {
+    "body": [
+      "${1:color} = pow(${1:color}, vec3(1.0/2.2)); // gamma correction"
+    ]
+  },
+  "version": {
+    "body": [
+      "#version 300 es"
+    ]
+  }
+}

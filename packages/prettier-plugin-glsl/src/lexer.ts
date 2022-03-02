@@ -109,7 +109,7 @@ export namespace TOKEN {
   // Categories
 
   export const ASSIGN_OP = createToken({ name: "ASSIGN_OP", pattern: Lexer.NA })
-  export const UNARY_OP = createToken({ name: "PREFIX_OP", pattern: Lexer.NA })
+  export const UNARY_OP = createToken({ name: "UNARY_OP", pattern: Lexer.NA })
   export const POSTFIX_OP = createToken({
     name: "POSTFIX_OP",
     pattern: Lexer.NA,
@@ -355,7 +355,7 @@ export namespace TOKEN {
     label: "'&'",
   })
   export const VERTICAL_BAR = createToken({
-    name: "PIPE",
+    name: "VERTICAL_BAR",
     pattern: "|",
     label: "'|'",
   })

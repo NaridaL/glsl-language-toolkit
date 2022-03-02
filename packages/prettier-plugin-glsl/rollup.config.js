@@ -6,7 +6,7 @@ import { terser } from "rollup-plugin-terser"
 const pkg = require("./package.json")
 export default [
   {
-    input: "src/index.ts",
+    input: "src/index.test.ts",
     output: [
       ["es", false],
       ["es", true],
@@ -25,23 +25,23 @@ export default [
       },
       plugins: compress
         ? [
-            terser({
-              compress: {
-                passes: 3,
-                unsafe: true,
-                ecma: 7,
-              },
-              toplevel: true,
-              mangle: {
-                properties: { regex: /^_/ },
-              },
-            }),
-          ]
+          terser({
+            compress: {
+              passes: 3,
+              unsafe: true,
+              ecma: 7,
+            },
+            toplevel: true,
+            mangle: {
+              properties: { regex: /^_/ },
+            },
+          }),
+        ]
         : [],
     })),
     external: Object.keys(pkg.dependencies || {}),
     plugins: [typescriptPlugin({ typescript })].filter((x) => x),
-    onwarn: function (warning, warn) {
+    onwarn: function(warning, warn) {
       if ("THIS_IS_UNDEFINED" === warning.code) return
       if ("CIRCULAR_DEPENDENCY" === warning.code) {
         const m = warning.message.match(
@@ -49,7 +49,7 @@ export default [
         )
         if (m) {
           const start = m[1]
-          if (start.match(/out[/\\]index.js|src[/\\]index.ts/)) {
+          if (start.match(/out[/\\]index.js|src[/\\]index.test.ts/)) {
             // this is a loop of length three starting at the index file: don't warn
             return
           }

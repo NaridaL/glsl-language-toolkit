@@ -1,5 +1,13 @@
 /* eslint-disable @typescript-eslint/member-ordering */
-import { EmbeddedActionsParser, EOF, IRecognitionException, IRuleConfig, IToken, TokenType } from "chevrotain"
+import {
+  EmbeddedActionsParser,
+  EOF,
+  ILexingResult,
+  IRecognitionException,
+  IRuleConfig,
+  IToken,
+  TokenType,
+} from "chevrotain"
 
 import {
   ArraySpecifier,
@@ -1632,12 +1640,7 @@ export function shortDesc(node: Node | IToken) {
       }`
 }
 
-export function parseInput(originalInput: string): TranslationUnit {
-  const { result: input, changes } = applyLineContinuations(originalInput)
-
-  const lexingResult = GLSL_LEXER.tokenize(input)
-  checkLexingErrors(input, lexingResult)
-
+function checkTokenErrors(lexingResult: ILexingResult): void {
   const errors = []
 
   function markError(where: IToken, err: string, msg?: string) {
@@ -1658,6 +1661,15 @@ export function parseInput(originalInput: string): TranslationUnit {
       }
     }
   }
+}
+
+export function parseInput(originalInput: string): TranslationUnit {
+  const { result: input, changes } = applyLineContinuations(originalInput)
+
+  const lexingResult = GLSL_LEXER.tokenize(input)
+  checkLexingErrors(input, lexingResult)
+
+  checkTokenErrors(lexingResult)
 
   // "input" is a setter which will reset the glslParser's state.
   GLSL_PARSER.input = lexingResult.tokens

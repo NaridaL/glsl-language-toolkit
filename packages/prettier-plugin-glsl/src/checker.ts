@@ -1087,6 +1087,33 @@ function getMatrixDimensions(
   }
 }
 
+function getAssignOpBinaryOp(t: TokenType): TokenType {
+  switch (t) {
+    case TOKEN.MULASSIGN:
+      return TOKEN.STAR
+    case TOKEN.DIVASSIGN:
+      return TOKEN.SLASH
+    case TOKEN.MODASSIGN:
+      return TOKEN.PERCENT
+    case TOKEN.ADDASSIGN:
+      return TOKEN.PLUS
+    case TOKEN.SUBASSIGN:
+      return TOKEN.DASH
+    case TOKEN.LEFTASSIGN:
+      return TOKEN.LEFT_OP
+    case TOKEN.RIGHTASSIGN:
+      return TOKEN.RIGHT_OP
+    case TOKEN.ANDASSIGN:
+      return TOKEN.AMPERSAND
+    case TOKEN.XORASSIGN:
+      return TOKEN.CARET
+    case TOKEN.ORASSIGN:
+      return TOKEN.VERTICAL_BAR
+    default:
+      assertNever()
+  }
+}
+
 function getConstantType(t: TokenType): TokenType {
   switch (t) {
     case TOKEN.INTCONSTANT:
@@ -1142,28 +1169,28 @@ const GEN_TYPES: Readonly<Record<string, TokenType[]>> = {
 const VEC_TYPES = [TOKEN.VEC2, TOKEN.VEC3, TOKEN.VEC4]
 const UVEC_TYPES = [TOKEN.UVEC2, TOKEN.UVEC3, TOKEN.UVEC4]
 const IVEC_TYPES = [TOKEN.IVEC2, TOKEN.IVEC3, TOKEN.IVEC4]
-type T4 = [TokenType, TokenType, TokenType, TokenType]
-const VALID_BINARY_OPERATIONS: T4[] = [
-  ...[TOKEN.PLUS, TOKEN.DASH, TOKEN.STAR, TOKEN.SLASH].flatMap<T4>((op) => [
+type BinOp = [op: TokenType, lhs: TokenType, rhs: TokenType, res: TokenType]
+const VALID_BINARY_OPERATIONS: BinOp[] = [
+  ...[TOKEN.PLUS, TOKEN.DASH, TOKEN.STAR, TOKEN.SLASH].flatMap<BinOp>((op) => [
     // the two operators are scalars
     [op, TOKEN.FLOAT, TOKEN.FLOAT, TOKEN.FLOAT],
     [op, TOKEN.INT, TOKEN.INT, TOKEN.INT],
     [op, TOKEN.UINT, TOKEN.UINT, TOKEN.UINT],
     // one is a scalar, the other is a vector or matrix
-    ...[...VEC_TYPES, ...MATRIX_TYPES].flatMap<T4>((t) => [
+    ...[...VEC_TYPES, ...MATRIX_TYPES].flatMap<BinOp>((t) => [
       [op, TOKEN.FLOAT, t, t],
       [op, t, TOKEN.FLOAT, t],
     ]),
-    ...IVEC_TYPES.flatMap<T4>((t) => [
+    ...IVEC_TYPES.flatMap<BinOp>((t) => [
       [op, TOKEN.INT, t, t],
       [op, t, TOKEN.INT, t],
     ]),
-    ...UVEC_TYPES.flatMap<T4>((t) => [
+    ...UVEC_TYPES.flatMap<BinOp>((t) => [
       [op, TOKEN.UINT, t, t],
       [op, t, TOKEN.UINT, t],
     ]),
     // the two operands are vectors of the same size
-    ...[...VEC_TYPES, ...UVEC_TYPES, ...IVEC_TYPES].map<T4>((t) => [
+    ...[...VEC_TYPES, ...UVEC_TYPES, ...IVEC_TYPES].map<BinOp>((t) => [
       op,
       t,
       t,
@@ -1173,8 +1200,8 @@ const VALID_BINARY_OPERATIONS: T4[] = [
   // The operator is add (+), subtract (-), or divide (/), and the operands are matrices with the same
   // number of rows and the same number of columns.  In this case, the operation is done component-
   // wise resulting in the same size matrix.
-  ...[TOKEN.PLUS, TOKEN.DASH, TOKEN.SLASH].flatMap<T4>((op) =>
-    MATRIX_TYPES.map<T4>((t) => [op, t, t, t]),
+  ...[TOKEN.PLUS, TOKEN.DASH, TOKEN.SLASH].flatMap<BinOp>((op) =>
+    MATRIX_TYPES.map<BinOp>((t) => [op, t, t, t]),
   ),
   // MAT_COLS_X_ROWS
   // columns of lhs === rows of rhs
@@ -1248,15 +1275,15 @@ const VALID_BINARY_OPERATIONS: T4[] = [
     TOKEN.AMPERSAND,
     TOKEN.CARET,
     TOKEN.VERTICAL_BAR,
-  ].flatMap<T4>((op) => [
+  ].flatMap<BinOp>((op) => [
     [op, TOKEN.INT, TOKEN.INT, TOKEN.INT],
     [op, TOKEN.UINT, TOKEN.UINT, TOKEN.UINT],
-    ...UVEC_TYPES.flatMap<T4>((t) => [
+    ...UVEC_TYPES.flatMap<BinOp>((t) => [
       [op, TOKEN.UINT, t, t],
       [op, t, TOKEN.UINT, t],
       [op, t, t, t],
     ]),
-    ...IVEC_TYPES.flatMap<T4>((t) => [
+    ...IVEC_TYPES.flatMap<BinOp>((t) => [
       [op, TOKEN.INT, t, t],
       [op, t, TOKEN.INT, t],
       [op, t, t, t],
@@ -1268,10 +1295,10 @@ const VALID_BINARY_OPERATIONS: T4[] = [
     TOKEN.GE_OP,
     TOKEN.LEFT_ANGLE,
     TOKEN.RIGHT_ANGLE,
-  ].flatMap<T4>((op) => [
-    [op, TOKEN.FLOAT, TOKEN.FLOAT, TOKEN.FLOAT],
-    [op, TOKEN.UINT, TOKEN.UINT, TOKEN.UINT],
-    [op, TOKEN.INT, TOKEN.INT, TOKEN.INT],
+  ].flatMap<BinOp>((op) => [
+    [op, TOKEN.FLOAT, TOKEN.FLOAT, TOKEN.BOOL],
+    [op, TOKEN.UINT, TOKEN.UINT, TOKEN.BOOL],
+    [op, TOKEN.INT, TOKEN.INT, TOKEN.BOOL],
   ]),
   [TOKEN.AND_OP, TOKEN.BOOL, TOKEN.BOOL, TOKEN.BOOL],
   [TOKEN.OR_OP, TOKEN.BOOL, TOKEN.BOOL, TOKEN.BOOL],
@@ -1282,12 +1309,12 @@ const VALID_BINARY_OPERATIONS: T4[] = [
   // resulting type will be the same type as the left operand.  If the first operand is a scalar, the second
   // operand has to be a scalar as well.  If the first operand is a vector, the second operand must be a scalar
   // or a vector with the same size as the first operand, and the result is computed component-wise. [...]
-  ...[TOKEN.LEFT_OP, TOKEN.RIGHT_OP].flatMap<T4>((op) => [
+  ...[TOKEN.LEFT_OP, TOKEN.RIGHT_OP].flatMap<BinOp>((op) => [
     [op, TOKEN.INT, TOKEN.INT, TOKEN.INT],
     [op, TOKEN.INT, TOKEN.UINT, TOKEN.INT],
     [op, TOKEN.UINT, TOKEN.UINT, TOKEN.UINT],
     [op, TOKEN.UINT, TOKEN.INT, TOKEN.UINT],
-    ...[...UVEC_TYPES, ...IVEC_TYPES].flatMap<T4>((t, i) => [
+    ...[...UVEC_TYPES, ...IVEC_TYPES].flatMap<BinOp>((t, i) => [
       [op, t, TOKEN.INT, t],
       [op, t, TOKEN.UINT, t],
       [op, t, UVEC_TYPES[i % 3], t],
@@ -1458,7 +1485,48 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return super.initDeclaratorListDeclaration(n)
   }
 
-  protected assignmentExpression(n: AssignmentExpression) {
+  protected binaryExpression(n: BinaryExpression): NormalizedType | undefined {
+    const lType = this.visit(n.lhs)
+    const rType = this.visit(n.rhs)
+
+    function markErr(n: BinaryExpression) {
+      markError(
+        n.op,
+        "S0004",
+        "TODO lhs op rhs",
+        "valid ops for " +
+          n.op.tokenType.PATTERN +
+          " are\n" +
+          VALID_BINARY_OPERATIONS.filter(([op]) => op === n.op.tokenType)
+            .map(
+              ([op, lhs, rhs]) =>
+                `  ${lhs.LABEL ?? lhs.PATTERN} ${op.PATTERN} ${
+                  rhs.LABEL ?? rhs.PATTERN
+                }`,
+            )
+            .join("\n"),
+      )
+    }
+
+    if (lType?.kind === "basic" && rType?.kind === "basic") {
+      const validOp = VALID_BINARY_OPERATIONS.find(
+        ([op, lhs, rhs, _result]) =>
+          op === n.op.tokenType && lhs === lType.type && rhs === rType.type,
+      )
+      if (validOp) {
+        return { kind: "basic", type: validOp[3] }
+      } else {
+        markErr(n)
+      }
+    } else if (lType && rType) {
+      markErr(n)
+    }
+    return
+  }
+
+  protected assignmentExpression(
+    n: AssignmentExpression,
+  ): NormalizedType | undefined {
     // We parse conditionExpressions on the LHS, but only unaryExpressions are allowed.
 
     if (!isLValue(n.lhs)) {
@@ -1467,9 +1535,24 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
 
     const lType = this.visit(n.lhs)
     const rType = this.visit(n.rhs)
-    if (typeNotEquals(lType, rType)) {
-      // TODO better error code?
-      markError(n.op, "S0004", lType, rType)
+    if (n.op.tokenType === TOKEN.EQUAL) {
+      if (typeNotEquals(lType, rType)) {
+        // TODO better error code?
+        markError(n.op, "S0004", lType, rType)
+      }
+    } else if (lType?.kind === "basic" && rType?.kind === "basic") {
+      const binaryOp = getAssignOpBinaryOp(n.op.tokenType)
+      const validOp = VALID_BINARY_OPERATIONS.find(
+        ([op, lhs, rhs, _result]) =>
+          op === binaryOp && lhs === lType.type && rhs === rType.type,
+      )
+      if (validOp) {
+        return { kind: "basic", type: validOp[3] }
+      } else {
+        markError(n.op, "S0004", "TODO lhs op rhs")
+      }
+    } else if (lType && rType) {
+      markError(n.op, "S0004", "TODO lhs op rhs")
     }
     return lType
   }
@@ -1637,45 +1720,6 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     }
   }
 
-  protected binaryExpression(n: BinaryExpression): NormalizedType | undefined {
-    const lType = this.visit(n.lhs)
-    const rType = this.visit(n.rhs)
-
-    function markErr(n: BinaryExpression) {
-      markError(
-        n.op,
-        "S0004",
-        "TODO lhs op rhs",
-        "valid ops for " +
-          n.op.tokenType.PATTERN +
-          " are\n" +
-          VALID_BINARY_OPERATIONS.filter(([op]) => op === n.op.tokenType)
-            .map(
-              ([op, lhs, rhs]) =>
-                `  ${lhs.LABEL ?? lhs.PATTERN} ${op.PATTERN} ${
-                  rhs.LABEL ?? rhs.PATTERN
-                }`,
-            )
-            .join("\n"),
-      )
-    }
-
-    if (lType?.kind === "basic" && rType?.kind === "basic") {
-      const validOp = VALID_BINARY_OPERATIONS.find(
-        ([op, lhs, rhs, _result]) =>
-          op === n.op.tokenType && lhs === lType.type && rhs === rType.type,
-      )
-      if (validOp) {
-        return { kind: "basic", type: validOp[3] }
-      } else {
-        markErr(n)
-      }
-    } else if (lType && rType) {
-      markErr(n)
-    }
-    return
-  }
-
   protected postfixExpression(
     n: PostfixExpression,
   ): NormalizedType | undefined {
@@ -1764,7 +1808,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     const nType = this.visit(n.no)
 
     if (typeNotEquals(cType, BasicType.BOOL)) {
-      markError(n.condition, "S0005")
+      markError(n.condition, "S0005", typeString(cType))
     }
     if (typeNotEquals(yType, nType)) {
       markError(n, "S0006", yType, nType)
@@ -1773,9 +1817,9 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   }
 
   protected returnStatement(n: ReturnStatement): NormalizedType | undefined {
-    if (!this.currentFunctionPrototypeReturnType) {
-      throw new Error()
-    }
+    // if (!this.currentFunctionPrototypeReturnType) {
+    //   throw new Error()
+    // }
     const wType = this.visit(n.what)
     if (typeEquals(this.currentFunctionPrototypeReturnType, BasicType.VOID)) {
       if (n.what) {
