@@ -640,15 +640,15 @@ export class AbstractVisitor<R> {
     return
   }
 
-  protected ppDir(n: PpDir): R | undefined {
+  protected ppDir(_n: PpDir): R | undefined {
     return
   }
 
-  protected ppExtension(n: PpExtension): R | undefined {
+  protected ppExtension(_n: PpExtension): R | undefined {
     return
   }
 
-  protected ppCall(n: PpCall): R | undefined {
+  protected ppCall(_n: PpCall): R | undefined {
     return
   }
 }
@@ -659,4 +659,59 @@ export function isToken(x: IToken | Node): x is IToken {
 
 export function isNode(x: Token | Node): x is Node {
   return "kind" in x
+}
+
+function lessEqual(line1: number, char1: number, line2: number, char2: number) {
+  return line1 < line2 || (line1 === line2 && char1 <= char2)
+}
+
+function nodeIncludes(node: Node, line: number, char: number) {
+  return (
+    node.firstToken &&
+    node.lastToken &&
+    lessEqual(
+      node.firstToken.startLine!,
+      node.firstToken.startColumn!,
+      line,
+      char,
+    ) &&
+    lessEqual(line, char, node.lastToken.endLine!, node.lastToken.endColumn!)
+  )
+}
+
+class FindNodeVisitor extends AbstractVisitor<Node> {
+  private line = 0
+  private col = 0
+  private result: Node | undefined
+  private path!: Node[]
+
+  public findNodeByLineCol(
+    tree: Node,
+    line: number,
+    col: number,
+  ): [result: Node | undefined, path: Node[]] {
+    this.line = line
+    this.col = col
+    this.result = undefined
+    this.path = []
+    this.visit(tree)
+    return [this.result, this.path]
+  }
+
+  protected visit(n: Node | undefined): Node | undefined {
+    if (n && nodeIncludes(n, this.line, this.col)) {
+      this.path.push(n)
+      this.result = n
+      super.visit(n)
+    }
+    return undefined
+  }
+}
+
+export function findPositionNode(
+  tree: Node,
+  line: number,
+  char: number,
+): [result: Node | undefined, path: Node[]] {
+  return new FindNodeVisitor().findNodeByLineCol(tree, line, char)
 }

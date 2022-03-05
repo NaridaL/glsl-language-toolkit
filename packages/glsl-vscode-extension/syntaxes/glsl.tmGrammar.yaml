@@ -77,7 +77,7 @@ repository:
       # builtin variables
       - name: support.variable.glsl
         match: gl_MaxVertexAttribs|gl_MaxVertexUniformVectors|gl_MaxVertexOutputVectors|gl_MaxFragmentInputVectors|gl_MaxVertexTextureImageUnits|gl_MaxCombinedTextureImageUnits|gl_MaxTextureImageUnits|gl_MaxFragmentUniformVectors|gl_MaxDrawBuffers|gl_MinProgramTexelOffset|gl_MaxProgramTexelOffset|gl_FragCoord|gl_FrontFacing|gl_FragDepth|gl_PointCoord|gl_HelperInvocation
-
+      - name:
       - name: identifier
         match: '[a-zA-Z][a-zA-Z\d]*'
       #      - name: comment

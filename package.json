@@ -10,7 +10,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run build --workspaces",
     "watch": "tsc --build --watch",
-    "clean": "tsc --build --clean && npm run clean --workspaces"
+    "clean": "tsc --build --clean && npm run clean --workspaces",
+    "fmt": "prettier --write ."
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,6 @@
   "devDependencies": {
     "prettier": "^2.5.1",
     "rimraf": "^3.0.2",
-    "typescript": "^4.5.5"
+    "typescript": "^4.6.2"
   }
 }

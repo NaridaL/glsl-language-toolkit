@@ -24,7 +24,10 @@ export function underline(
   )
 }
 
-export function ccorrect<T, R>(
+/**
+ * If array, call .map, otherwise just call f on the one object.
+ */
+export function safeMap<T, R>(
   x: Many<T>,
   f: (x: T, i: number, arr: Many<T>) => R,
 ): Many<R> {
@@ -120,4 +123,84 @@ export function assertNever(_x?: never): never {
   if (!DEV) {
     throw new Error()
   }
+}
+
+export function dedent(
+  strings: string | TemplateStringsArray,
+  ...args: string[]
+): string {
+  const raw = typeof strings === "string" ? [strings] : strings.raw
+
+  // first, perform interpolation
+  let result = ""
+  for (let i = 0; i < raw.length; i++) {
+    result += raw[i]
+      // join lines when there is a suppressed newline
+      .replace(/\\\n[ \t]*/g, "")
+      // handle escaped backticks
+      .replace(/\\`/g, "`")
+
+    if (i < (args.length <= 1 ? 0 : args.length - 1)) {
+      result += args.length <= i + 1 ? undefined : args[i + 1]
+    }
+  }
+
+  // now strip indentation
+  const lines = result.split("\n")
+  let mindent = Number.MAX_SAFE_INTEGER
+  lines.forEach(function(l) {
+    const m = l.match(/^(\s+)\S+/)
+    if (m) {
+      const indent = m[1].length
+      mindent = Math.min(mindent, indent)
+    }
+  })
+
+  if (mindent !== Number.MAX_SAFE_INTEGER) {
+    result = lines.map((l) => (l[0] === " " ? l.slice(mindent) : l)).join("\n")
+  }
+
+  return (
+    result
+      // dedent eats leading and trailing whitespace too
+      .trim()
+      // handle escaped newlines at the end to ensure they don't get stripped too
+      .replace(/\\n/g, "\n")
+  )
+}
+
+export function offsetToLineCol(
+  input: string,
+  offset: number,
+): [line: number, col: number] {
+  if (offset > input.length) {
+    throw new Error("offset cannot be larger than input.length")
+  }
+  let i = 0
+  let line = 1
+  let lineStart = 0
+  while (i < offset) {
+    if (input[i] === "\n") {
+      line++
+      lineStart = i + 1
+    }
+    i++
+  }
+  return [line, offset - lineStart]
+}
+
+export function lineColToOffset(
+  input: string,
+  line: number,
+  col: number,
+): number {
+  let i = 0
+  let iLine = 1
+  while (iLine < line) {
+    if (input[i] === "\n") {
+      iLine++
+    }
+    i++
+  }
+  return i + col - 1
 }

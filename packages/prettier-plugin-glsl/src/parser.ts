@@ -1640,6 +1640,21 @@ export function shortDesc(node: Node | IToken) {
       }`
 }
 
+function nodeShortDesc(x: Node) {
+  return `${x.kind} ${x.firstToken!.startLine!}:${x.firstToken!
+    .startColumn!}-${x.lastToken!.endLine!}:${x.lastToken!.endColumn! + 1}`
+}
+
+function tokenShortDesc(x: IToken) {
+  return `${x.tokenType.name} ${x.startLine!}:${x.startColumn!}-${x.endLine!}:${
+    x.endColumn! + 1
+  }`
+}
+
+export function shortDesc2(node: Node | IToken) {
+  return isToken(node) ? tokenShortDesc(node) : nodeShortDesc(node)
+}
+
 function checkTokenErrors(lexingResult: ILexingResult): void {
   const errors = []
 

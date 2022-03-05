@@ -1,5 +1,8 @@
-import { parseInput } from "./parser"
+import * as assert from "assert"
+import { parseInput, shortDesc2 } from "./parser"
 import { simplifyCst } from "./gendiagrams"
+import { dedent } from "./util"
+import { findPositionNode } from "./nodes"
 
 test("parse multi-dim array", () => {
   expect(
@@ -126,4 +129,28 @@ test("parse multi-dim array", () => {
     kind: "translationUnit",
     lastToken: "RIGHT_BRACE(}) 45-45",
   })
+})
+
+test("findPositionNode", () => {
+  const tree = parseInput(dedent`
+    void main() {
+      if (32 == kawaga) {
+        float f = sirup(foo(a, s));
+      }
+    }
+  `)
+  const [result, path] = findPositionNode(tree, 3, 22)
+  assert.deepStrictEqual(path.map(shortDesc2), [
+    "translationUnit 1:1-5:2",
+    "functionDefinition 1:1-5:2",
+    "compoundStatement 1:13-5:2",
+    "selectionStatement 2:3-4:4",
+    "compoundStatement 2:21-4:4",
+    "initDeclaratorListDeclaration 3:5-3:32",
+    "declarator 3:11-3:31",
+    "functionCall 3:15-3:31",
+    "functionCall 3:21-3:30",
+    "typeSpecifier 3:21-3:24",
+  ])
+  assert.equal(shortDesc2(result!), "typeSpecifier 3:21-3:24")
 })

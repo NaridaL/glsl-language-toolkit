@@ -7,12 +7,4 @@
   "include": [
     "src"
   ],
-  "exclude": [
-    "**/*.test.ts"
-  ],
-  "ts-node": {
-    "compilerOptions": {
-      "module": "CommonJS"
-    }
-  }
 }

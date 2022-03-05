@@ -45,7 +45,7 @@ import {
 import { doOp, TOKEN } from "./lexer"
 import { applyBuiltinFunction, Matrix } from "./builtins"
 import { parseInput } from "./parser"
-import { allDefined, assertNever, ccorrect, CheckError, mapExpandedLocation } from "./util"
+import { allDefined, assertNever, CheckError, mapExpandedLocation, safeMap } from "./util"
 import { ERRORS } from "./errors"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
@@ -125,7 +125,7 @@ function isLValue(n: Node): boolean {
       return (
         !n.binding ||
         (!n.binding?.declaratorList?.fsType.typeQualifier?.storageQualifier
-          ?.CONST &&
+            ?.CONST &&
           !n.binding.parameter?.parameterTypeQualifier)
       )
     case "fieldAccess":
@@ -312,9 +312,7 @@ export function evaluateConstantExpression(n: Node): TypeAndValue | undefined {
   return CONSTANT_VISITOR.eval(n)
 }
 
-const CONSTANT_VISITOR = new (class extends AbstractVisitor<
-  TypeAndValue | undefined
-> {
+const CONSTANT_VISITOR = new (class extends AbstractVisitor<TypeAndValue | undefined> {
   public eval(n: Node): TypeAndValue | undefined {
     return super.visit(n)
   }
@@ -492,7 +490,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
         n.binding,
       )!.result
       const compType = getComponentType((type as BasicType).type)!
-      const value = ccorrect(
+      const value = safeMap(
         applyBuiltinFunction(
           (n.callee.typeSpecifierNonArray as Token).image,
           args.map((a) => a.value),
@@ -725,7 +723,7 @@ function findMatchingFunctionDefinition(
 
 function getGenTypes(ts: TypeSpecifier): TokenType[] | undefined {
   return isToken(ts.typeSpecifierNonArray) &&
-    ts.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER
+  ts.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER
     ? GEN_TYPES[ts.typeSpecifierNonArray.image]
     : undefined
 }
@@ -942,15 +940,15 @@ class BinderVisitor extends AbstractVisitor<any> {
         builtIn: this.doingBuiltIns,
       }
     }
-
+    const returnTypeResolved = this.figure(
+      n.returnType.typeSpecifier,
+      undefined,
+    )!
     if (this.doingBuiltIns) {
       const genTypes =
         getGenTypes(n.returnType.typeSpecifier) ||
         n.params.map((p) => getGenTypes(p.typeSpecifier)).find(Boolean)
-      const returnTypeResolved = this.figure(
-        n.returnType.typeSpecifier,
-        undefined,
-      )!
+
       if (genTypes) {
         for (let ti = 0; ti < genTypes.length; ti++) {
           const type = genTypes[ti]
@@ -974,6 +972,11 @@ class BinderVisitor extends AbstractVisitor<any> {
         })
       }
     } else {
+      def.overloads.push({
+        def: n,
+        params: params as NormalizedType[],
+        result: returnTypeResolved,
+      })
       n.returnTypeResolved = this.figure(n.returnType, undefined)
     }
   }
@@ -1495,16 +1498,16 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
         "S0004",
         "TODO lhs op rhs",
         "valid ops for " +
-          n.op.tokenType.PATTERN +
-          " are\n" +
-          VALID_BINARY_OPERATIONS.filter(([op]) => op === n.op.tokenType)
-            .map(
-              ([op, lhs, rhs]) =>
-                `  ${lhs.LABEL ?? lhs.PATTERN} ${op.PATTERN} ${
-                  rhs.LABEL ?? rhs.PATTERN
-                }`,
-            )
-            .join("\n"),
+        n.op.tokenType.PATTERN +
+        " are\n" +
+        VALID_BINARY_OPERATIONS.filter(([op]) => op === n.op.tokenType)
+          .map(
+            ([op, lhs, rhs]) =>
+              `  ${lhs.LABEL ?? lhs.PATTERN} ${op.PATTERN} ${
+                rhs.LABEL ?? rhs.PATTERN
+              }`,
+          )
+          .join("\n"),
       )
     }
 

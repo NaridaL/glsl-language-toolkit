@@ -16,12 +16,21 @@ import {
   TextDocuments,
   TextDocumentSyncKind,
 } from "vscode-languageserver/node"
-import { check, GLSL_LEXER, GLSL_PARSER, Node, Token } from "prettier-plugin-glsl"
+import {
+  check,
+  findPositionNode,
+  GLSL_LEXER,
+  GLSL_PARSER,
+  Node,
+  shortDesc2,
+  Token,
+  TranslationUnit,
+} from "prettier-plugin-glsl"
 
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { isToken } from "prettier-plugin-glsl/out/nodes"
 import { applyLineContinuations, fixLocations } from "prettier-plugin-glsl/out/preprocessor"
-import { Range } from "vscode-languageserver"
+import { DefinitionLink, Range } from "vscode-languageserver"
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -62,6 +71,7 @@ connection.onInitialize((params: InitializeParams) => {
       completionProvider: {
         resolveProvider: true,
       },
+      definitionProvider: true,
     },
   }
   if (hasWorkspaceFolderCapability) {
@@ -159,6 +169,8 @@ function getRange(textDocument: TextDocument, e: Token | Node): Range {
       }
 }
 
+let translationUnit: TranslationUnit
+
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   // In this simple example we get the settings for every validate run.
   const settings = await getDocumentSettings(textDocument.uri)
@@ -186,7 +198,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
   // "input" is a setter which will reset the glslParser's state.
   GLSL_PARSER.input = lexingResult.tokens
-  const translationUnit = GLSL_PARSER.translationUnit()
+  translationUnit = GLSL_PARSER.translationUnit()
   for (let err of GLSL_PARSER.errors) {
     diagnostics.push({
       message: err.message,
@@ -292,6 +304,25 @@ connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
   }
   return item
 })
+
+connection.onDefinition(
+  ({ textDocument, position }): DefinitionLink[] | undefined => {
+    const [x, xx] = findPositionNode(
+      translationUnit,
+      position.line,
+      position.character,
+    )
+    connection.console.log("" + xx.map(shortDesc2))
+    return [
+      {
+        originSelectionRange: undefined as any,
+        targetRange: undefined as any,
+        targetSelectionRange: undefined as any,
+        targetUri: "",
+      },
+    ]
+  },
+)
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events

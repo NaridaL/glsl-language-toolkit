@@ -10,15 +10,9 @@
   "parserOptions": {
     "ecmaVersion": 6,
     "sourceType": "module",
-    "project": [
-      "test.tsconfig.json"
-    ]
+    "project": ["tsconfig.json"]
   },
-  "plugins": [
-    "@typescript-eslint",
-    "import",
-    "cflint"
-  ],
+  "plugins": ["@typescript-eslint", "import", "cflint"],
   "rules": {
     "curly": "warn",
     "eqeqeq": "warn",
@@ -45,9 +39,5 @@
     "cflint/no-substr": "error",
     "cflint/no-this-assignment": "error"
   },
-  "ignorePatterns": [
-    "out",
-    "dist",
-    "**/*.d.ts"
-  ]
+  "ignorePatterns": ["out", "dist", "**/*.d.ts"]
 }

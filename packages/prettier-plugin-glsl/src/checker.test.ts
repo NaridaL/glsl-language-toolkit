@@ -1,18 +1,16 @@
 import { readFileSync } from "fs"
 import { VError } from "@netflix/nerror"
-import { last, Many } from "lodash"
+import { last, Many, merge } from "lodash"
 
-import {
-  check,
-  evaluateConstantExpression,
-  ShaderType,
-  typeString,
-} from "./checker"
+import { check, evaluateConstantExpression, ShaderType, typeString } from "./checker"
 import { parseInput } from "./parser"
 import { ExpressionStatement, FunctionDefinition } from "./nodes"
-import { ccorrect, substrContext } from "./util"
+import { substrContext } from "./util"
 import { TOKEN } from "./lexer"
+import { getMarkerPositions } from "./testutil.test"
+import { Matrix } from "./builtins"
 import ProvidesCallback = jest.ProvidesCallback
+
 
 function parseAndCheck(p: string, shaderType: ShaderType | undefined) {
   const parsed = parseInput(p)
@@ -20,31 +18,14 @@ function parseAndCheck(p: string, shaderType: ShaderType | undefined) {
 }
 
 function glsl(
-  p: string,
+  pWithMarkers: string,
   expectedErrorCodes: string[],
   shaderType?: ShaderType,
 ) {
-  const expectedErrors = expectedErrorCodes.map((code) => ({
-    code,
-    start: 0,
-    end: 0,
-  }))
-  let i = 0
-  p = p.replace(
-    /`(.*?)`|\[\[(.*?)]]|'(.*?)'/g,
-    (
-      _,
-      m0: string | undefined,
-      m1: string | undefined,
-      m2: string | undefined,
-      offset,
-    ) => {
-      const str = (m0 ?? m1 ?? m2)!
-      expectedErrors[i].start = offset + 1
-      expectedErrors[i].end = offset + str.length + 1
-      i++
-      return " " + str + " " // add spaces so indexes don't change
-    },
+  const [p, positions] = getMarkerPositions(pWithMarkers)
+  const expectedErrors = merge(
+    expectedErrorCodes.map((code) => ({ code })),
+    positions,
   )
   const errs = parseAndCheck(p, shaderType)
   try {
@@ -239,29 +220,34 @@ describe("expected errors", () => {
 describe("valid cases", () => {
   test("struct decl in func return type is allowed", () =>
     glsl("struct G { int i; } foo() { return G(1); } G g;", []))
+  test("a defined function can be called", () =>
+    glsl(
+      "float dot2(vec2 v) { return dot(v, v); } " +
+      "void main() { float f = dot2(vec2(2)); }",
+      [],
+    ))
 })
 
-function mat(...rs: number[][]): number[] {
-  const cols = rs[0].length
-  const rows = rs.length
+function mat(...rowValues: number[][]): Matrix {
+  const cols = rowValues[0].length
+  const rows = rowValues.length
   const result = Array(cols * rows)
   for (let c = 0; c < cols; c++) {
     for (let r = 0; r < rows; r++) {
-      result[c * rows + r] = Math.fround(rs[r][c])
+      result[c * rows + r] = Math.fround(rowValues[r][c])
     }
   }
   return Object.assign(result, { rows })
 }
 
-type V = number | boolean | Record<string, unknown>
 describe("/*constant expressions", () => {
-  function is(expectedValue: Many<V>): ProvidesCallback {
-    const cfround = (x: V): V =>
-      typeof x === "number" && x % 1 !== 0 ? Math.fround(x) : x
-    const rows = expectedValue.rows
-    expectedValue = ccorrect(expectedValue, cfround)
-    if (rows) {
-      expectedValue.rows = rows
+  function is(expectedValue: Many<number | boolean | Record<string, unknown>> | Matrix): ProvidesCallback {
+    if (Array.isArray(expectedValue)) {
+      for (let i = 0; i < expectedValue.length; i++) {
+        expectedValue[i] = Math.fround(expectedValue[i])
+      }
+    } else if (typeof expectedValue === "number" && expectedValue % 1 !== 0) {
+      expectedValue = Math.fround(expectedValue)
     }
     return () => {
       const exprStr = expect.getState().currentTestName
@@ -277,7 +263,7 @@ describe("/*constant expressions", () => {
         last(
           (unit.declarations[0] as FunctionDefinition).body.statements,
         ) as ExpressionStatement
-      ).expression
+      ).expression!
       const value = evaluateConstantExpression(expr)?.value
 
       expect(value).toEqual(expectedValue)

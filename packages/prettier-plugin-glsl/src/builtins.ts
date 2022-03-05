@@ -1,12 +1,5 @@
 import { clamp } from "lodash"
-import {
-  determinant2,
-  determinant3,
-  determinant4,
-  inverse2,
-  inverse3,
-  inverse4,
-} from "./matinverse"
+import { determinant2, determinant3, determinant4, inverse2, inverse3, inverse4 } from "./matinverse"
 import { invariant } from "./util"
 
 const COMPONENT_FUNCTIONS = {
@@ -134,11 +127,13 @@ const GEOMETRIC = {
 }
 
 export type Matrix = number[] & { rows: number }
+
 export function Matrix(cols: number, rows: number): Matrix {
   return Object.assign(new Array(cols * rows), { rows })
 }
+
 export function isMatrix(x: number[] | number): x is Matrix {
-  return typeof x === "object" && "rows" in x
+  return Array.isArray(x) && "rows" in x
 }
 
 const MATRIX = {
