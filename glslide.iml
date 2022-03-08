@@ -7,6 +7,7 @@
       <excludeFolder url="file://$MODULE_DIR$/lib" />
       <excludeFolder url="file://$MODULE_DIR$/packages/glsl-lsp-server/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/prettier-plugin-glsl/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/prettier-plugin-glsl/.rollup.cache" />
       <excludePattern pattern="package-lock.json" />
     </content>
     <orderEntry type="inheritedJdk" />

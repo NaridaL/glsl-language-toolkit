@@ -286,7 +286,6 @@ genType mod (genType x, float y);
 genType mod (genType x, genType y);
 
 
-
 //Returns the fractional part of x and sets i to the integer
 //part (as a whole number floating point value). Both the
 //return value and the output parameter will have the same
@@ -311,7 +310,6 @@ genIType max (genIType x, genIType y);
 genIType max (genIType x, int y);
 genUType max (genUType x, genUType y);
 genUType max (genUType x, uint y);
-
 
 
 //Returns min (max (x, minVal), maxVal).
@@ -357,7 +355,6 @@ genType smoothstep (genType edge0, genType edge1, genType x);
 genType smoothstep (float edge0, float edge1, genType x);
 
 
-
 //Returns true if x holds a NaN. Returns false otherwise.
 genBType isnan (genType x);
 
@@ -365,7 +362,6 @@ genBType isnan (genType x);
 //Returns true if x holds a positive infinity or negative
 //infinity. Returns false otherwise.
 genBType isinf (genType x);
-
 
 
 //Returns a signed or unsigned highp integer value
@@ -485,12 +481,16 @@ float distance (genType p0, genType p1);
 float dot (genType x, genType y);
 
 
-//Returns the cross product of x and y, i.e.,
-//vec3(
-//  x[1]*y[2]- y[1]*x[2],
-//  x[2]*y[0]- y[2]*x[0],
-//  x[0]*y[1]- y[0]*x[1])
-vec3 cross (vec3 x, vec3 y);
+/**
+ * Returns the cross product of a and b, i.e.,
+ * ```
+ * vec3(
+ *   a[1] * b[2] - b[1] * a[2],
+ *   a[2] * b[0] - b[2] * a[0],
+ *   a[0] * b[1] - b[0] * a[1])
+ * ```
+ */
+vec3 cross (vec3 a, vec3 b);
 
 
 //Returns a vector in the same direction as x but with a length of 1 i.e.
@@ -500,7 +500,6 @@ genType normalize (genType x);
 // Orients a vector to point away from a surface as defined by its normal.
 //If dot(Nref, I) < 0 return N, otherwise return -N.
 genType faceforward(genType N, genType I, genType Nref);
-
 
 
 //For the incident vector I and surface orientation N,
@@ -621,7 +620,6 @@ bvec equal(vec x, vec y);
 bvec equal(ivec x, ivec y);
 bvec equal(uvec x, uvec y);
 bvec equal(bvec x, bvec y);
-
 
 
 //Returns the component-wise compare of x != y.
@@ -748,18 +746,18 @@ highp ivec3 textureSize (sampler2DArrayShadow sampler, int lod);
 //in the non-shadow forms, and
 //the second to last component
 //of P in the shadow forms.
-gvec4 texture (gsampler2D sampler, vec2 P );
-gvec4 texture (gsampler2D sampler, vec2 P , float bias );
-gvec4 texture (gsampler3D sampler, vec3 P );
-gvec4 texture (gsampler3D sampler, vec3 P , float bias );
-gvec4 texture (gsamplerCube sampler, vec3 P );
-gvec4 texture (gsamplerCube sampler, vec3 P , float bias );
-float texture (sampler2DShadow sampler, vec3 P );
-float texture (sampler2DShadow sampler, vec3 P , float bias );
-float texture (samplerCubeShadow sampler, vec4 P );
-float texture (samplerCubeShadow sampler, vec4 P , float bias );
-gvec4 texture (gsampler2DArray sampler, vec3 P );
-gvec4 texture (gsampler2DArray sampler, vec3 P , float bias );
+gvec4 texture (gsampler2D sampler, vec2 P);
+gvec4 texture (gsampler2D sampler, vec2 P, float bias);
+gvec4 texture (gsampler3D sampler, vec3 P);
+gvec4 texture (gsampler3D sampler, vec3 P, float bias);
+gvec4 texture (gsamplerCube sampler, vec3 P);
+gvec4 texture (gsamplerCube sampler, vec3 P, float bias);
+float texture (sampler2DShadow sampler, vec3 P);
+float texture (sampler2DShadow sampler, vec3 P, float bias);
+float texture (samplerCubeShadow sampler, vec4 P);
+float texture (samplerCubeShadow sampler, vec4 P, float bias);
+gvec4 texture (gsampler2DArray sampler, vec3 P);
+gvec4 texture (gsampler2DArray sampler, vec3 P, float bias);
 float texture (sampler2DArrayShadow sampler, vec4 P);
 
 //Do a texture lookup with
@@ -778,14 +776,14 @@ float texture (sampler2DArrayShadow sampler, vec4 P);
 //vec4. After these values are
 //computed, texture lookup
 //proceeds as in texture.
-gvec4 textureProj (gsampler2D sampler, vec3 P );
-gvec4 textureProj (gsampler2D sampler, vec3 P , float bias );
-gvec4 textureProj (gsampler2D sampler, vec4 P );
-gvec4 textureProj (gsampler2D sampler, vec4 P , float bias );
-gvec4 textureProj (gsampler3D sampler, vec4 P );
-gvec4 textureProj (gsampler3D sampler, vec4 P , float bias );
+gvec4 textureProj (gsampler2D sampler, vec3 P);
+gvec4 textureProj (gsampler2D sampler, vec3 P, float bias);
+gvec4 textureProj (gsampler2D sampler, vec4 P);
+gvec4 textureProj (gsampler2D sampler, vec4 P, float bias);
+gvec4 textureProj (gsampler3D sampler, vec4 P);
+gvec4 textureProj (gsampler3D sampler, vec4 P, float bias);
 float textureProj (sampler2DShadow sampler, vec4 P);
-float textureProj (sampler2DShadow sampler, vec4 P, float bias );
+float textureProj (sampler2DShadow sampler, vec4 P, float bias);
 
 //Do a texture lookup as in
 //texture but with explicit LOD;
@@ -829,15 +827,15 @@ gvec4 textureLod (gsampler2DArray sampler, vec3 P, float lod);
 //offset is (𝛿_ , 𝛿_v ,𝛿_w). Note
 //that texel offsets are also not
 //supported for cube maps.
-gvec4 textureOffset (gsampler2D sampler, vec2 P, ivec2 offset );
-gvec4 textureOffset (gsampler2D sampler, vec2 P, ivec2 offset  , float bias);
-gvec4 textureOffset (gsampler3D sampler, vec3 P, ivec3 offset );
-gvec4 textureOffset (gsampler3D sampler, vec3 P, ivec3 offset  , float bias);
+gvec4 textureOffset (gsampler2D sampler, vec2 P, ivec2 offset);
+gvec4 textureOffset (gsampler2D sampler, vec2 P, ivec2 offset, float bias);
+gvec4 textureOffset (gsampler3D sampler, vec3 P, ivec3 offset);
+gvec4 textureOffset (gsampler3D sampler, vec3 P, ivec3 offset, float bias);
 
-float textureOffset (sampler2DShadow sampler, vec3 P, ivec2 offset );
-float textureOffset (sampler2DShadow sampler, vec3 P, ivec2 offset  , float bias);
-gvec4 textureOffset (gsampler2DArray sampler, vec3 P, ivec2 offset );
-gvec4 textureOffset (gsampler2DArray sampler, vec3 P, ivec2 offset  , float bias);
+float textureOffset (sampler2DShadow sampler, vec3 P, ivec2 offset);
+float textureOffset (sampler2DShadow sampler, vec3 P, ivec2 offset, float bias);
+gvec4 textureOffset (gsampler2DArray sampler, vec3 P, ivec2 offset);
+gvec4 textureOffset (gsampler2DArray sampler, vec3 P, ivec2 offset, float bias);
 
 //Use integer texture coordinate
 //P to lookup a single texel from
@@ -868,15 +866,15 @@ gvec4 texelFetchOffset (gsampler2DArray sampler, ivec3 P, int lod, ivec2 offset)
 //as described in textureProj
 //offset by offset as described in
 //textureOffset.
-gvec4 textureProjOffset (gsampler2D sampler, vec3 P, ivec2 offset );
-gvec4 textureProjOffset (gsampler2D sampler, vec3 P, ivec2 offset, float bias );
-gvec4 textureProjOffset (gsampler2D sampler, vec4 P, ivec2 offset );
-gvec4 textureProjOffset (gsampler2D sampler, vec4 P, ivec2 offset, float bias );
-gvec4 textureProjOffset (gsampler3D sampler, vec4 P, ivec3 offset );
-gvec4 textureProjOffset (gsampler3D sampler, vec4 P, ivec3 offset, float bias );
+gvec4 textureProjOffset (gsampler2D sampler, vec3 P, ivec2 offset);
+gvec4 textureProjOffset (gsampler2D sampler, vec3 P, ivec2 offset, float bias);
+gvec4 textureProjOffset (gsampler2D sampler, vec4 P, ivec2 offset);
+gvec4 textureProjOffset (gsampler2D sampler, vec4 P, ivec2 offset, float bias);
+gvec4 textureProjOffset (gsampler3D sampler, vec4 P, ivec3 offset);
+gvec4 textureProjOffset (gsampler3D sampler, vec4 P, ivec3 offset, float bias);
 
-float textureProjOffset (sampler2DShadow sampler, vec4 P, ivec2 offset , float bias );
-float textureProjOffset (sampler2DShadow sampler, vec4 P, ivec2 offset , float bias );
+float textureProjOffset (sampler2DShadow sampler, vec4 P, ivec2 offset, float bias);
+float textureProjOffset (sampler2DShadow sampler, vec4 P, ivec2 offset, float bias);
 
 //Do an offset texture lookup
 //with explicit LOD. See

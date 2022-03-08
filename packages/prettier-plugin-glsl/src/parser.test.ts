@@ -1,7 +1,7 @@
-import * as assert from "assert"
+import expect from "expect"
 import { parseInput, shortDesc2 } from "./parser"
 import { simplifyCst } from "./gendiagrams"
-import { dedent } from "./util"
+import { dedent } from "./testutil"
 import { findPositionNode } from "./nodes"
 
 test("parse multi-dim array", () => {
@@ -140,7 +140,7 @@ test("findPositionNode", () => {
     }
   `)
   const [result, path] = findPositionNode(tree, 3, 22)
-  assert.deepStrictEqual(path.map(shortDesc2), [
+  expect(path.map(shortDesc2)).toEqual([
     "translationUnit 1:1-5:2",
     "functionDefinition 1:1-5:2",
     "compoundStatement 1:13-5:2",
@@ -152,5 +152,5 @@ test("findPositionNode", () => {
     "functionCall 3:21-3:30",
     "typeSpecifier 3:21-3:24",
   ])
-  assert.equal(shortDesc2(result!), "typeSpecifier 3:21-3:24")
+  expect(shortDesc2(result!)).toEqual("typeSpecifier 3:21-3:24")
 })

@@ -10,7 +10,7 @@
   ],
   "references": [
     {
-      "path": "../prettier-plugin-glsl"
+      "path": "../prettier-plugin-glsl/tsconfig.build.json"
     }
   ]
 }

@@ -125,6 +125,15 @@ test("#if macro", () => {
   `
   testPreproc(source, `float f;`)
 })
+test("#define in false #if", () => {
+  testPreproc(
+    `#if 0 == 1
+    #define FOO 2
+    #endif
+    FOO`,
+    "FOO",
+  )
+})
 test("#if-#else macro", () => {
   const source = `
   #define HW_PERFORMANCE 0

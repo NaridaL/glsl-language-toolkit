@@ -22,7 +22,7 @@
       "path": "./packages/glsl-lsp-server"
     },
     {
-      "path": "./packages/prettier-plugin-glsl"
+      "path": "./packages/prettier-plugin-glsl/tsconfig.build.json"
     }
   ]
 }

@@ -22,3 +22,5 @@ export function getMarkerPositions(
   )
   return [s, positions]
 }
+
+export * from "./dedent"

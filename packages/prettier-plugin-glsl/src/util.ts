@@ -125,50 +125,6 @@ export function assertNever(_x?: never): never {
   }
 }
 
-export function dedent(
-  strings: string | TemplateStringsArray,
-  ...args: string[]
-): string {
-  const raw = typeof strings === "string" ? [strings] : strings.raw
-
-  // first, perform interpolation
-  let result = ""
-  for (let i = 0; i < raw.length; i++) {
-    result += raw[i]
-      // join lines when there is a suppressed newline
-      .replace(/\\\n[ \t]*/g, "")
-      // handle escaped backticks
-      .replace(/\\`/g, "`")
-
-    if (i < (args.length <= 1 ? 0 : args.length - 1)) {
-      result += args.length <= i + 1 ? undefined : args[i + 1]
-    }
-  }
-
-  // now strip indentation
-  const lines = result.split("\n")
-  let mindent = Number.MAX_SAFE_INTEGER
-  lines.forEach(function(l) {
-    const m = l.match(/^(\s+)\S+/)
-    if (m) {
-      const indent = m[1].length
-      mindent = Math.min(mindent, indent)
-    }
-  })
-
-  if (mindent !== Number.MAX_SAFE_INTEGER) {
-    result = lines.map((l) => (l[0] === " " ? l.slice(mindent) : l)).join("\n")
-  }
-
-  return (
-    result
-      // dedent eats leading and trailing whitespace too
-      .trim()
-      // handle escaped newlines at the end to ensure they don't get stripped too
-      .replace(/\\n/g, "\n")
-  )
-}
-
 export function offsetToLineCol(
   input: string,
   offset: number,
@@ -186,7 +142,7 @@ export function offsetToLineCol(
     }
     i++
   }
-  return [line, offset - lineStart]
+  return [line, offset - lineStart + 1]
 }
 
 export function lineColToOffset(

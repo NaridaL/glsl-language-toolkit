@@ -57,8 +57,6 @@ repository:
         match: \b(for|while|do)\b
       - name: keyword.control.flow.glsl
         match: \b(return|continue|break|discard)\b
-      - name: keyword.control.other.glsl
-        match: const|uniform|layout|centroid|flat|smooth|precision|invariant|inout|out|in|void|struct
       - name: punctuation.terminator.statement.glsl
         match: ';'
       - name: punctuation.separator.glsl
@@ -73,6 +71,8 @@ repository:
       # builting-functions
       - name: support.function.glsl
         match: '\b(radians|degrees|sin|cos|tan|asin|acos|atan|atan|sinh|cosh|tanh|asinh|acosh|atanh|pow|exp|log|exp2|log2|sqrt|inversesqrt|abs|sign|floor|trunc|round|roundEven|ceil|fract|mod|modf|min|max|clamp|mix|step|smoothstep|isnan|isinf|floatBitsToInt|floatBitsToUint|intBitsToFloat|uintBitsToFloat|packSnorm2x16|unpackSnorm2x16|packUnorm2x16|unpackUnorm2x16|packHalf2x16|unpackHalf2x16|length|distance|dot|cross|normalize|faceforward|reflect|refract|matrixCompMult|outerProduct|transpose|determinant|inverse|lessThan|lessThanEqual|greaterThan|greaterThanEqual|equal|notEqual|any|all|not|textureSize|texture|textureProj|textureLod|textureOffset|texelFetch|texelFetchOffset|textureProjOffset|textureLodOffset|textureProjLod|textureProjLodOffset|textureGrad|textureGradOffset|textureProjGrad|textureProjGradOffset|dFdx|dFdy|fwidth)\b'
+      - name: keyword.control.other.glsl
+        match: const|uniform|layout|centroid|flat|smooth|precision|invariant|inout|out|in|void|struct
 
       # builtin variables
       - name: support.variable.glsl

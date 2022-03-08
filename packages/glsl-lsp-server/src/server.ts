@@ -17,20 +17,26 @@ import {
   TextDocumentSyncKind,
 } from "vscode-languageserver/node"
 import {
+  applyLineContinuations,
   check,
   findPositionNode,
+  fixLocations,
+  getColors,
   GLSL_LEXER,
   GLSL_PARSER,
+  isToken,
   Node,
-  shortDesc2,
+  preproc,
+  preprocMacros,
+  resolvePositionDefinition,
   Token,
   TranslationUnit,
 } from "prettier-plugin-glsl"
 
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { isToken } from "prettier-plugin-glsl/out/nodes"
-import { applyLineContinuations, fixLocations } from "prettier-plugin-glsl/out/preprocessor"
-import { DefinitionLink, Range } from "vscode-languageserver"
+import { DefinitionLink, Position, Range } from "vscode-languageserver"
+import * as console from "console"
+import { ColorInformation, Hover } from "vscode-languageserver-protocol"
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -46,23 +52,14 @@ let hasDiagnosticRelatedInformationCapability = false
 connection.onInitialize((params: InitializeParams) => {
   const capabilities = params.capabilities
 
-  console.log("test")
-
-  connection.console.log("gadlkadlkajdlkajkj")
+  console.log("test", JSON.stringify(params))
 
   // Does the client support the `workspace/configuration` request?
   // If not, we fall back using global settings.
-  hasConfigurationCapability = !!(
-    capabilities.workspace && !!capabilities.workspace.configuration
-  )
-  hasWorkspaceFolderCapability = !!(
-    capabilities.workspace && !!capabilities.workspace.workspaceFolders
-  )
-  hasDiagnosticRelatedInformationCapability = !!(
-    capabilities.textDocument &&
-    capabilities.textDocument.publishDiagnostics &&
-    capabilities.textDocument.publishDiagnostics.relatedInformation
-  )
+  hasConfigurationCapability = !!capabilities.workspace?.configuration
+  hasWorkspaceFolderCapability = !!capabilities.workspace?.workspaceFolders
+  hasDiagnosticRelatedInformationCapability =
+    !!capabilities.textDocument?.publishDiagnostics?.relatedInformation
 
   const result: InitializeResult = {
     capabilities: {
@@ -72,6 +69,8 @@ connection.onInitialize((params: InitializeParams) => {
         resolveProvider: true,
       },
       definitionProvider: true,
+      hoverProvider: true,
+      colorProvider: true,
     },
   }
   if (hasWorkspaceFolderCapability) {
@@ -160,13 +159,13 @@ documents.onDidChangeContent((change) => {
 function getRange(textDocument: TextDocument, e: Token | Node): Range {
   return isToken(e)
     ? {
-        start: textDocument.positionAt(e.startOffset),
-        end: textDocument.positionAt(e.endOffset!),
-      }
+      start: textDocument.positionAt(e.startOffset),
+      end: textDocument.positionAt(e.endOffset!),
+    }
     : {
-        start: textDocument.positionAt(e.firstToken!.startOffset),
-        end: textDocument.positionAt(e.lastToken!.endOffset! + 1),
-      }
+      start: textDocument.positionAt(e.firstToken!.startOffset),
+      end: textDocument.positionAt(e.lastToken!.endOffset! + 1),
+    }
 }
 
 let translationUnit: TranslationUnit
@@ -180,7 +179,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   const originalText = textDocument.getText()
 
   const { result: input, changes } = applyLineContinuations(originalText)
-
+  preproc(input)
   const diagnostics: Diagnostic[] = []
   const lexingResult = GLSL_LEXER.tokenize(input)
   for (let error of lexingResult.errors) {
@@ -195,9 +194,10 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   }
 
   fixLocations(lexingResult.tokens, changes)
+  const ppTokens = preprocMacros(lexingResult.tokens)
 
   // "input" is a setter which will reset the glslParser's state.
-  GLSL_PARSER.input = lexingResult.tokens
+  GLSL_PARSER.input = ppTokens
   translationUnit = GLSL_PARSER.translationUnit()
   for (let err of GLSL_PARSER.errors) {
     diagnostics.push({
@@ -206,6 +206,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       severity: DiagnosticSeverity.Error,
     })
   }
+
 
   const errs = check(translationUnit, undefined)
   for (let err of errs) {
@@ -305,22 +306,98 @@ connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
   return item
 })
 
+connection.onHover(({ textDocument, position }): Hover | undefined | null => {
+  const [node, path] = findPositionNode(
+    translationUnit,
+    ...positionToLineCol(position),
+  )
+  if (path[path.length - 2]?.kind === "functionCall") {
+    const fc = path[path.length - 2]
+    if (fc.kind === "functionCall") {
+      if (isToken(fc.callee.typeSpecifierNonArray)) {
+        if (fc.callee.typeSpecifierNonArray.image === "cross") {
+          return {
+            contents: {
+              kind: "markdown",
+              value: ` Returns the cross product of a and b, i.e.,
+\`\`\`
+vec3(
+a[1] * b[2] - b[1] * a[2],
+a[2] * b[0] - b[2] * a[0],
+a[0] * b[1] - b[0] * a[1])
+\`\`\``,
+            },
+          }
+        }
+      }
+    }
+  }
+})
+
+function nodeRange(node: Node): Range {
+  return {
+    start: tokenStartPosition(node.firstToken!),
+    end: tokenEndPosition(node.lastToken!),
+  }
+}
+
+connection.onDocumentColor(({ textDocument }): ColorInformation[] => {
+  return getColors(translationUnit).map(
+    ({ node, color: [red, green, blue, alpha] }) => ({
+      range: nodeRange(node),
+      color: { red, green, blue, alpha: alpha || 1 },
+    }),
+  )
+})
+
+function tokenStartPosition(token: Token): Position {
+  return lineColToPosition(token.startLine!, token.startColumn!)
+}
+
+function tokenEndPosition(token: Token): Position {
+  // endColumn more accurately describes lastColumn, hence +1.
+  return lineColToPosition(token.endLine!, token.endColumn! + 1)
+}
+
+function tokenRange(token: Token): Range {
+  return {
+    start: tokenStartPosition(token),
+    end: tokenEndPosition(token),
+  }
+}
+
+function lineColToPosition(line: number, col: number): Position {
+  return { line: line - 1, character: col - 1 }
+}
+
+function positionToLineCol(pos: Position): [line: number, col: number] {
+  return [pos.line + 1, pos.character + 1]
+}
+
 connection.onDefinition(
   ({ textDocument, position }): DefinitionLink[] | undefined => {
+    console.log("finding position for " + JSON.stringify(position))
     const [x, xx] = findPositionNode(
       translationUnit,
-      position.line,
-      position.character,
+      ...positionToLineCol(position),
     )
-    connection.console.log("" + xx.map(shortDesc2))
-    return [
-      {
-        originSelectionRange: undefined as any,
-        targetRange: undefined as any,
-        targetSelectionRange: undefined as any,
-        targetUri: "",
-      },
-    ]
+    const token = resolvePositionDefinition(
+      translationUnit,
+      ...positionToLineCol(position),
+    )
+    connection.console.log("textDocument.uri" + textDocument.uri)
+    if (token) {
+      const targetRange = tokenRange(token)
+      return [
+        {
+          targetRange,
+          targetSelectionRange: targetRange,
+          targetUri: textDocument.uri,
+        },
+      ]
+    } else {
+      return []
+    }
   },
 )
 

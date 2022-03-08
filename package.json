@@ -11,7 +11,7 @@
     "build": "npm run build --workspaces",
     "watch": "tsc --build --watch",
     "clean": "tsc --build --clean && npm run clean --workspaces",
-    "fmt": "prettier --write ."
+    "fmt": "prettier --write --plugin-search-dir=./src . --extensions"
   },
   "repository": {
     "type": "git",

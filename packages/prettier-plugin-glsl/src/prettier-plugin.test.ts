@@ -2,7 +2,7 @@
 
 import { readFileSync } from "fs"
 import expect from "expect"
-import prettier from "prettier"
+import * as prettier from "prettier"
 import * as prettierPlugin from "./prettier-plugin"
 
 function fmt(source: string, printWidth = 80): string {
