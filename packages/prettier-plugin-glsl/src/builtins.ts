@@ -1,5 +1,12 @@
 import { clamp } from "lodash"
-import { determinant2, determinant3, determinant4, inverse2, inverse3, inverse4 } from "./matinverse"
+import {
+  determinant2,
+  determinant3,
+  determinant4,
+  inverse2,
+  inverse3,
+  inverse4,
+} from "./matinverse"
 import { invariant } from "./util"
 
 const COMPONENT_FUNCTIONS = {

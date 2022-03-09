@@ -4,7 +4,7 @@ patterns:
   - include: "#expression"
 vars:
   #  newLineCont: '\\\n' # TODO fix
-  newLineCont: ''
+  newLineCont: ""
 repository:
   expression:
     patterns:
@@ -12,7 +12,7 @@ repository:
       - include: "#paren-expression"
       #      - include: '#single-line-comment-consuming-line-ending'
       - name: comment.line.double-slash.glsl
-        begin: '//'
+        begin: "//"
         end: '(?<!\\)\n'
         #        end: x
         #        match: //.*
@@ -58,7 +58,7 @@ repository:
       - name: keyword.control.flow.glsl
         match: \b(return|continue|break|discard)\b
       - name: punctuation.terminator.statement.glsl
-        match: ';'
+        match: ";"
       - name: punctuation.separator.glsl
         match: '\.'
       - name: meta.preprocessor
@@ -83,15 +83,14 @@ repository:
       #      - name: comment
       #        match: /\*.*?(?:\*/|$)
 
-
 single-line-comment-consuming-line-ending:
   begin: (^[ \t]+)?((//))
   beginCaptures:
-    '1': { name: punctuation.whitespace.comment.leading.ts }
-    '2': { name: comment.line.double-slash.ts }
-    '3': { name: punctuation.definition.comment.ts }
-    '4': { name: storage.type.internaldeclaration.ts }
-    '5': { name: punctuation.decorator.internaldeclaration.ts }
+    "1": { name: punctuation.whitespace.comment.leading.ts }
+    "2": { name: comment.line.double-slash.ts }
+    "3": { name: punctuation.definition.comment.ts }
+    "4": { name: storage.type.internaldeclaration.ts }
+    "5": { name: punctuation.decorator.internaldeclaration.ts }
   end: (?=^)
   contentName: comment.line.double-slash.glsl
 letter:
@@ -101,10 +100,10 @@ letter:
     begin: "\\("
     end: "\\)"
     beginCaptures:
-      '0':
+      "0":
         name: punctuation.paren.open
     endCaptures:
-      '0':
+      "0":
         name: punctuation.paren.close
     name: expression.group
     patterns:

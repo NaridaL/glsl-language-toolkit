@@ -2,18 +2,14 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es2019",
-    "lib": [
-      "ES2019",
-      "DOM"
-    ],
+    "lib": ["ES2019", "DOM"],
     "strict": true,
     "outDir": "",
     "sourceMap": true,
     "declarationMap": true,
     "composite": true
   },
-  "files": [
-  ],
+  "files": [],
   "references": [
     {
       "path": "./packages/glsl-vscode-extension"

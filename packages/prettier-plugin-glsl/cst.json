@@ -33,9 +33,7 @@
     {
       "kind": "ppDefine",
       "what": "IDENTIFIER(AA) 1646-1647",
-      "tokens": [
-        "INTCONSTANT(1) 1649-1649"
-      ],
+      "tokens": ["INTCONSTANT(1) 1649-1649"],
       "node": {
         "kind": "constantExpression",
         "_const": "INTCONSTANT(1) 1649-1649",
@@ -55,9 +53,7 @@
     {
       "kind": "ppDefine",
       "what": "IDENTIFIER(AA) 1665-1666",
-      "tokens": [
-        "INTCONSTANT(2) 1668-1668"
-      ],
+      "tokens": ["INTCONSTANT(2) 1668-1668"],
       "node": {
         "kind": "constantExpression",
         "_const": "INTCONSTANT(2) 1668-1668",
@@ -341,10 +337,7 @@
     {
       "kind": "ppDefine",
       "what": "IDENTIFIER(MUL) 1943-1945",
-      "params": [
-        "IDENTIFIER(A) 1947-1947",
-        "IDENTIFIER(B) 1950-1950"
-      ],
+      "params": ["IDENTIFIER(A) 1947-1947", "IDENTIFIER(B) 1950-1950"],
       "tokens": [
         "LEFT_PAREN(() 1953-1953",
         "IDENTIFIER(A) 1954-1954",
@@ -378,10 +371,7 @@
     {
       "kind": "ppDefine",
       "what": "IDENTIFIER(ADD) 1972-1974",
-      "params": [
-        "IDENTIFIER(A) 1976-1976",
-        "IDENTIFIER(B) 1979-1979"
-      ],
+      "params": ["IDENTIFIER(A) 1976-1976", "IDENTIFIER(B) 1979-1979"],
       "tokens": [
         "LEFT_PAREN(() 1982-1982",
         "LEFT_PAREN(() 1983-1983",
@@ -417,9 +407,7 @@
     {
       "kind": "ppDefine",
       "what": "IDENTIFIER(MAX3) 2004-2007",
-      "params": [
-        "IDENTIFIER(genType) 2009-2015"
-      ],
+      "params": ["IDENTIFIER(genType) 2009-2015"],
       "tokens": [
         "IDENTIFIER(genType) 2022-2028",
         "IDENTIFIER(max3) 2030-2033",
@@ -596,9 +584,7 @@
       "callee": "IDENTIFIER(MAX3) 2166-2169",
       "args": [
         {
-          "tokens": [
-            "FLOAT(float) 2171-2175"
-          ]
+          "tokens": ["FLOAT(float) 2171-2175"]
         }
       ],
       "firstToken": "IDENTIFIER(MAX3) 2166-2169",
@@ -609,9 +595,7 @@
       "callee": "IDENTIFIER(MAX3) 2178-2181",
       "args": [
         {
-          "tokens": [
-            "VEC3(vec3) 2183-2186"
-          ]
+          "tokens": ["VEC3(vec3) 2183-2186"]
         }
       ],
       "firstToken": "IDENTIFIER(MAX3) 2178-2181",
@@ -11359,9 +11343,7 @@
           {
             "kind": "ppDir",
             "dir": "IF(if) 8210-8211",
-            "tokens": [
-              "INTCONSTANT(0) 8213-8213"
-            ],
+            "tokens": ["INTCONSTANT(0) 8213-8213"],
             "node": {
               "kind": "constantExpression",
               "_const": "INTCONSTANT(0) 8213-8213",
@@ -11712,9 +11694,7 @@
           {
             "kind": "ppDir",
             "dir": "IF(if) 8387-8388",
-            "tokens": [
-              "INTCONSTANT(1) 8390-8390"
-            ],
+            "tokens": ["INTCONSTANT(1) 8390-8390"],
             "node": {
               "kind": "constantExpression",
               "_const": "INTCONSTANT(1) 8390-8390",
@@ -12197,9 +12177,7 @@
           {
             "kind": "ppDir",
             "dir": "IF(if) 8673-8674",
-            "tokens": [
-              "INTCONSTANT(0) 8676-8676"
-            ],
+            "tokens": ["INTCONSTANT(0) 8676-8676"],
             "node": {
               "kind": "constantExpression",
               "_const": "INTCONSTANT(0) 8676-8676",
@@ -20393,9 +20371,7 @@
           {
             "kind": "ppDir",
             "dir": "IF(if) 14543-14544",
-            "tokens": [
-              "INTCONSTANT(0) 14546-14546"
-            ],
+            "tokens": ["INTCONSTANT(0) 14546-14546"],
             "node": {
               "kind": "constantExpression",
               "_const": "INTCONSTANT(0) 14546-14546",

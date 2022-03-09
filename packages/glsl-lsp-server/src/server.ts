@@ -159,13 +159,13 @@ documents.onDidChangeContent((change) => {
 function getRange(textDocument: TextDocument, e: Token | Node): Range {
   return isToken(e)
     ? {
-      start: textDocument.positionAt(e.startOffset),
-      end: textDocument.positionAt(e.endOffset!),
-    }
+        start: textDocument.positionAt(e.startOffset),
+        end: textDocument.positionAt(e.endOffset!),
+      }
     : {
-      start: textDocument.positionAt(e.firstToken!.startOffset),
-      end: textDocument.positionAt(e.lastToken!.endOffset! + 1),
-    }
+        start: textDocument.positionAt(e.firstToken!.startOffset),
+        end: textDocument.positionAt(e.lastToken!.endOffset! + 1),
+      }
 }
 
 let translationUnit: TranslationUnit
@@ -206,7 +206,6 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       severity: DiagnosticSeverity.Error,
     })
   }
-
 
   const errs = check(translationUnit, undefined)
   for (let err of errs) {

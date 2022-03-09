@@ -2,7 +2,12 @@ import { readFileSync } from "fs"
 import { VError } from "@netflix/nerror"
 import { last, Many, merge } from "lodash"
 
-import { check, evaluateConstantExpression, ShaderType, typeString } from "./checker"
+import {
+  check,
+  evaluateConstantExpression,
+  ShaderType,
+  typeString,
+} from "./checker"
 import { parseInput } from "./parser"
 import { ExpressionStatement, FunctionDefinition } from "./nodes"
 import { substrContext } from "./util"
@@ -10,7 +15,6 @@ import { TOKEN } from "./lexer"
 import { getMarkerPositions } from "./testutil.test"
 import { Matrix } from "./builtins"
 import ProvidesCallback = jest.ProvidesCallback
-
 
 function parseAndCheck(p: string, shaderType: ShaderType | undefined) {
   const parsed = parseInput(p)
@@ -223,7 +227,7 @@ describe("valid cases", () => {
   test("a defined function can be called", () =>
     glsl(
       "float dot2(vec2 v) { return dot(v, v); } " +
-      "void main() { float f = dot2(vec2(2)); }",
+        "void main() { float f = dot2(vec2(2)); }",
       [],
     ))
 })
@@ -241,7 +245,9 @@ function mat(...rowValues: number[][]): Matrix {
 }
 
 describe("/*constant expressions", () => {
-  function is(expectedValue: Many<number | boolean | Record<string, unknown>> | Matrix): ProvidesCallback {
+  function is(
+    expectedValue: Many<number | boolean | Record<string, unknown>> | Matrix,
+  ): ProvidesCallback {
     if (Array.isArray(expectedValue)) {
       for (let i = 0; i < expectedValue.length; i++) {
         expectedValue[i] = Math.fround(expectedValue[i])

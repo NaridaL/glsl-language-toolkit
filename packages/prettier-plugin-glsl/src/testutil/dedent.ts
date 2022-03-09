@@ -24,7 +24,6 @@
  * THE SOFTWARE.
  */
 
-
 export function dedent(
   strings: string | TemplateStringsArray,
   ...args: string[]
@@ -48,7 +47,7 @@ export function dedent(
   // now strip indentation
   const lines = result.split("\n")
   let mindent = Number.MAX_SAFE_INTEGER
-  lines.forEach(function(l) {
+  lines.forEach(function (l) {
     const m = l.match(/^(\s+)\S+/)
     if (m) {
       const indent = m[1].length

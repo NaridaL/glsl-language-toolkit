@@ -6,12 +6,16 @@
 import * as path from "path"
 import { ExtensionContext, workspace } from "vscode"
 
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+  TransportKind,
+} from "vscode-languageclient/node"
 
 let client: LanguageClient
 
 export function activate(context: ExtensionContext) {
-
   console.log("hello there")
   // The server is implemented in node
   const serverModule = context.asAbsolutePath(

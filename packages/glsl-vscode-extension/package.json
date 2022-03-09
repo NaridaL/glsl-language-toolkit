@@ -75,7 +75,8 @@
     "clean": "",
     "watch": "",
     "watch-": "watch \"js-yaml syntaxes/glsl.tmGrammar.yaml > syntaxes/glsl.tmGrammar.json\" ./syntaxes --wait 1",
-    "watch-snippets": "watch \"js-yaml snippets/glsl.snippets.yaml > snippets/glsl.snippets.json\" ./snippets --wait 1"
+    "watch-snippets": "watch \"js-yaml snippets/glsl.snippets.yaml > snippets/glsl.snippets.json\" ./snippets --wait 1",
+    "test": ""
   },
   "repository": {
     "type": "git",

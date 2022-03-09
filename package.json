@@ -7,11 +7,11 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run test --workspaces",
     "build": "npm run build --workspaces",
     "watch": "tsc --build --watch",
     "clean": "tsc --build --clean && npm run clean --workspaces",
-    "fmt": "prettier --write --plugin-search-dir=./src . --extensions"
+    "fmt": "prettier --write ."
   },
   "repository": {
     "type": "git",

@@ -45,6 +45,16 @@ export function resolvePositionDefinition(
   }
 }
 
+export function getHighlights(
+  tree: Node,
+  line: number,
+  column: number,
+): Node[] {
+  const [node, path] = findPositionNode(tree, line, column)
+
+  return []
+}
+
 const COLOR_VISITOR = new (class extends AbstractVisitor<void> {
   private result!: {
     node: FunctionCall

@@ -1,10 +1,26 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { AstPath, Doc, format, ParserOptions, Plugin, SupportInfo, util } from "prettier"
+import {
+  AstPath,
+  Doc,
+  format,
+  ParserOptions,
+  Plugin,
+  SupportInfo,
+  util,
+} from "prettier"
 import * as doc from "prettier/doc"
 import { IToken, TokenType } from "chevrotain"
 
-import { AbstractVisitor, BinaryExpression, isExpression, isToken, Node, Token, TypeQualifier } from "./nodes"
+import {
+  AbstractVisitor,
+  BinaryExpression,
+  isExpression,
+  isToken,
+  Node,
+  Token,
+  TypeQualifier,
+} from "./nodes"
 import { TOKEN } from "./lexer"
 import { parseInput } from "./parser"
 import isNextLineEmpty = util.isNextLineEmpty
@@ -58,7 +74,9 @@ export const parsers: Plugin<Node | IToken>["parsers"] = {
   "glsl-parse": {
     parse(text, parsers, options) {
       const translationUnit = parseInput(text)
-      translationUnit.comments?.forEach((c) => ((c as any).value = JSON.stringify(c)))
+      translationUnit.comments?.forEach(
+        (c) => ((c as any).value = JSON.stringify(c)),
+      )
       return translationUnit
     },
     astFormat: "glsl-ast",
@@ -183,12 +201,12 @@ function printBinaryExpression(
   const lhsDoc = path.call(
     shouldFlatten
       ? (path) =>
-        printBinaryExpression(
-          path,
-          print,
-          path.getValue() as BinaryExpression,
-          inMacro,
-        )
+          printBinaryExpression(
+            path,
+            print,
+            path.getValue() as BinaryExpression,
+            inMacro,
+          )
       : print,
     "lhs",
   )
@@ -437,11 +455,11 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               ]),
               n.no
                 ? [
-                  hardline,
-                  "else",
-                  n.no.kind === "selectionStatement" ? " " : line,
-                  p(n, "no"),
-                ]
+                    hardline,
+                    "else",
+                    n.no.kind === "selectionStatement" ? " " : line,
+                    p(n, "no"),
+                  ]
                 : "",
             ]
           case "forStatement":
@@ -601,9 +619,9 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           default:
             throw new Error(
               "unexpected n type " +
-              n.kind +
-              "\n" +
-              JSON.stringify(n).substr(0, 100),
+                n.kind +
+                "\n" +
+                JSON.stringify(n).substr(0, 100),
             )
         }
       } catch (e) {

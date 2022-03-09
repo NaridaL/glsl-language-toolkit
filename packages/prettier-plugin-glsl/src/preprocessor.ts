@@ -541,7 +541,7 @@ export function preprocMacros(
           la().image === "else"
         ) {
           return
-        } else {
+        } else if (outputting) {
           markError(
             "P0001",
             la(),

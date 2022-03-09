@@ -129,6 +129,9 @@ test("#define in false #if", () => {
   testPreproc(
     `#if 0 == 1
     #define FOO 2
+    #if B
+    # #
+    #endif
     #endif
     FOO`,
     "FOO",
