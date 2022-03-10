@@ -470,12 +470,12 @@ genType uintBitsToFloat(genUType value);
  * 16-bit integer values. Then, the results are packed into the returned 32-bit
  * unsigned integer. The conversion for component c of v to fixed point is done
  * as follows:
-
- packSnorm2x16: `round(clamp(c, -1, +1) * 32767.0)`
-
- The first
- * component of the vector will be written to the least significant bits of the
- * output; the last component will be written to the most significant bits.
+ *
+ * packSnorm2x16: `round(clamp(c, -1, +1) * 32767.0)`
+ *
+ * The first component of the vector will be written to the least significant
+ * bits of the output; the last component will be written to the most
+ * significant bits.
  */
 highp uint packSnorm2x16(vec2 v);
 
@@ -544,13 +544,19 @@ mediump vec2 unpackHalf2x16(highp uint v);
  * These operate on vectors as vectors, not component-wise.
  */
 
-/** Returns the length of vector x, i.e., s`qrt(x[0]^2 + x[1]^2 + ...)`.*/
+/**
+ * Returns the length of vector x, i.e., s`qrt(x[0]^2 + x[1]^2 + ...)`.
+ */
 float length(genType x);
 
-/**Returns the distance between p0 and p1, i.e., `length(p0 - p1)`.*/
+/**
+ * Returns the distance between p0 and p1, i.e., `length(p0 - p1)`.
+ */
 float distance(genType p0, genType p1);
 
-/**Returns the dot product of x and y, i.e., `x[0]*y[0] + x[1]*y[1] + ...`.*/
+/**
+ * Returns the dot product of x and y, i.e., `x[0]*y[0] + x[1]*y[1] + ...`.
+ */
 float dot(genType x, genType y);
 
 /**
@@ -611,19 +617,18 @@ genType refract(genType I, genType N, float eta);
  */
 
 /**
-Multiply matrix x by matrix y component-wise, i.e.,
-result[i][j] is the scalar product of x[i][j] and y[i][j].
-Note: to get linear algebraic matrix multiplication, use
-the multiply operator(*).
-*/
+ * Multiply matrix x by matrix y component-wise, i.e., result[i][j] is the
+ * scalar product of x[i][j] and y[i][j]. Note: to get linear algebraic matrix
+ * multiplication, use the multiply operator (`*`).
+ */
 mat matrixCompMult(mat x, mat y);
 
 /**
  * Treats the first parameter c as a column vector (matrix with one column) and
- * the second parameter r as a row vector (matrix with one row) and does a linear
- * algebraic matrix multiply `c * r`, yielding a matrix whose number of rows is
- * the number of components in c and whose number of columns is the number of
- * components in r.
+ * the second parameter r as a row vector (matrix with one row) and does a
+ * linear algebraic matrix multiply `c * r`, yielding a matrix whose number of
+ * rows is the number of components in c and whose number of columns is the
+ * number of components in r.
  */
 mat2 outerProduct(vec2 c, vec2 r);
 mat3 outerProduct(vec3 c, vec3 r);
@@ -794,8 +799,8 @@ bvec not(bvec x);
  * P is used to select which face to do a 2-dimensional texture lookup in, as
  * described in section 3.8.10 “Cube Map Texture Selection” in the OpenGL ES
  * Graphics System Specification. For Array forms, the array layer used will be
- * `max(0,min(d -1, floor(layer+0.5)))`, where d is the depth of the texture array and layer comes from the component
- * indicated in the tables below.
+ * `max(0,min(d -1, floor(layer+0.5)))`, where d is the depth of the texture
+ * array and layer comes from the component indicated in the tables below.
  */
 
 /**
@@ -857,13 +862,13 @@ float textureProj(sampler2DShadow sampler, vec4 P);
 float textureProj(sampler2DShadow sampler, vec4 P, float bias);
 
 /**
- * Do a texture lookup as in texture but with explicit LOD; `lod` specifies λ_base
- * and sets the partial derivatives as follows. (See section 3.8.9 “Texture
- * Minification” and equation 3.14 in the OpenGL ES 3.0 Graphics System
+ * Do a texture lookup as in texture but with explicit LOD; `lod` specifies
+ * λ_base and sets the partial derivatives as follows. (See section 3.8.9
+ * “Texture Minification” and equation 3.14 in the OpenGL ES 3.0 Graphics System
  * Specification.)
-
- - ∂u/∂x=0 ∂v/∂x=0 ∂w/∂x=0
- - ∂u/∂y=0 ∂v/∂y=0 ∂w/∂y=0
+ *
+ * - ∂u/∂x=0 ∂v/∂x=0 ∂w/∂x=0
+ * - ∂u/∂y=0 ∂v/∂y=0 ∂w/∂y=0
  */
 gvec4 textureLod(gsampler2D sampler, vec2 P, float lod);
 gvec4 textureLod(gsampler3D sampler, vec3 P, float lod);
@@ -877,12 +882,11 @@ gvec4 textureLod(gsampler2DArray sampler, vec3 P, float lod);
  * expression. A limited range of offset values are supported; the minimum and
  * maximum offset values are implementation-dependent and given by
  * `MIN_PROGRAM_TEXEL_OFFSET` and `MAX_PROGRAM_TEXEL_OFFSET`, respectively.
-
- Note
- * that offset does not apply to the layer coordinate for texture arrays. This
- * is explained in detail in section 3.8.9 “Texture Minification” of the OpenGL
- * ES Graphics System Specification, where offset is `(𝛿_ , 𝛿_v, 𝛿_w)`. Note that
- * texel offsets are also not supported for cube maps.
+ *
+ * Note that offset does not apply to the layer coordinate for texture arrays.
+ * This is explained in detail in section 3.8.9 “Texture Minification” of the
+ * OpenGL ES Graphics System Specification, where `offset` is `(𝛿_u , 𝛿_v, 𝛿_w)`.
+ * Note that texel offsets are also not supported for cube maps.
  */
 gvec4 textureOffset(gsampler2D sampler, vec2 P, ivec2 offset);
 gvec4 textureOffset(gsampler2D sampler, vec2 P, ivec2 offset, float bias);
@@ -983,16 +987,16 @@ ivec2 offset
 );
 
 /**
- * Do a texture lookup as in texture but with explicit
- * gradients. The partial derivatives of P are with respect to window x and
- * window y. Set
-- ∂s/∂x = ∂P.s/∂x
-- ∂s/∂y = ∂P.s/∂y
-- ∂t/∂x = ∂P.t/∂x
-- ∂t/∂y = ∂P.t/∂y
-- ∂r/∂x = ∂P.p/∂x (cube)
-- ∂r/∂y = ∂P.p/∂y (cube)
-
+ * Do a texture lookup as in texture but with explicit gradients. The partial
+ * derivatives of P are with respect to window x and window y. Set
+ *
+ * - ∂s/∂x = ∂P.s/∂x
+ * - ∂s/∂y = ∂P.s/∂y
+ * - ∂t/∂x = ∂P.t/∂x
+ * - ∂t/∂y = ∂P.t/∂y
+ * - ∂r/∂x = ∂P.p/∂x (cube)
+ * - ∂r/∂y = ∂P.p/∂y (cube)
+ *
  * For the cube version, the partial derivatives of P are assumed to be in the
  * coordinate system used before texture coordinates are projected onto the
  * appropriate cube face.
@@ -1099,23 +1103,23 @@ ivec2 offset
  * are undefined within non-uniform control flow. The expected behavior of a
  * derivative is specified using forward/backward differencing.
  *
-```
-Forward differencing:
-
-  F(x + dx) - F(x) ~ dFdx(x) * dx       1a
-
-            F(x + dx) - F(x)
-  dFdx(x) ~ ----------------            1b
-                   dx
-
-Backward differencing:
-
-  F(x - dx) - F(x) ~ -dFdx(x) * dx       2a
-
-            F(x) - F(x - dx)
-  dFdx(x) ~ ----------------            2b
-                   dx
-```
+ * ```
+ * Forward differencing:
+ *
+ *   F(x + dx) - F(x) ~ dFdx(x) * dx       1a
+ *
+ *             F(x + dx) - F(x)
+ *   dFdx(x) ~ ----------------            1b
+ *                    dx
+ *
+ * Backward differencing:
+ *
+ *   F(x - dx) - F(x) ~ -dFdx(x) * dx      2a
+ *
+ *             F(x) - F(x - dx)
+ *   dFdx(x) ~ ----------------            2b
+ *                    dx
+ * ```
  *
  * With single-sample rasterization, dx <= 1.0 in equations 1b and 2b. For
  * multi-sample rasterization, dx < 2.0 in equations 1b and 2b. dFdy is
