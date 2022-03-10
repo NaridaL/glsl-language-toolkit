@@ -304,32 +304,42 @@ genType inversesqrt(genType x);
  * These all operate component-wise. The description is per component.
  */
 
-//Returns x if x >= 0, otherwise it returns -x.
+/**
+ * Returns x if x >= 0, otherwise it returns -x.
+ */
 genType abs(genType x);
 genIType abs(genIType x);
 
-//Returns 1.0 if x > 0, 0.0 if x = 0, or -1.0 if x < 0.
+/**
+ * Returns 1.0 if x > 0, 0.0 if x = 0, or -1.0 if x < 0.
+ */
 genType sign(genType x);
 genIType sign(genIType x);
 
-//Returns a value equal to the nearest integer that is less
-//than or equal to x.
+/**
+ * Returns a value equal to the nearest integer that is less than or equal to x.
+ */
 genType floor(genType x);
 
-//Returns a value equal to the nearest integer to x whose
-//absolute value is not larger than the absolute value of x.
+/**
+ * Returns a value equal to the nearest integer to x whose absolute value is not
+ * larger than the absolute value of x.
+ */
 genType trunc(genType x);
 
-//Returns a value equal to the nearest integer to x. The
-//fraction 0.5 will round in a direction chosen by the
-//implementation, presumably the direction that is fastest.
-//This includes the possibility that round(x) returns the
-//same value as roundEven(x) for all values of x.
+/**
+ * Returns a value equal to the nearest integer to x. The fraction 0.5 will
+ * round in a direction chosen by the implementation, presumably the direction
+ * that is fastest. This includes the possibility that round(x) returns the same
+ * value as roundEven(x) for all values of x.
+ */
 genType round(genType x);
 
-//Returns a value equal to the nearest integer to x. A
-//fractional part of 0.5 will round toward the nearest even
-//integer.(Both 3.5 and 4.5 for x will return 4.0.)
+/**
+ * Returns a value equal to the nearest integer to x. A fractional part of 0.5
+ * will round toward the nearest even integer.(Both 3.5 and 4.5 for x will
+ * return 4.0.)
+ */
 genType roundEven(genType x);
 
 /**
@@ -504,17 +514,19 @@ highp vec2 unpackSnorm2x16(highp uint p);
 //will be written to the most significant bits.
 highp uint packUnorm2x16(vec2 v);
 
-//First, unpacks a single 32-bit unsigned integer p into a
-//pair of 16-bit unsigned integers. Then, each component
-//is converted to a normalized floating-point value to
-//generate the returned two-component vector.
-//The conversion for unpacked fixed-point value f to
-//floating point is done as follows:
-//unpackUnorm2x16: f / 65535.0
-//The first component of the returned vector will be
-//extracted from the least significant bits of the input; the
-//last component will be extracted from the most
-//significant bits.
+/**
+ * First, unpacks a single 32-bit unsigned integer p into a pair of 16-bit
+ * unsigned integers. Then, each component is converted to a normalized
+ * floating-point value to generate the returned two-component vector. The
+ * conversion for unpacked fixed-point value f to floating point is done as
+ * follows:
+
+unpackUnorm2x16: f / 65535.0
+
+The first component of the returned
+ * vector will be extracted from the least significant bits of the input; the
+ * last component will be extracted from the most significant bits.
+ */
 highp vec2 unpackUnorm2x16(highp uint p);
 
 /**
@@ -643,8 +655,10 @@ mat4x2 outerProduct(vec2 c, vec4 r);
 mat3x4 outerProduct(vec4 c, vec3 r);
 mat4x3 outerProduct(vec3 c, vec4 r);
 
-//Returns a matrix that is the transpose of m. The input
-//matrix m is not modified.
+/**
+ * Returns a matrix that is the transpose of m. The input matrix m is not
+ * modified.
+ */
 mat2 transpose(mat2 m);
 mat3 transpose(mat3 m);
 mat4 transpose(mat4 m);
@@ -658,7 +672,9 @@ mat4x2 transpose(mat2x4 m);
 mat3x4 transpose(mat4x3 m);
 mat4x3 transpose(mat3x4 m);
 
-//Returns the determinant of m.
+/**
+ * Returns the determinant of m.
+ */
 float determinant(mat2 m);
 float determinant(mat3 m);
 float determinant(mat4 m);
@@ -684,45 +700,63 @@ mat4 inverse(mat4 m);
  * for any particular call must match.
  */
 
-//Returns the component-wise compare of x < y.
+/**
+ * Returns the component-wise compare of x < y.
+ */
 bvec lessThan(vec x, vec y);
 bvec lessThan(ivec x, ivec y);
 bvec lessThan(uvec x, uvec y);
 
-//Returns the component-wise compare of x <= y.
+/**
+ * Returns the component-wise compare of x <= y.
+ */
 bvec lessThanEqual(vec x, vec y);
 bvec lessThanEqual(ivec x, ivec y);
 bvec lessThanEqual(uvec x, uvec y);
 
-//Returns the component-wise compare of x > y.
+/**
+ * Returns the component-wise compare of x > y.
+ */
 bvec greaterThan(vec x, vec y);
 bvec greaterThan(ivec x, ivec y);
 bvec greaterThan(uvec x, uvec y);
 
-//Returns the component-wise compare of x >= y.
+/**
+ * Returns the component-wise compare of x >= y.
+ */
 bvec greaterThanEqual(vec x, vec y);
 bvec greaterThanEqual(ivec x, ivec y);
 bvec greaterThanEqual(uvec x, uvec y);
 
-//Returns the component-wise compare of x == y.
+/**
+ * Returns the component-wise compare of x == y.
+ */
 bvec equal(vec x, vec y);
 bvec equal(ivec x, ivec y);
 bvec equal(uvec x, uvec y);
 bvec equal(bvec x, bvec y);
 
-//Returns the component-wise compare of x != y.
+/**
+ * Returns the component-wise compare of x != y.
+ */
 bvec notEqual(vec x, vec y);
 bvec notEqual(ivec x, ivec y);
 bvec notEqual(uvec x, uvec y);
 bvec notEqual(bvec x, bvec y);
 
-//Returns true if any component of x is true.
+/**
+ * Returns true if any component of x is true.
+ */
 bool any(bvec x);
 
-//Returns true only if all components of x are true.
+/**
+ * Returns true only if all components of x are true.
+ */
 bool all(bvec x);
 
-//Returns the component-wise logical complement of x.
+/**
+ * Returns the component-wise logical complement of x.
+ */
 bvec not(bvec x);
 
 /**
@@ -929,16 +963,16 @@ gvec4 textureProjOffset(gsampler3D sampler, vec4 P, ivec3 offset);
 gvec4 textureProjOffset(gsampler3D sampler, vec4 P, ivec3 offset, float bias);
 
 float textureProjOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  ivec2 offset,
-  float bias
+sampler2DShadow sampler,
+vec4 P,
+ivec2 offset,
+float bias
 );
 float textureProjOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  ivec2 offset,
-  float bias
+sampler2DShadow sampler,
+vec4 P,
+ivec2 offset,
+float bias
 );
 
 /**
@@ -948,16 +982,16 @@ float textureProjOffset(
 gvec4 textureLodOffset(gsampler2D sampler, vec2 P, float lod, ivec2 offset);
 gvec4 textureLodOffset(gsampler3D sampler, vec3 P, float lod, ivec3 offset);
 float textureLodOffset(
-  sampler2DShadow sampler,
-  vec3 P,
-  float lod,
-  ivec2 offset
+sampler2DShadow sampler,
+vec3 P,
+float lod,
+ivec2 offset
 );
 gvec4 textureLodOffset(
-  gsampler2DArray sampler,
-  vec3 P,
-  float lod,
-  ivec2 offset
+gsampler2DArray sampler,
+vec3 P,
+float lod,
+ivec2 offset
 );
 
 /**
@@ -979,10 +1013,10 @@ gvec4 textureProjLodOffset(gsampler2D sampler, vec4 P, float lod, ivec2 offset);
 gvec4 textureProjLodOffset(gsampler3D sampler, vec4 P, float lod, ivec3 offset);
 
 float textureProjLodOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  float lod,
-  ivec2 offset
+sampler2DShadow sampler,
+vec4 P,
+float lod,
+ivec2 offset
 );
 
 /**
@@ -1013,40 +1047,40 @@ float textureGrad(sampler2DArrayShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy);
  * `textureGrad` and `textureOffset`.
  */
 gvec4 textureGradOffset(
-  gsampler2D sampler,
-  vec2 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+gsampler2D sampler,
+vec2 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 gvec4 textureGradOffset(
-  gsampler3D sampler,
-  vec3 P,
-  vec3 dPdx,
-  vec3 dPdy,
-  ivec3 offset
+gsampler3D sampler,
+vec3 P,
+vec3 dPdx,
+vec3 dPdy,
+ivec3 offset
 );
 
 float textureGradOffset(
-  sampler2DShadow sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+sampler2DShadow sampler,
+vec3 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 gvec4 textureGradOffset(
-  gsampler2DArray sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+gsampler2DArray sampler,
+vec3 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 float textureGradOffset(
-  sampler2DArrayShadow sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+sampler2DArrayShadow sampler,
+vec4 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 
 /**
@@ -1064,32 +1098,32 @@ float textureProjGrad(sampler2DShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy);
  * textureProjGrad, as well as with offset, as described in textureOffset.
  */
 gvec4 textureProjGradOffset(
-  gsampler2D sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+gsampler2D sampler,
+vec3 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 gvec4 textureProjGradOffset(
-  gsampler2D sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+gsampler2D sampler,
+vec4 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 gvec4 textureProjGradOffset(
-  gsampler3D sampler,
-  vec4 P,
-  vec3 dPdx,
-  vec3 dPdy,
-  ivec3 offset
+gsampler3D sampler,
+vec4 P,
+vec3 dPdx,
+vec3 dPdy,
+ivec3 offset
 );
 float textureProjGradOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+sampler2DShadow sampler,
+vec4 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 
 /**
