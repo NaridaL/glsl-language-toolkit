@@ -332,26 +332,34 @@ genType round(genType x);
 //integer.(Both 3.5 and 4.5 for x will return 4.0.)
 genType roundEven(genType x);
 
-/**Returns a value equal to the nearest integer that is
-greater than or equal to x.*/
+/**
+ * Returns a value equal to the nearest integer that is greater than or equal to
+ * x.
+ */
 genType ceil(genType x);
 
-/**Returns `x - floor(x)`.*/
+/**
+ * Returns `x - floor(x)`.
+ */
 genType fract(genType x);
 
-/**Modulus. Returns `x - y * floor(x/y)`.*/
+/**
+ * Modulus. Returns `x - y * floor(x/y)`.
+ */
 genType mod(genType x, float y);
 genType mod(genType x, genType y);
 
-/**Returns the fractional part of x and sets i to the integer
-part(as a whole number floating point value). Both the
-return value and the output parameter will have the same
-sign as x.
-If x has the value +/- INF, the return value should be
-NaN and must be either NaN or 0.0.*/
+/**
+ * Returns the fractional part of x and sets i to the integer part(as a whole
+ * number floating point value). Both the return value and the output parameter
+ * will have the same sign as x. If x has the value +/- INF, the return value
+ * should be NaN and must be either NaN or 0.0.
+ */
 genType modf(genType x, out genType i);
 
-/**eturns y if y < x, otherwise it returns x.*/
+/**
+ * Returns y if y < x, otherwise it returns x.
+ */
 genType min(genType x, genType y);
 genType min(genType x, float y);
 genIType min(genIType x, genIType y);
@@ -359,7 +367,9 @@ genIType min(genIType x, int y);
 genUType min(genUType x, genUType y);
 genUType min(genUType x, uint y);
 
-/**Returns y if x < y, otherwise it returns x.*/
+/**
+ * Returns y if x < y, otherwise it returns x.
+ */
 genType max(genType x, genType y);
 genType max(genType x, float y);
 genIType max(genIType x, genIType y);
@@ -367,8 +377,10 @@ genIType max(genIType x, int y);
 genUType max(genUType x, genUType y);
 genUType max(genUType x, uint y);
 
-/**Returns min(max(x, minVal), maxVal).
-Results are undefined if minVal > maxVal.*/
+/**
+ * Returns min(max(x, minVal), maxVal). Results are undefined if minVal >
+ * maxVal.
+ */
 genType clamp(genType x, genType minVal, genType maxVal);
 genType clamp(genType x, float minVal, float maxVal);
 genIType clamp(genIType x, genIType minVal, genIType maxVal);
@@ -376,7 +388,9 @@ genIType clamp(genIType x, int minVal, int maxVal);
 genUType clamp(genUType x, genUType minVal, genUType maxVal);
 genUType clamp(genUType x, uint minVal, uint maxVal);
 
-/**Returns the linear blend of x and y, i.e., `x*(1-a)+y*a`.*/
+/**
+ * Returns the linear blend of x and y, i.e., `x*(1-a)+y*a`.
+ */
 genType mix(genType x, genType y, genType a);
 genType mix(genType x, genType y, float a);
 
@@ -386,84 +400,84 @@ genType mix(genType x, genType y, float a);
  * of a that is true, the corresponding component of y is returned. Components
  * of x and y that are not selected are allowed to be invalid floating point
  * values and will have no effect on the results. Thus, this provides different
- * functionality than `genType mix(genType x, genType y, genType(a));` where a is
- * a Boolean vector.
+ * functionality than `genType mix(genType x, genType y, genType(a));` where a
+ * is a Boolean vector.
  */
 genType mix(genType x, genType y, genBType a);
 
-/**Returns 0.0 if x < edge, otherwise it returns 1.0.*/
+/**
+ * Returns 0.0 if x < edge, otherwise it returns 1.0.
+ */
 genType step(genType edge, genType x);
 genType step(float edge, genType x);
 
 /**
-Returns 0.0 if x <= edge0 and 1.0 if x >= edge1 and
-performs smooth Hermite interpolation between 0 and 1
-when edge0 < x < edge1. This is useful in cases where
-you would want a threshold function with a smooth
-transition. This is equivalent to:
-```
-genType t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
-return t * t * (3 - 2 * t);
-```
-Results are undefined if edge0 >= edge1.
-*/
+ * Returns 0.0 if x <= edge0 and 1.0 if x >= edge1 and performs smooth Hermite
+ * interpolation between 0 and 1 when edge0 < x < edge1. This is useful in cases
+ * where you would want a threshold function with a smooth transition. This is
+ * equivalent to:
+ *
+ * ```
+ * genType t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+ * return t * t * (3 - 2 * t);
+ * ```
+ *
+ * Results are undefined if edge0 >= edge1.
+ */
 genType smoothstep(genType edge0, genType edge1, genType x);
 genType smoothstep(float edge0, float edge1, genType x);
 
-
-/**Returns true if x holds a NaN. Returns false otherwise.*/
+/**
+ * Returns true if x holds a NaN. Returns false otherwise.
+ */
 genBType isnan(genType x);
 
-
 /**
-Returns true if x holds a positive infinity or negative
-infinity. Returns false otherwise.*/
+ * Returns true if x holds a positive infinity or negative infinity. Returns
+ * false otherwise.
+ */
 genBType isinf(genType x);
 
 /**
-Returns a signed or unsigned highp integer value
-representing the encoding of a floating-point value. For
-highp floating point, the value's bit level representation
-is preserved. For mediump and lowp, the value is first
-converted to highp floating point and the encoding of
-that value is returned.
-*/
+ * Returns a signed or unsigned highp integer value representing the encoding of
+ * a floating-point value. For highp floating point, the value's bit level
+ * representation is preserved. For mediump and lowp, the value is first
+ * converted to highp floating point and the encoding of that value is returned.
+ */
 genIType floatBitsToInt(genType value);
 genUType floatBitsToUint(genType value);
 
 /**
-Returns a highp floating-point value corresponding to a
-signed or unsigned integer encoding of a floating-point
-value. If an inf or NaN is passed in, it will not signal,
-and the resulting floating point value is unspecified.
-Otherwise, the bit-level representation is preserved. For
-lowp and mediump, the value is first converted to the
-corresponding signed or unsigned highp integer and then
-reinterpreted as a highp floating point value as before.
-*/
+ * Returns a highp floating-point value corresponding to a signed or unsigned
+ * integer encoding of a floating-point value. If an inf or NaN is passed in, it
+ * will not signal, and the resulting floating point value is unspecified.
+ * Otherwise, the bit-level representation is preserved. For lowp and mediump,
+ * the value is first converted to the corresponding signed or unsigned highp
+ * integer and then reinterpreted as a highp floating point value as before.
+ */
 genType intBitsToFloat(genIType value);
 genType uintBitsToFloat(genUType value);
 
 /**
-## Floating-Point Pack and Unpack Functions
-These functions do not operate component-wise, rather as described in each case.
-*/
-
+ * ## Floating-Point Pack and Unpack Functions
+ *
+ * These functions do not operate component-wise, rather as described in each
+ * case.
+ */
 
 /**
-First, converts each component of the normalized
-floating-point value v into 16-bit integer values. Then,
-the results are packed into the returned 32-bit unsigned
-integer.
-The conversion for component c of v to fixed point is
-done as follows:
-packSnorm2x16: `round(clamp(c, -1, +1) * 32767.0)`
-The first component of the vector will be written to the
-least significant bits of the output; the last component
-will be written to the most significant bits.
-*/
-highp uint packSnorm2x16(vec2 v);
+ * First, converts each component of the normalized floating-point value v into
+ * 16-bit integer values. Then, the results are packed into the returned 32-bit
+ * unsigned integer. The conversion for component c of v to fixed point is done
+ * as follows:
 
+ packSnorm2x16: `round(clamp(c, -1, +1) * 32767.0)`
+
+ The first
+ * component of the vector will be written to the least significant bits of the
+ * output; the last component will be written to the most significant bits.
+ */
+highp uint packSnorm2x16(vec2 v);
 
 //First, unpacks a single 32-bit unsigned integer p into a
 //pair of 16-bit signed integers. Then, each component is
@@ -490,7 +504,6 @@ highp vec2 unpackSnorm2x16(highp uint p);
 //will be written to the most significant bits.
 highp uint packUnorm2x16(vec2 v);
 
-
 //First, unpacks a single 32-bit unsigned integer p into a
 //pair of 16-bit unsigned integers. Then, each component
 //is converted to a normalized floating-point value to
@@ -505,49 +518,44 @@ highp uint packUnorm2x16(vec2 v);
 highp vec2 unpackUnorm2x16(highp uint p);
 
 /**
-Returns an unsigned integer obtained by converting the
-components of a two-component floating-point vector to
-the 16-bit floating-point representation found in the
-OpenGL ES Specification, and then packing these two
-16-bit integers into a 32-bit unsigned integer.
-The first vector component specifies the 16 leastsignificant bits of the result; the second component
-specifies the 16 most-significant bits.
-*/
+ * Returns an unsigned integer obtained by converting the components of a
+ * two-component floating-point vector to the 16-bit floating-point
+ * representation found in the OpenGL ES Specification, and then packing these
+ * two 16-bit integers into a 32-bit unsigned integer. The first vector
+ * component specifies the 16 leastsignificant bits of the result; the second
+ * component specifies the 16 most-significant bits.
+ */
 highp uint packHalf2x16(mediump vec2 v);
 
-
 /**
-Returns a two-component floating-point vector with
-components obtained by unpacking a 32-bit unsigned
-integer into a pair of 16-bit values, interpreting those
-values as 16-bit floating-point numbers according to the
-OpenGL ES Specification, and converting them to 32-bit
-floating-point values.
-The first component of the vector is obtained from the
-16 least-significant bits of v; the second component is
-obtained from the 16 most-significant bits of v.
-*/
+ * Returns a two-component floating-point vector with components obtained by
+ * unpacking a 32-bit unsigned integer into a pair of 16-bit values,
+ * interpreting those values as 16-bit floating-point numbers according to the
+ * OpenGL ES Specification, and converting them to 32-bit floating-point values.
+ * The first component of the vector is obtained from the 16 least-significant
+ * bits of v; the second component is obtained from the 16 most-significant bits
+ * of v.
+ */
 mediump vec2 unpackHalf2x16(highp uint v);
 
 /**
-### Geometric Functions
+ * ### Geometric Functions
+ *
+ * These operate on vectors as vectors, not component-wise.
+ */
 
-These operate on vectors as vectors, not component-wise.
-*/
-
-
-//Returns the length of vector x, i.e., sqrt(x[0]^2 + x[1]^2 + ...)
+/** Returns the length of vector x, i.e., s`qrt(x[0]^2 + x[1]^2 + ...)`.*/
 float length(genType x);
 
-//Returns the distance between p0 and p1, i.e., length(p0 - p1)
+/**Returns the distance between p0 and p1, i.e., `length(p0 - p1)`.*/
 float distance(genType p0, genType p1);
 
-//Returns the dot product of x and y, i.e., x[0]*y[0] + x[1]*y[1] + ...
+/**Returns the dot product of x and y, i.e., `x[0]*y[0] + x[1]*y[1] + ...`.*/
 float dot(genType x, genType y);
-
 
 /**
  * Returns the cross product of a and b, i.e.,
+ *
  * ```
  * vec3(
  *   a[1] * b[2] - b[1] * a[2],
@@ -557,67 +565,66 @@ float dot(genType x, genType y);
  */
 vec3 cross(vec3 a, vec3 b);
 
-
 /**
-Returns a vector in the same direction as x but with a length of 1 i.e.
- `x/length(x)`
+ * Returns a vector in the same direction as x but with a length of 1 i.e.
+ * `x/length(x)`.
  */
 genType normalize(genType x);
 
 /**
- Orients a vector to point away from a surface as defined by its normal.
-If dot(Nref, I) < 0 return N, otherwise return -N.
-*/
+ * Orients a vector to point away from a surface as defined by its normal. If
+ * dot(Nref, I) < 0 return N, otherwise return -N.
+ */
 genType faceforward(genType N, genType I, genType Nref);
 
 /**
-For the incident vector I and surface orientation N,
-returns the reflection direction:
-```
-I - 2 * dot(N, I) * N
-```
-N must already be normalized in order to achieve the
-desired result.
-*/
+ * For the incident vector I and surface orientation N, returns the reflection
+ * direction:
+ *
+ * ```
+ * I - 2 * dot(N, I) * N
+ * ```
+ *
+ * N must already be normalized in order to achieve the desired result.
+ */
 genType reflect(genType I, genType N);
 
 /**
-For the incident vector I and surface normal N, and the
-ratio of indices of refraction eta, return the refraction
-vector. The result is computed by
-```
-k = 1.0 - eta * eta *(1.0 - dot(N, I) * dot(N, I))
-if(k < 0.0)
-return genType(0.0)
-else
-return eta * I -(eta * dot(N, I) + sqrt(k)) * N
-```
-The input parameters for the incident vector I and the
-surface normal N must already be normalized to get the
-desired results.
-*/
+ * For the incident vector I and surface normal N, and the ratio of indices of
+ * refraction eta, return the refraction vector. The result is computed by
+ *
+ * ```
+ * k = 1.0 - eta * eta *(1.0 - dot(N, I) * dot(N, I))
+ * if (k < 0.0)
+ *   return genType(0.0)
+ * else
+ *   return eta * I -(eta * dot(N, I) + sqrt(k)) * N
+ * ```
+ *
+ * The input parameters for the incident vector I and the surface normal N must
+ * already be normalized to get the desired results.
+ */
 genType refract(genType I, genType N, float eta);
 
 /**
-###Matrix Functions
-*/
-
-
-//Multiply matrix x by matrix y component-wise, i.e.,
-//result[i][j] is the scalar product of x[i][j] and y[i][j].
-//Note: to get linear algebraic matrix multiplication, use
-//the multiply operator(*).
-mat matrixCompMult(mat x, mat y);
-
+ * ###Matrix Functions
+ */
 
 /**
-Treats the first parameter c as a column vector(matrix
-with one column) and the second parameter r as a row
-vector(matrix with one row) and does a linear algebraic
-matrix multiply c * r, yielding a matrix whose number of
-rows is the number of components in c and whose
-number of columns is the number of components in r.
+Multiply matrix x by matrix y component-wise, i.e.,
+result[i][j] is the scalar product of x[i][j] and y[i][j].
+Note: to get linear algebraic matrix multiplication, use
+the multiply operator(*).
 */
+mat matrixCompMult(mat x, mat y);
+
+/**
+ * Treats the first parameter c as a column vector (matrix with one column) and
+ * the second parameter r as a row vector (matrix with one row) and does a linear
+ * algebraic matrix multiply `c * r`, yielding a matrix whose number of rows is
+ * the number of components in c and whose number of columns is the number of
+ * components in r.
+ */
 mat2 outerProduct(vec2 c, vec2 r);
 mat3 outerProduct(vec3 c, vec3 r);
 mat4 outerProduct(vec4 c, vec4 r);
@@ -651,31 +658,31 @@ float determinant(mat2 m);
 float determinant(mat3 m);
 float determinant(mat4 m);
 
-
 /**
-Returns a matrix that is the inverse of m. The input
-matrix m is not modified. The values in the returned
-matrix are undefined if m is singular or poorly conditioned (nearly singular).
-*/
+ * Returns a matrix that is the inverse of m. The input matrix m is not
+ * modified. The values in the returned matrix are undefined if m is singular or
+ * poorly conditioned (nearly singular).
+ */
 mat2 inverse(mat2 m);
 mat3 inverse(mat3 m);
 mat4 inverse(mat4 m);
 
 /**
-##Vector Relational Functions
-
-Relational and equality operators(<, <=, >, >=, ==, !=) are defined to produce scalar Boolean results. For
-vector results, use the following built-in functions. Below, “bvec” is a placeholder for one of bvec2,
-bvec3, or bvec4, “ivec” is a placeholder for one of ivec2, ivec3, or ivec4, “uvec” is a placeholder for
-uvec2, uvec3, or uvec4, and “vec” is a placeholder for vec2, vec3, or vec4. In all cases, the sizes of the
-input and return vectors for any particular call must match.
-*/
+ * ### Vector Relational Functions
+ *
+ * Relational and equality operators (<, <=, >, >=, ==, !=) are defined to
+ * produce scalar Boolean results. For vector results, use the following
+ * built-in functions. Below, “bvec” is a placeholder for one of bvec2, bvec3,
+ * or bvec4, “ivec” is a placeholder for one of ivec2, ivec3, or ivec4, “uvec”
+ * is a placeholder for uvec2, uvec3, or uvec4, and “vec” is a placeholder for
+ * vec2, vec3, or vec4. In all cases, the sizes of the input and return vectors
+ * for any particular call must match.
+ */
 
 //Returns the component-wise compare of x < y.
 bvec lessThan(vec x, vec y);
 bvec lessThan(ivec x, ivec y);
 bvec lessThan(uvec x, uvec y);
-
 
 //Returns the component-wise compare of x <= y.
 bvec lessThanEqual(vec x, vec y);
@@ -687,19 +694,16 @@ bvec greaterThan(vec x, vec y);
 bvec greaterThan(ivec x, ivec y);
 bvec greaterThan(uvec x, uvec y);
 
-
 //Returns the component-wise compare of x >= y.
 bvec greaterThanEqual(vec x, vec y);
 bvec greaterThanEqual(ivec x, ivec y);
 bvec greaterThanEqual(uvec x, uvec y);
-
 
 //Returns the component-wise compare of x == y.
 bvec equal(vec x, vec y);
 bvec equal(ivec x, ivec y);
 bvec equal(uvec x, uvec y);
 bvec equal(bvec x, bvec y);
-
 
 //Returns the component-wise compare of x != y.
 bvec notEqual(vec x, vec y);
@@ -710,103 +714,101 @@ bvec notEqual(bvec x, bvec y);
 //Returns true if any component of x is true.
 bool any(bvec x);
 
-
 //Returns true only if all components of x are true.
 bool all(bvec x);
-
 
 //Returns the component-wise logical complement of x.
 bvec not(bvec x);
 
+/**
+ * ### TEXTURE LOOKUP FUNCTIONS
+ *
+ * Texture lookup functions are available to vertex and fragment shaders.
+ * However, level of detail is not implicitly computed for vertex shaders. The
+ * functions in the table below provide access to textures through samplers, as
+ * set up through the OpenGL ES API. Texture properties such as size, pixel
+ * format, number of dimensions, filtering method, number of mip-map levels,
+ * depth comparison, and so on are also defined by OpenGL ES API calls. Such
+ * properties are taken into account as the texture is accessed via the built-in
+ * functions defined below.
+ *
+ * Texture data can be stored by the GL as floating point, unsigned normalized
+ * integer, unsigned integer or signed integer data. This is determined by the
+ * type of the internal format of the texture. Texture lookups on unsigned
+ * normalized integer data return floating point values in the range [0, 1].
+ *
+ * Texture lookup functions are provided that can return their result as
+ * floating point, unsigned integer or signed integer, depending on the sampler
+ * type passed to the lookup function. Care must be taken to use the right
+ * sampler type for texture access. The following table lists the supported
+ * combinations of sampler types and texture internal formats. Blank entries are
+ * unsupported. Doing a texture lookup will return undefined values for
+ * unsupported combinations.
+ *
+| Internal Texture Format | Floating Point | Signed Integer | Unsigned Integer |
+|                         | Sampler Types  | Sampler Types  | Sampler Types |
+| ------------------------|----------------|----------------|-------------------|
+| Floating point          | Supported      |                | |
+| Normalized Integer      | Supported      |                | |
+| Signed Integer          |                | Supported      | |
+| Unsigned Integer        |                |                | Supported |
+ *
+ * If an integer sampler type is used, the result of a texture lookup is an
+ * ivec4. If an unsigned integer sampler type is used, the result of a texture
+ * lookup is a uvec4. If a floating point sampler type is used, the result of a
+ * texture lookup is a vec4.
+ *
+ * In the prototypes below, the “g” in the return type “gvec4” is used as a
+ * placeholder for nothing, “i”, or “u” making a return type of vec4, ivec4, or
+ * uvec4. In these cases, the sampler argument type also starts with “g”,
+ * indicating the same substitution done on the return type; it is either a
+ * floating point, signed integer, or unsigned integer sampler, matching the
+ * basic type of the return type, as described above.
+ *
+ * For shadow forms(the sampler parameter is a shadow-type), a depth comparison
+ * lookup on the depth texture bound to sampler is done as described in section
+ * 3.8.16 “Texture Comparison Modes” of the OpenGL ES Graphics System
+ * Specification. See the table below for which component specifies Dref. The
+ * texture bound to sampler must be a depth texture, or results are undefined.
+ * If a non-shadow texture call is made to a sampler that represents a depth
+ * texture with depth comparisons turned on, then results are undefined. If a
+ * shadow texture call is made to a sampler that represents a depth texture with
+ * depth comparisons turned off, then results are undefined. If a shadow texture
+ * call is made to a sampler that does not represent a depth texture, then
+ * results are undefined.
+ *
+ * In all functions below, the bias parameter is optional for fragment shaders.
+ * The bias parameter is not accepted in a vertex shader. For a fragment shader,
+ * if bias is present, it is added to the implicit level of detail prior to
+ * performing the texture access operation.
+ *
+ * The implicit level of detail is selected as follows: For a texture that is
+ * not mip-mapped, the texture is used directly. If it is mip-mapped and running
+ * in a fragment shader, the LOD computed by the implementation is used to do
+ * the texture lookup. If it is mip-mapped and running on the vertex shader,
+ * then the base texture is used.
+ *
+ * Some texture functions(non-“Lod” and non-“Grad” versions) may require
+ * implicit derivatives. Implicit derivatives are undefined within non-uniform
+ * control flow and for vertex texture fetches. For Cube forms, the direction of
+ * P is used to select which face to do a 2-dimensional texture lookup in, as
+ * described in section 3.8.10 “Cube Map Texture Selection” in the OpenGL ES
+ * Graphics System Specification. For Array forms, the array layer used will be
+ * `max(0,min(d -1, floor(layer+0.5)))`, where d is the depth of the texture array and layer comes from the component
+ * indicated in the tables below.
+ */
 
 /**
-### TEXTURE LOOKUP FUNCTIONS
-
-Texture lookup functions are available to vertex and fragment shaders. However, level of detail is not
-implicitly computed for vertex shaders. The functions in the table below provide access to textures
-through samplers, as set up through the OpenGL ES API. Texture properties such as size, pixel format,
-number of dimensions, filtering method, number of mip-map levels, depth comparison, and so on are also
-defined by OpenGL ES API calls. Such properties are taken into account as the texture is accessed via the
-built-in functions defined below.
-
-Texture data can be stored by the GL as floating point, unsigned normalized integer, unsigned integer or
-signed integer data. This is determined by the type of the internal format of the texture. Texture lookups
-on unsigned normalized integer data return floating point values in the range [0, 1].
-
-Texture lookup functions are provided that can return their result as floating point, unsigned integer or
-signed integer, depending on the sampler type passed to the lookup function. Care must be taken to use
-the right sampler type for texture access. The following table lists the supported combinations of sampler
-types and texture internal formats. Blank entries are unsupported. Doing a texture lookup will return
-undefined values for unsupported combinations.
-
-Internal Texture Format | Floating Point | Signed Integer | Unsigned Integer
-                        | Sampler Types  | Sampler Types  | Sampler Types
-------------------------------------------------------------------------------
-Floating point          | Supported      |                |
-Normalized Integer      | Supported      |                |
-Signed Integer          |                | Supported      |
-Unsigned Integer        |                |                | Supported
-
-If an integer sampler type is used, the result of a texture lookup is an ivec4. If an unsigned integer
-sampler type is used, the result of a texture lookup is a uvec4. If a floating point sampler type is used, the
-result of a texture lookup is a vec4.
-
-In the prototypes below, the “g” in the return type “gvec4” is used as a placeholder for nothing, “i”, or “u”
-making a return type of vec4, ivec4, or uvec4. In these cases, the sampler argument type also starts with
-“g”, indicating the same substitution done on the return type; it is either a floating point, signed integer, or
-unsigned integer sampler, matching the basic type of the return type, as described above.
-
-For shadow forms(the sampler parameter is a shadow-type), a depth comparison lookup on the depth
-texture bound to sampler is done as described in section 3.8.16 “Texture Comparison Modes” of the
-OpenGL ES Graphics System Specification. See the table below for which component specifies Dref. The
-texture bound to sampler must be a depth texture, or results are undefined. If a non-shadow texture call is
-made to a sampler that represents a depth texture with depth comparisons turned on, then results are
-undefined. If a shadow texture call is made to a sampler that represents a depth texture with depth
-comparisons turned off, then results are undefined. If a shadow texture call is made to a sampler that does
-not represent a depth texture, then results are undefined.
-
-In all functions below, the bias parameter is optional for fragment shaders. The bias parameter is not
-accepted in a vertex shader. For a fragment shader, if bias is present, it is added to the implicit level of
-detail prior to performing the texture access operation.
-
-The implicit level of detail is selected as follows: For a texture that is not mip-mapped, the texture is used
-directly. If it is mip-mapped and running in a fragment shader, the LOD computed by the implementation
-is used to do the texture lookup. If it is mip-mapped and running on the vertex shader, then the base
-texture is used.
-
-Some texture functions(non-“Lod” and non-“Grad” versions) may require implicit derivatives. Implicit
-derivatives are undefined within non-uniform control flow and for vertex texture fetches.
-For Cube forms, the direction of P is used to select which face to do a 2-dimensional texture lookup in, as
-described in section 3.8.10 “Cube Map Texture Selection” in the OpenGL ES Graphics System
-Specification.
-For Array forms, the array layer used will be
-max(0,min(d -1, floor(layer+0.5)))
-
-where d is the depth of the texture array and layer comes from the component indicated in the tables
-below.
-*/
-
-
-/**
-Returns the dimensions of
-level lod for the texture bound
-to sampler, as described in
-section 2.11.9 “Shader
-Execution” of the OpenGL ES
-3.0 Graphics System
-Specification, under “Texture
-Size Query”.
-
-The components in the return
-value are filled in, in order,
-with the width, height, depth of
-the texture.
-
-For the array forms, the last
-component of the return value
-is the number of layers in the
-texture array.
-*/
+ * Returns the dimensions of level lod for the texture bound to sampler, as
+ * described in section 2.11.9 “Shader Execution” of the OpenGL ES 3.0 Graphics
+ * System Specification, under “Texture Size Query”.
+ *
+ * The components in the return value are filled in, in order, with the width,
+ * height, depth of the texture.
+ *
+ * For the array forms, the last component of the return value is the number of
+ * layers in the texture array.
+ */
 highp ivec2 textureSize(gsampler2D sampler, int lod);
 highp ivec3 textureSize(gsampler3D sampler, int lod);
 highp ivec2 textureSize(gsamplerCube sampler, int lod);
@@ -817,18 +819,12 @@ highp ivec3 textureSize(gsampler2DArray sampler, int lod);
 highp ivec3 textureSize(sampler2DArrayShadow sampler, int lod);
 
 /**
-Use the texture coordinate P to
-do a texture lookup in the
-texture currently bound to
-sampler. The last component
-of P is used as Dref for the
-shadow forms. For array
-forms, the array layer comes
-from the last component of P
-in the non-shadow forms, and
-the second to last component
-of P in the shadow forms.
-*/
+ * Use the texture coordinate P to do a texture lookup in the texture currently
+ * bound to sampler. The last component of P is used as Dref for the shadow
+ * forms. For array forms, the array layer comes from the last component of P in
+ * the non-shadow forms, and the second to last component of P in the shadow
+ * forms.
+ */
 gvec4 texture(gsampler2D sampler, vec2 P);
 gvec4 texture(gsampler2D sampler, vec2 P, float bias);
 gvec4 texture(gsampler3D sampler, vec3 P);
@@ -844,23 +840,13 @@ gvec4 texture(gsampler2DArray sampler, vec3 P, float bias);
 float texture(sampler2DArrayShadow sampler, vec4 P);
 
 /**
-Do a texture lookup with
-projection. The texture
-coordinates consumed from P,
-not including the last
-component of P, are divided by
-the last component of P to
-form projected coordinates P'.
-The resulting third component
-of P' in the shadow forms is
-used as Dref. The third
-component of P is ignored
-when sampler has type
-gsampler2D and P has type
-vec4. After these values are
-computed, texture lookup
-proceeds as in texture.
-*/
+ * Do a texture lookup with projection. The texture coordinates consumed from P,
+ * not including the last component of P, are divided by the last component of P
+ * to form projected coordinates P'. The resulting third component of P' in the
+ * shadow forms is used as Dref. The third component of P is ignored when
+ * sampler has type gsampler2D and P has type vec4. After these values are
+ * computed, texture lookup proceeds as in `texture`.
+ */
 gvec4 textureProj(gsampler2D sampler, vec3 P);
 gvec4 textureProj(gsampler2D sampler, vec3 P, float bias);
 gvec4 textureProj(gsampler2D sampler, vec4 P);
@@ -871,51 +857,33 @@ float textureProj(sampler2DShadow sampler, vec4 P);
 float textureProj(sampler2DShadow sampler, vec4 P, float bias);
 
 /**
-Do a texture lookup as in
-texture but with explicit LOD;
-lod specifies λ_base and sets the
-partial derivatives as follows.
-(See section 3.8.9 “Texture
-Minification” and equation
-3.14 in the OpenGL ES 3.0
-Graphics System
-Specification.)
-∂u/∂x=0 ∂v/∂x=0 ∂w/∂x=0
-∂u/∂y=0 ∂v/∂y=0 ∂w/∂y=0
-*/
+ * Do a texture lookup as in texture but with explicit LOD; `lod` specifies λ_base
+ * and sets the partial derivatives as follows. (See section 3.8.9 “Texture
+ * Minification” and equation 3.14 in the OpenGL ES 3.0 Graphics System
+ * Specification.)
+
+ - ∂u/∂x=0 ∂v/∂x=0 ∂w/∂x=0
+ - ∂u/∂y=0 ∂v/∂y=0 ∂w/∂y=0
+ */
 gvec4 textureLod(gsampler2D sampler, vec2 P, float lod);
 gvec4 textureLod(gsampler3D sampler, vec3 P, float lod);
 gvec4 textureLod(gsamplerCube sampler, vec3 P, float lod);
 float textureLod(sampler2DShadow sampler, vec3 P, float lod);
 gvec4 textureLod(gsampler2DArray sampler, vec3 P, float lod);
 
-
 /**
-Do a texture lookup as in
-texture but with offset added
-to the(u,v,w) texel coordinates
-before looking up each texel.
-The offset value must be a
-constant expression. A limited
-range of offset values are
-supported; the minimum and
-maximum offset values are
-implementation-dependent and
-given by
-MIN_PROGRAM_TEXEL_OFFSET and
-MAX_PROGRAM_TEXEL_OFFSET,
-respectively.
-Note that offset does not apply
-to the layer coordinate for
-texture arrays. This is
-explained in detail in section
-3.8.9 “Texture Minification” of
-the OpenGL ES Graphics
-System Specification, where
-offset is(𝛿_ , 𝛿_v ,𝛿_w). Note
-that texel offsets are also not
-supported for cube maps.
-*/
+ * Do a texture lookup as in texture but with offset added to the(u,v,w) texel
+ * coordinates before looking up each texel. The offset value must be a constant
+ * expression. A limited range of offset values are supported; the minimum and
+ * maximum offset values are implementation-dependent and given by
+ * `MIN_PROGRAM_TEXEL_OFFSET` and `MAX_PROGRAM_TEXEL_OFFSET`, respectively.
+
+ Note
+ * that offset does not apply to the layer coordinate for texture arrays. This
+ * is explained in detail in section 3.8.9 “Texture Minification” of the OpenGL
+ * ES Graphics System Specification, where offset is `(𝛿_ , 𝛿_v, 𝛿_w)`. Note that
+ * texel offsets are also not supported for cube maps.
+ */
 gvec4 textureOffset(gsampler2D sampler, vec2 P, ivec2 offset);
 gvec4 textureOffset(gsampler2D sampler, vec2 P, ivec2 offset, float bias);
 gvec4 textureOffset(gsampler3D sampler, vec3 P, ivec3 offset);
@@ -927,39 +895,29 @@ gvec4 textureOffset(gsampler2DArray sampler, vec3 P, ivec2 offset);
 gvec4 textureOffset(gsampler2DArray sampler, vec3 P, ivec2 offset, float bias);
 
 /**
-Use integer texture coordinate
-P to lookup a single texel from
-sampler. The array layer
-comes from the last component
-of P for the array forms. The
-level-of-detail lod is as
-described in sections 2.11.9
-“Shader Execution” under
-Texel Fetches and 3.8
-“Texturing” of the OpenGL ES
-3.0 Graphics System
-Specification.
-*/
+ * Use integer texture coordinate P to lookup a single texel from sampler. The
+ * array layer comes from the last component of P for the array forms. The
+ * level-of-detail lod is as described in sections 2.11.9 “Shader Execution”
+ * under Texel Fetches and 3.8 “Texturing” of the OpenGL ES 3.0 Graphics System
+ * Specification.
+ */
 gvec4 texelFetch(gsampler2D sampler, ivec2 P, int lod);
 gvec4 texelFetch(gsampler3D sampler, ivec3 P, int lod);
 gvec4 texelFetch(gsampler2DArray sampler, ivec3 P, int lod);
 
 /**
-Fetch a single texel as in
-texelFetch offset by offset as
-described in textureOffset.
-*/
+ * Fetch a single texel as in texelFetch offset by offset as described in
+ * `textureOffset`.
+ */
 gvec4 texelFetchOffset(gsampler2D sampler, ivec2 P, int lod, ivec2 offset);
 gvec4 texelFetchOffset(gsampler3D sampler, ivec3 P, int lod, ivec3 offset);
 
 gvec4 texelFetchOffset(gsampler2DArray sampler, ivec3 P, int lod, ivec2 offset);
 
 /**
-Do a projective texture lookup
-as described in textureProj
-offset by offset as described in
-textureOffset.
-*/
+ * Do a projective texture lookup as described in textureProj offset by offset
+ * as described in `textureOffset`.
+ */
 gvec4 textureProjOffset(gsampler2D sampler, vec3 P, ivec2 offset);
 gvec4 textureProjOffset(gsampler2D sampler, vec3 P, ivec2 offset, float bias);
 gvec4 textureProjOffset(gsampler2D sampler, vec4 P, ivec2 offset);
@@ -967,25 +925,42 @@ gvec4 textureProjOffset(gsampler2D sampler, vec4 P, ivec2 offset, float bias);
 gvec4 textureProjOffset(gsampler3D sampler, vec4 P, ivec3 offset);
 gvec4 textureProjOffset(gsampler3D sampler, vec4 P, ivec3 offset, float bias);
 
-float textureProjOffset(sampler2DShadow sampler, vec4 P, ivec2 offset, float bias);
-float textureProjOffset(sampler2DShadow sampler, vec4 P, ivec2 offset, float bias);
+float textureProjOffset(
+sampler2DShadow sampler,
+vec4 P,
+ivec2 offset,
+float bias
+);
+float textureProjOffset(
+sampler2DShadow sampler,
+vec4 P,
+ivec2 offset,
+float bias
+);
 
 /**
-Do an offset texture lookup
-with explicit LOD. See
-textureLod and
-textureOffset.
-*/
+ * Do an offset texture lookup with explicit LOD. See textureLod and
+ * textureOffset.
+ */
 gvec4 textureLodOffset(gsampler2D sampler, vec2 P, float lod, ivec2 offset);
 gvec4 textureLodOffset(gsampler3D sampler, vec3 P, float lod, ivec3 offset);
-float textureLodOffset(sampler2DShadow sampler, vec3 P, float lod, ivec2 offset);
-gvec4 textureLodOffset(gsampler2DArray sampler, vec3 P, float lod, ivec2 offset);
+float textureLodOffset(
+sampler2DShadow sampler,
+vec3 P,
+float lod,
+ivec2 offset
+);
+gvec4 textureLodOffset(
+gsampler2DArray sampler,
+vec3 P,
+float lod,
+ivec2 offset
+);
 
 /**
-Do a projective texture lookup
-with explicit LOD. See
-textureProj and textureLod.
-*/
+ * Do a projective texture lookup with explicit LOD. See textureProj and
+ * textureLod.
+ */
 gvec4 textureProjLod(gsampler2D sampler, vec3 P, float lod);
 gvec4 textureProjLod(gsampler2D sampler, vec4 P, float lod);
 gvec4 textureProjLod(gsampler3D sampler, vec4 P, float lod);
@@ -993,68 +968,35 @@ gvec4 textureProjLod(gsampler3D sampler, vec4 P, float lod);
 float textureProjLod(sampler2DShadow sampler, vec4 P, float lod);
 
 /**
-Do an offset projective texture
-lookup with explicit LOD. See
-textureProj, textureLod, and
-textureOffset.
-*/
+ * Do an offset projective texture lookup with explicit LOD. See textureProj,
+ * textureLod, and textureOffset.
+ */
 gvec4 textureProjLodOffset(gsampler2D sampler, vec3 P, float lod, ivec2 offset);
 gvec4 textureProjLodOffset(gsampler2D sampler, vec4 P, float lod, ivec2 offset);
 gvec4 textureProjLodOffset(gsampler3D sampler, vec4 P, float lod, ivec3 offset);
 
-float textureProjLodOffset(sampler2DShadow sampler, vec4 P, float lod, ivec2 offset);
+float textureProjLodOffset(
+sampler2DShadow sampler,
+vec4 P,
+float lod,
+ivec2 offset
+);
 
 /**
- TODO FIX COMMENT
-Do a texture lookup as in
-texture but with explicit
-gradients. The partial
-derivatives of P are with
-respect to window x and
-window y. Set
-∂s
-∂x
-∂s
-∂y
-∂t
-∂x
-∂t
-∂y
-∂r
-∂x
-∂r
-∂y
+ * Do a texture lookup as in texture but with explicit
+ * gradients. The partial derivatives of P are with respect to window x and
+ * window y. Set
+- ∂s/∂x = ∂P.s/∂x
+- ∂s/∂y = ∂P.s/∂y
+- ∂t/∂x = ∂P.t/∂x
+- ∂t/∂y = ∂P.t/∂y
+- ∂r/∂x = ∂P.p/∂x (cube)
+- ∂r/∂y = ∂P.p/∂y (cube)
 
-=
-=
-=
-=
-=
-=
-
-∂P.s
-∂x
-∂P.s
-∂y
-∂P.t
-∂x
-∂P.t
-∂y
-∂P.p
-cube
-∂x
-∂P.p
-cube
-∂y
-
-For the cube version, the
-partial derivatives of P are
-assumed to be in the
-coordinate system used before
-texture coordinates are
-projected onto the appropriate
-cube face.
-*/
+ * For the cube version, the partial derivatives of P are assumed to be in the
+ * coordinate system used before texture coordinates are projected onto the
+ * appropriate cube face.
+ */
 gvec4 textureGrad(gsampler2D sampler, vec2 P, vec2 dPdx, vec2 dPdy);
 gvec4 textureGrad(gsampler3D sampler, vec3 P, vec3 dPdx, vec3 dPdy);
 gvec4 textureGrad(gsamplerCube sampler, vec3 P, vec3 dPdx, vec3 dPdy);
@@ -1064,125 +1006,166 @@ gvec4 textureGrad(gsampler2DArray sampler, vec3 P, vec2 dPdx, vec2 dPdy);
 float textureGrad(sampler2DArrayShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy);
 
 /**
-Do a texture lookup with both
-explicit gradient and offset, as
-described in textureGrad and
-textureOffset.
-*/
-gvec4 textureGradOffset(gsampler2D sampler, vec2 P, vec2 dPdx, vec2 dPdy, ivec2 offset);
-gvec4 textureGradOffset(gsampler3D sampler, vec3 P, vec3 dPdx, vec3 dPdy, ivec3 offset);
+ * Do a texture lookup with both explicit gradient and offset, as described in
+ * `textureGrad` and `textureOffset`.
+ */
+gvec4 textureGradOffset(
+gsampler2D sampler,
+vec2 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
+);
+gvec4 textureGradOffset(
+gsampler3D sampler,
+vec3 P,
+vec3 dPdx,
+vec3 dPdy,
+ivec3 offset
+);
 
-float textureGradOffset(sampler2DShadow sampler, vec3 P, vec2 dPdx, vec2 dPdy, ivec2 offset);
-gvec4 textureGradOffset(gsampler2DArray sampler, vec3 P, vec2 dPdx, vec2 dPdy, ivec2 offset);
-float textureGradOffset(sampler2DArrayShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy, ivec2 offset);
+float textureGradOffset(
+sampler2DShadow sampler,
+vec3 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
+);
+gvec4 textureGradOffset(
+gsampler2DArray sampler,
+vec3 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
+);
+float textureGradOffset(
+sampler2DArrayShadow sampler,
+vec4 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
+);
 
 /**
-Do a texture lookup both
-projectively, as described in
-textureProj, and with explicit
-gradient as described in
-textureGrad. The partial
-derivatives dPdx and dPdy are
-assumed to be already
-projected.
-*/
+ * Do a texture lookup both projectively, as described in textureProj, and with
+ * explicit gradient as described in textureGrad. The partial derivatives `dPdx`
+ * and `dPdy` are assumed to be already projected.
+ */
 gvec4 textureProjGrad(gsampler2D sampler, vec3 P, vec2 dPdx, vec2 dPdy);
 gvec4 textureProjGrad(gsampler2D sampler, vec4 P, vec2 dPdx, vec2 dPdy);
 gvec4 textureProjGrad(gsampler3D sampler, vec4 P, vec3 dPdx, vec3 dPdy);
 float textureProjGrad(sampler2DShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy);
 
 /**
-Do a texture lookup
-projectively and with explicit
-gradient as described in
-textureProjGrad, as well as
-with offset, as described in
-textureOffset.
-*/
-gvec4 textureProjGradOffset(gsampler2D sampler, vec3 P, vec2 dPdx, vec2 dPdy, ivec2 offset);
-gvec4 textureProjGradOffset(gsampler2D sampler, vec4 P, vec2 dPdx, vec2 dPdy, ivec2 offset);
-gvec4 textureProjGradOffset(gsampler3D sampler, vec4 P, vec3 dPdx, vec3 dPdy, ivec3 offset);
-float textureProjGradOffset(sampler2DShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy, ivec2 offset);
+ * Do a texture lookup projectively and with explicit gradient as described in
+ * textureProjGrad, as well as with offset, as described in textureOffset.
+ */
+gvec4 textureProjGradOffset(
+gsampler2D sampler,
+vec3 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
+);
+gvec4 textureProjGradOffset(
+gsampler2D sampler,
+vec4 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
+);
+gvec4 textureProjGradOffset(
+gsampler3D sampler,
+vec4 P,
+vec3 dPdx,
+vec3 dPdy,
+ivec3 offset
+);
+float textureProjGradOffset(
+sampler2DShadow sampler,
+vec4 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
+);
 
 /**
- TODO FIX COMMENT
-### Fragment Processing Functions
-
-Fragment processing functions are only available in fragment shaders.
-Derivatives may be computationally expensive and/or numerically unstable. Therefore, an OpenGL ES
-implementation may approximate the true derivatives by using a fast but not entirely accurate derivative
-computation. Derivatives are undefined within non-uniform control flow.
-The expected behavior of a derivative is specified using forward/backward differencing.
-
+ * ### Fragment Processing Functions
+ *
+ * Fragment processing functions are only available in fragment shaders.
+ * Derivatives may be computationally expensive and/or numerically unstable.
+ * Therefore, an OpenGL ES implementation may approximate the true derivatives
+ * by using a fast but not entirely accurate derivative computation. Derivatives
+ * are undefined within non-uniform control flow. The expected behavior of a
+ * derivative is specified using forward/backward differencing.
+ *
+```
 Forward differencing:
 
-F  xdx -F  x ~ dFdx  x⋅dx
-dFdx  x ~
+  F(x + dx) - F(x) ~ dFdx(x) * dx       1a
 
-F  xdx -F  x
-dx
-
-1a
-1b
+            F(x + dx) - F(x)
+  dFdx(x) ~ ----------------            1b
+                   dx
 
 Backward differencing:
 
-F  x-dx -F  x ~ -dFdx x⋅dx
-dFdx  x ~
+  F(x - dx) - F(x) ~ -dFdx(x) * dx       2a
 
-F  x-F x-dx
-dx
-
-2a
-2b
-
-With single-sample rasterization, dx <= 1.0 in equations 1b and 2b. For multi-sample rasterization, dx <
-2.0 in equations 1b and 2b.
-dFdy is approximated similarly, with y replacing x.
-An OpenGL ES implementation may use the above or other methods to perform the calculation, subject to
-the following conditions:
-1. The method may use piecewise linear approximations. Such linear approximations imply that higher
-order derivatives, dFdx(dFdx(x)) and above, are undefined.
-2. The method may assume that the function evaluated is continuous. Therefore derivatives within the
-body of a non-uniform conditional are undefined.
-3. The method may differ per fragment, subject to the constraint that the method may vary by window
-coordinates, not screen coordinates. The invariance requirement described in section 3.2 “Invariance”
-of the OpenGL ES Graphics System Specification, is relaxed for derivative calculations, because the
-method may be a function of fragment location.
-Other properties that are desirable, but not required, are:
-4. Functions should be evaluated within the interior of a primitive(interpolated, not extrapolated).
-5. Functions for dFdx should be evaluated while holding y constant. Functions for dFdy should be
-evaluated while holding x constant. However, mixed higher order derivatives, like dFdx(dFdy(y))
-and dFdy(dFdx(x)) are undefined.
-6. Derivatives of constant arguments should be 0.
-In some implementations, varying degrees of derivative accuracy may be obtained by providing GL hints
-(section 5.3 “Hints” of the OpenGL ES 3.0 Graphics System Specification), allowing a user to make an
-image quality versus speed trade off.
-*/
+            F(x) - F(x - dx)
+  dFdx(x) ~ ----------------            2b
+                   dx
+```
+ *
+ * With single-sample rasterization, dx <= 1.0 in equations 1b and 2b. For
+ * multi-sample rasterization, dx < 2.0 in equations 1b and 2b. dFdy is
+ * approximated similarly, with y replacing x. An OpenGL ES implementation may
+ * use the above or other methods to perform the calculation, subject to the
+ * following conditions:
+ *
+ * 1. The method may use piecewise linear approximations. Such linear
+ *    approximations imply that higher order derivatives, `dFdx(dFdx(x))` and
+ *    above, are undefined.
+ * 2. The method may assume that the function evaluated is continuous. Therefore
+ *    derivatives within the body of a non-uniform conditional are undefined.
+ * 3. The method may differ per fragment, subject to the constraint that the
+ *    method may vary by window coordinates, not screen coordinates. The
+ *    invariance requirement described in section 3.2 “Invariance” of the OpenGL
+ *    ES Graphics System Specification, is relaxed for derivative calculations,
+ *    because the method may be a function of fragment location. Other
+ *    properties that are desirable, but not required, are:
+ * 4. Functions should be evaluated within the interior of a
+ *    primitive(interpolated, not extrapolated).
+ * 5. Functions for dFdx should be evaluated while holding y constant. Functions
+ *    for dFdy should be evaluated while holding x constant. However, mixed
+ *    higher order derivatives, like dFdx(dFdy(y)) and dFdy(dFdx(x)) are
+ *    undefined.
+ * 6. Derivatives of constant arguments should be 0. In some implementations,
+ *    varying degrees of derivative accuracy may be obtained by providing GL
+ *    hints (section 5.3 “Hints” of the OpenGL ES 3.0 Graphics System
+ *    Specification), allowing a user to make an image quality versus speed
+ *    trade off.
+ */
 
 /**
-Returns the derivative in x using local differencing for
-the input argument p.
-*/
+ * Returns the derivative in x using local differencing for the input argument
+ * p.
+ */
 genType dFdx(genType p);
 
 /**
-Returns the derivative in y using local differencing for
-the input argument p.
-These two functions are commonly used to estimate the
-filter width used to anti-alias procedural textures. We
-are assuming that the expression is being evaluated in
-parallel on a SIMD array so that at any given point in
-time the value of the function is known at the grid points
-represented by the SIMD array. Local differencing
-between SIMD array elements can therefore be used to
-derive dFdx, dFdy, etc.
-*/
+ * Returns the derivative in y using local differencing for the input argument
+ * p. These two functions are commonly used to estimate the filter width used to
+ * anti-alias procedural textures. We are assuming that the expression is being
+ * evaluated in parallel on a SIMD array so that at any given point in time the
+ * value of the function is known at the grid points represented by the SIMD
+ * array. Local differencing between SIMD array elements can therefore be used
+ * to derive dFdx, dFdy, etc.
+ */
 genType dFdy(genType p);
 
 /**
-Returns the sum of the absolute derivative in x and y
-using local differencing for the input argument p, i.e.,
-abs(dFdx(p)) + abs(dFdy(p));
-*/
+ * Returns the sum of the absolute derivative in x and y using local
+ * differencing for the input argument p, i.e., abs(dFdx(p)) + abs(dFdy(p));
+ */
 genType fwidth(genType p);

@@ -680,6 +680,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
         formattedSourceLines.pop()
 
         const e = n.endOffset!
+        // TODO: more than one line to next comment
         const isFollowedByNewLineThenComment =
           options.originalText[e + 1] === "\n" &&
           options.originalText[e + 2] === "\n" &&
