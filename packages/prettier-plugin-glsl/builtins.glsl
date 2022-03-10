@@ -489,29 +489,33 @@ genType uintBitsToFloat(genUType value);
  */
 highp uint packSnorm2x16(vec2 v);
 
-//First, unpacks a single 32-bit unsigned integer p into a
-//pair of 16-bit signed integers. Then, each component is
-//converted to a normalized floating-point value to
-//generate the returned two-component vector.
-//The conversion for unpacked fixed-point value f to
-//floating point is done as follows:
-//unpackSnorm2x16: clamp(f / 32767.0, -1,+1)
-//The first component of the returned vector will be
-//extracted from the least significant bits of the input; the
-//last component will be extracted from the most
-//significant bits.
+/**
+ * First, unpacks a single 32-bit unsigned integer p into a pair of 16-bit
+ * signed integers. Then, each component is converted to a normalized
+ * floating-point value to generate the returned two-component vector. The
+ * conversion for unpacked fixed-point value f to floating point is done as
+ * follows:
+ *
+ * unpackSnorm2x16: `clamp(f / 32767.0, -1,+1)`
+ *
+ * The first component of the returned vector will be extracted from the least
+ * significant bits of the input; the last component will be extracted from the
+ * most significant bits.
+ */
 highp vec2 unpackSnorm2x16(highp uint p);
 
-//First, converts each component of the normalized
-//floating-point value v into 16-bit integer values. Then,
-//the results are packed into the returned 32-bit unsigned
-//integer.
-//The conversion for component c of v to fixed point is
-//done as follows:
-//packUnorm2x16: round(clamp(c, 0, +1) * 65535.0)
-//The first component of the vector will be written to the
-//least significant bits of the output; the last component
-//will be written to the most significant bits.
+/**
+ * First, converts each component of the normalized floating-point value v into
+ * 16-bit integer values. Then, the results are packed into the returned 32-bit
+ * unsigned integer. The conversion for component c of v to fixed point is done
+ * as follows:
+ *
+ * packUnorm2x16: `round(clamp(c, 0, +1) * 65535.0)`
+ *
+ * The first component of the vector will be written to the least significant
+ * bits of the output; the last component will be written to the most
+ * significant bits.
+ */
 highp uint packUnorm2x16(vec2 v);
 
 /**
@@ -520,12 +524,12 @@ highp uint packUnorm2x16(vec2 v);
  * floating-point value to generate the returned two-component vector. The
  * conversion for unpacked fixed-point value f to floating point is done as
  * follows:
-
-unpackUnorm2x16: f / 65535.0
-
-The first component of the returned
- * vector will be extracted from the least significant bits of the input; the
- * last component will be extracted from the most significant bits.
+ *
+ * unpackUnorm2x16: f / 65535.0
+ *
+ * The first component of the returned vector will be extracted from the least
+ * significant bits of the input; the last component will be extracted from the
+ * most significant bits.
  */
 highp vec2 unpackUnorm2x16(highp uint p);
 
@@ -963,16 +967,16 @@ gvec4 textureProjOffset(gsampler3D sampler, vec4 P, ivec3 offset);
 gvec4 textureProjOffset(gsampler3D sampler, vec4 P, ivec3 offset, float bias);
 
 float textureProjOffset(
-sampler2DShadow sampler,
-vec4 P,
-ivec2 offset,
-float bias
+  sampler2DShadow sampler,
+  vec4 P,
+  ivec2 offset,
+  float bias
 );
 float textureProjOffset(
-sampler2DShadow sampler,
-vec4 P,
-ivec2 offset,
-float bias
+  sampler2DShadow sampler,
+  vec4 P,
+  ivec2 offset,
+  float bias
 );
 
 /**
@@ -982,16 +986,16 @@ float bias
 gvec4 textureLodOffset(gsampler2D sampler, vec2 P, float lod, ivec2 offset);
 gvec4 textureLodOffset(gsampler3D sampler, vec3 P, float lod, ivec3 offset);
 float textureLodOffset(
-sampler2DShadow sampler,
-vec3 P,
-float lod,
-ivec2 offset
+  sampler2DShadow sampler,
+  vec3 P,
+  float lod,
+  ivec2 offset
 );
 gvec4 textureLodOffset(
-gsampler2DArray sampler,
-vec3 P,
-float lod,
-ivec2 offset
+  gsampler2DArray sampler,
+  vec3 P,
+  float lod,
+  ivec2 offset
 );
 
 /**
@@ -1013,10 +1017,10 @@ gvec4 textureProjLodOffset(gsampler2D sampler, vec4 P, float lod, ivec2 offset);
 gvec4 textureProjLodOffset(gsampler3D sampler, vec4 P, float lod, ivec3 offset);
 
 float textureProjLodOffset(
-sampler2DShadow sampler,
-vec4 P,
-float lod,
-ivec2 offset
+  sampler2DShadow sampler,
+  vec4 P,
+  float lod,
+  ivec2 offset
 );
 
 /**
@@ -1047,40 +1051,40 @@ float textureGrad(sampler2DArrayShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy);
  * `textureGrad` and `textureOffset`.
  */
 gvec4 textureGradOffset(
-gsampler2D sampler,
-vec2 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  gsampler2D sampler,
+  vec2 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 gvec4 textureGradOffset(
-gsampler3D sampler,
-vec3 P,
-vec3 dPdx,
-vec3 dPdy,
-ivec3 offset
+  gsampler3D sampler,
+  vec3 P,
+  vec3 dPdx,
+  vec3 dPdy,
+  ivec3 offset
 );
 
 float textureGradOffset(
-sampler2DShadow sampler,
-vec3 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  sampler2DShadow sampler,
+  vec3 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 gvec4 textureGradOffset(
-gsampler2DArray sampler,
-vec3 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  gsampler2DArray sampler,
+  vec3 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 float textureGradOffset(
-sampler2DArrayShadow sampler,
-vec4 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  sampler2DArrayShadow sampler,
+  vec4 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 
 /**
@@ -1098,32 +1102,32 @@ float textureProjGrad(sampler2DShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy);
  * textureProjGrad, as well as with offset, as described in textureOffset.
  */
 gvec4 textureProjGradOffset(
-gsampler2D sampler,
-vec3 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  gsampler2D sampler,
+  vec3 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 gvec4 textureProjGradOffset(
-gsampler2D sampler,
-vec4 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  gsampler2D sampler,
+  vec4 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 gvec4 textureProjGradOffset(
-gsampler3D sampler,
-vec4 P,
-vec3 dPdx,
-vec3 dPdy,
-ivec3 offset
+  gsampler3D sampler,
+  vec4 P,
+  vec3 dPdx,
+  vec3 dPdy,
+  ivec3 offset
 );
 float textureProjGradOffset(
-sampler2DShadow sampler,
-vec4 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  sampler2DShadow sampler,
+  vec4 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 
 /**
