@@ -184,28 +184,38 @@ genType degrees(genType radians);
 
 /**
  * The standard trigonometric sine function.
+ *
+ * https://en.wikipedia.org/wiki/Sine
  */
 genType sin(genType angle);
 
 /**
  * The standard trigonometric cosine function.
+ *
+ * https://en.wikipedia.org/wiki/Cosine
  */
 genType cos(genType angle);
 
 /**
  * The standard trigonometric tangent.
+ *
+ * https://en.wikipedia.org/wiki/Tangent_(trigonometry)
  */
 genType tan(genType angle);
 
 /**
  * Arc sine. Returns an angle whose sine is x. The range of values returned by
  * this function is [-PI/2, PI/2]. Results are undefined if |x| < 1.
+ *
+ * https://en.wikipedia.org/wiki/Arcsine
  */
 genType asin(genType x);
 
 /**
  * Arc cosine. Returns an angle whose cosine is x. The range of values returned
  * by this function is [0, p]. Results are undefined if |x| < 1.
+ *
+ * https://en.wikipedia.org/wiki/Arccosine
  */
 genType acos(genType x);
 
@@ -213,22 +223,30 @@ genType acos(genType x);
  * Arc tangent. Returns an angle whose tangent is y/x. The signs of x and y are
  * used to determine what quadrant the angle is in. The range of values returned
  * by this function is [-π , π]. Results are undefined if x and y are both 0.
+ *
+ * https://en.wikipedia.org/wiki/Atan2
  */
 genType atan(genType y, genType x);
 
 /**
  * Arc tangent. Returns an angle whose tangent is y_over_x. The range of values
  * returned by this function is [-PI/2, PI/2].
+ *
+ * https://en.wikipedia.org/wiki/Arctangent
  */
 genType atan(genType y_over_x);
 
 /**
  * Returns the hyperbolic sine function `(pow(e, x) - pow(e, -x)) / 2`.
+ *
+ * https://en.wikipedia.org/wiki/Hyperbolic_sine
  */
 genType sinh(genType x);
 
 /**
  * Returns the hyperbolic cosine function `(pow(e, x) + pow(e, -x))/2`.
+ *
+ * https://en.wikipedia.org/wiki/Hyperbolic_cosine
  */
 genType cosh(genType x);
 
