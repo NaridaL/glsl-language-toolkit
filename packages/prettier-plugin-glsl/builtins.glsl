@@ -103,17 +103,17 @@ in bool gl_HelperInvocation;
  * a direct mapping to hardware and so are available only for a specific type of
  * shader. The built-in functions basically fall into three categories:
  *
- * - They expose some necessary hardware functionality in a convenient way such
- *   as accessing a texture map. There is no way in the language for these
- *   functions to be emulated by a shader.
+ * 1. They expose some necessary hardware functionality in a convenient way such
+ *    as accessing a texture map. There is no way in the language for these
+ *    functions to be emulated by a shader.
  *
- * - They represent a trivial operation(clamp, mix, etc.) that is very simple
- *   for the user to write, but they are very common and may have direct
- *   hardware support. It is a very hard problem for the compiler to map
- *   expressions to complex assembler instructions.
+ * 2. They represent a trivial operation(clamp, mix, etc.) that is very simple
+ *    for the user to write, but they are very common and may have direct
+ *    hardware support. It is a very hard problem for the compiler to map
+ *    expressions to complex assembler instructions.
  *
- * - They represent an operation graphics hardware is likely to accelerate at
- *   some point. The trigonometry functions fall into this category.
+ * 3. They represent an operation graphics hardware is likely to accelerate at
+ *    some point. The trigonometry functions fall into this category.
  *
  * Many of the functions are similar to the same named ones in common C
  * libraries, but they support vector input as well as the more traditional
