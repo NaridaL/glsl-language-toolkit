@@ -579,7 +579,7 @@ mediump vec2 unpackHalf2x16(highp uint v);
  */
 
 /**
- * Returns the length of vector x, i.e., s`qrt(x[0]^2 + x[1]^2 + ...)`.
+ * Returns the length of vector x, i.e., `√(x[0]^2 + x[1]^2 + ...)`.
  */
 float length(genType x);
 
