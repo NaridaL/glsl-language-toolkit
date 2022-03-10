@@ -18,88 +18,92 @@ export interface BaseNode {
   tokens?: Token[]
 }
 
+// need interface for interface merging
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface BaseExpressionNode extends BaseNode {}
+
 export interface ArraySpecifier extends BaseNode {
   kind: "arraySpecifier"
   size: Expression | undefined
 }
 
-export interface BinaryExpression extends BaseNode {
-  kind: "binaryExpression"
-  lhs: Expression
-  rhs: Expression
-  op: Token
-}
-
-export interface MethodCall extends BaseNode {
-  kind: "methodCall"
-  on: Expression
-  functionCall: FunctionCall
-}
-
-export interface FunctionCall extends BaseNode {
-  kind: "functionCall"
-  callee: TypeSpecifier
-  args: Expression[]
-}
-
-export interface ArrayAccess extends BaseNode {
+export interface ArrayAccess extends BaseExpressionNode {
   kind: "arrayAccess"
   on: Expression
   index: Expression
 }
 
-export interface TranslationUnit extends BaseNode {
-  kind: "translationUnit"
-  declarations: Declaration[]
-  comments?: Token[]
-}
-
-export interface AssignmentExpression extends BaseNode {
+export interface AssignmentExpression extends BaseExpressionNode {
   kind: "assignmentExpression"
   op: Token
   lhs: Expression
   rhs: Expression
 }
 
-export interface FieldAccess extends BaseNode {
-  kind: "fieldAccess"
-  on: Expression
-  field: Token
+export interface BinaryExpression extends BaseExpressionNode {
+  kind: "binaryExpression"
+  lhs: Expression
+  rhs: Expression
+  op: Token
 }
 
-export interface ConditionalExpression extends BaseNode {
+export interface CommaExpression extends BaseExpressionNode {
+  kind: "commaExpression"
+  lhs: Expression
+  rhs: Expression
+}
+
+export interface ConditionalExpression extends BaseExpressionNode {
   kind: "conditionalExpression"
   condition: Expression
   yes: Expression
   no: Expression
 }
 
-export interface PostfixExpression extends BaseNode {
+export interface ConstantExpression extends BaseExpressionNode {
+  kind: "constantExpression"
+  const_: Token
+}
+
+export interface FieldAccess extends BaseExpressionNode {
+  kind: "fieldAccess"
+  on: Expression
+  field: Token
+}
+
+export interface FunctionCall extends BaseExpressionNode {
+  kind: "functionCall"
+  callee: TypeSpecifier
+  args: Expression[]
+}
+
+export interface MethodCall extends BaseExpressionNode {
+  kind: "methodCall"
+  on: Expression
+  functionCall: FunctionCall
+}
+
+export interface PostfixExpression extends BaseExpressionNode {
   kind: "postfixExpression"
   on: Expression
   op: Token
 }
 
-export interface VariableExpression extends BaseNode {
+export interface UnaryExpression extends BaseExpressionNode {
+  kind: "unaryExpression"
+  on: Expression
+  op: Token
+}
+
+export interface VariableExpression extends BaseExpressionNode {
   kind: "variableExpression"
   var: Token
 }
 
-export interface ConstantExpression extends BaseNode {
-  kind: "constantExpression"
-  _const: Token
-}
-
-export interface CommaExpression extends BaseNode {
-  kind: "commaExpression"
-  lhs: Expression
-  rhs: Expression
-}
-
-export interface UnaryExpression extends BaseNode {
-  kind: "unaryExpression"
-  on: Expression
-  op: Token
+export interface TranslationUnit extends BaseNode {
+  kind: "translationUnit"
+  declarations: Declaration[]
+  comments?: Token[]
 }
 
 export interface FunctionDefinition extends BaseNode {
@@ -203,14 +207,14 @@ export type Expression =
   | ArrayAccess
   | AssignmentExpression
   | BinaryExpression
+  | CommaExpression
   | ConditionalExpression
+  | ConstantExpression
   | FieldAccess
   | FunctionCall
   | MethodCall
   | PostfixExpression
   | UnaryExpression
-  | CommaExpression
-  | ConstantExpression
   | VariableExpression
 
 export function isExpression(n: Node): n is Expression {
@@ -218,14 +222,14 @@ export function isExpression(n: Node): n is Expression {
     "arrayAccess",
     "assignmentExpression",
     "binaryExpression",
+    "commaExpression",
     "conditionalExpression",
+    "constantExpression",
     "fieldAccess",
     "functionCall",
     "methodCall",
     "postfixExpression",
     "unaryExpression",
-    "commaExpression",
-    "constantExpression",
     "variableExpression",
   ].includes(n.kind)
 }

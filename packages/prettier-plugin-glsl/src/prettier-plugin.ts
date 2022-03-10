@@ -278,8 +278,21 @@ export const printers: Plugin<Node | IToken>["printers"] = {
       try {
         switch (n.kind) {
           ////////// DECLARATIONS
-          case "translationUnit":
-            return [join(hardline, path.map(print, "declarations")), hardline]
+          case "translationUnit": {
+            const x: Doc = [line]
+            path.each((path, index) => {
+              const value = path.getValue()
+              if (index !== 0) {
+                x.push(hardline)
+              }
+              x.push(print(path))
+              if (isNextLineEmpty(options.originalText, value, locEnd)) {
+                x.push(hardline)
+              }
+            }, "declarations")
+            x.push(hardline)
+            return x
+          }
           case "fullySpecifiedType": {
             const parts: Doc = []
             if (n.typeQualifier) {
@@ -556,7 +569,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               p(n, "field"),
             ]
           case "constantExpression": {
-            const c = n._const
+            const c = n.const_
             if (c.tokenType === TOKEN.FLOATCONSTANT) {
               return normalizeFloat(c.image)
             }
@@ -621,12 +634,12 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               "unexpected n type " +
                 n.kind +
                 "\n" +
-                JSON.stringify(n).substr(0, 100),
+                JSON.stringify(n).substring(0, 100),
             )
         }
       } catch (e) {
         console.error(
-          "error printing " + JSON.stringify(n).substr(0, 100) + "\n",
+          "error printing " + JSON.stringify(n).substring(0, 100) + "\n",
         )
         throw e
       }
@@ -648,23 +661,38 @@ export const printers: Plugin<Node | IToken>["printers"] = {
       const n = commentPath.getValue() as Token
       if (n.tokenType === TOKEN.MULTILINE_COMMENT && n.image[2] === "*") {
         const src = n.image
-          .substr(3, n.image.length - 5)
+          .substring(3, n.image.length - 2)
           .split("\n")
-          .map((l: string) => (l.startsWith(" * ") ? l.substr(3) : l))
+          .map((l: string) =>
+            l === " *" ? "" : l.startsWith(" * ") ? l.substring(3) : l,
+          )
           .join("\n")
-        const fsrc = format(src, {
+          .trim()
+        const formattedSource = format(src, {
           ...options,
-          printWidth: options.printWidth - 4,
+          printWidth: options.printWidth - 3,
           parser: "markdown",
           proseWrap: "always",
+          plugins: [],
         })
+        const formattedSourceLines = formattedSource.split("\n")
+        // Remove the final newline which markdown formatter always adds.
+        formattedSourceLines.pop()
+
+        const e = n.endOffset!
+        const isFollowedByNewLineThenComment =
+          options.originalText[e + 1] === "\n" &&
+          options.originalText[e + 2] === "\n" &&
+          options.originalText[e + 3] === "/" &&
+          (options.originalText[e + 4] === "*" ||
+            options.originalText[e + 4] === "/")
         return (
           "/**\n" +
-          fsrc
-            .split("\n")
-            .map((l) => " * " + l)
+          formattedSourceLines
+            .map((l) => (l === "" ? " *" : " * " + l))
             .join("\n") +
-          "\n */"
+          "\n */" +
+          (isFollowedByNewLineThenComment ? "\n" : "")
         )
       }
       return n.image

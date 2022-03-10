@@ -31,10 +31,10 @@ const PREPROC_EVALUATOR = new (class extends AbstractVisitor<int32> {
   }
 
   protected constantExpression(n: ConstantExpression): int32 {
-    if (n._const.tokenType !== TOKEN.INTCONSTANT) {
+    if (n.const_.tokenType !== TOKEN.INTCONSTANT) {
       throw new Error("XX")
     }
-    return +n._const.image
+    return +n.const_.image
   }
 
   protected unaryExpression(n: UnaryExpression): int32 {
@@ -279,15 +279,24 @@ export function preproc(input: string): Token[] {
 
 type MacroDefinitions = Record<
   string,
-  | { kind: "function"; params: string[]; tokens: Token[] }
-  | { kind: "object"; tokens: Token[] }
+  | {
+      kind: "function"
+      params: string[]
+      tokens: Token[]
+      definition: Token
+    }
+  | {
+      kind: "object"
+      tokens: Token[]
+      definition: Token
+    }
 >
-const BUILT_IN_MACROS = [
+const BUILT_IN_MACROS: ReadonlyArray<string> = [
   "__LINE__",
   "__FILE__",
   "__VERSION__",
   "GL_ES",
-] as ReadonlyArray<string>
+]
 
 function makeIntConstantToken(image: string, token: Token): Token {
   return Object.assign({}, token, {
@@ -483,11 +492,13 @@ export function preprocMacros(
             kind: "function",
             params,
             tokens: tokens.slice(j, lastTokenOnLine + 1),
+            definition: name,
           }
         } else {
           definitions[name.image] = {
             kind: "object",
             tokens: tokens.slice(i + 2, lastTokenOnLine + 1),
+            definition: name,
           }
         }
       }

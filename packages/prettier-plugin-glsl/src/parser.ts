@@ -444,7 +444,7 @@ class GLSLParser extends EmbeddedActionsParser {
         {
           ALT: () => ({
             kind: "constantExpression",
-            _const: this.CONSUME(TOKEN.CONSTANT),
+            const_: this.CONSUME(TOKEN.CONSTANT),
           }),
         },
       ]),

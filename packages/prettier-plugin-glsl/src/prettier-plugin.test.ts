@@ -70,3 +70,7 @@ test("format raymarchingPrimitives.glsl", () => {
     loadFixture("raymarchingPrimitives-formatted.glsl"),
   )
 })
+test("format builtins", () => {
+  const s = readFileSync("builtins.glsl", { encoding: "utf-8" })
+  testFormat(s, s)
+})

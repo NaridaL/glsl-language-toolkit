@@ -5,11 +5,13 @@ import { dedent, getMarkerPositions } from "./testutil"
 import { offsetToLineCol } from "./util"
 import { check } from "./checker"
 import { getColors, getHighlights, resolvePositionDefinition } from "./support"
+import { preproc } from "./preprocessor"
 
 describe("definition lookup", () => {
   function testFindDeclaration(sourceWithMarkers: string) {
     const [source, markers] = getMarkerPositions(sourceWithMarkers)
     expect(markers).toHaveLength(2)
+    preproc()
     const tree = parseInput(source)
     check(tree, undefined)
     const definitionToken = resolvePositionDefinition(
@@ -38,7 +40,7 @@ describe("definition lookup", () => {
         int k = 0, 'a' = 32;
         int b = 'a' + 2;
       }`))
-  test("function (correct overload)", () =>
+  test("function overload", () =>
     testFindDeclaration(dedent`
       void foo();
       void 'foo'(int a) {}
@@ -57,6 +59,11 @@ describe("definition lookup", () => {
       #ifdef B
       #elif 'A' == 2
       #endif`))
+  test("object macro after redefinition", () =>
+    testFindDeclaration(dedent`
+      #define A 1
+      #define 'A' 2
+      int i = 'A';`))
   test("function macro", () =>
     testFindDeclaration(dedent`
       #define 'DOT2(G)' G dot2(G a) { return dot(a, a); }

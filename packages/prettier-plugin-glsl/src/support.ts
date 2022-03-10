@@ -26,11 +26,8 @@ export function resolveNodeDefinition(node: Node): Token | undefined {
       return node.typeSpecifierNonArrayBinding.type.specifier.name
     }
   } else if (node.kind === "fieldAccess") {
-    if (
-      node.on.kind === "variableExpression" &&
-      node.on.binding?.type?.kind === "struct"
-    ) {
-      return node.on.binding.type.fields[node.field.image]?.declarator?.name
+    if (node.on.resolvedType?.kind === "struct") {
+      return node.on.resolvedType.fields[node.field.image]?.declarator?.name
     }
   }
 }

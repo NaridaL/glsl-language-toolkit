@@ -24,6 +24,7 @@ import {
   FunctionDefinition,
   FunctionPrototype,
   InitDeclaratorListDeclaration,
+  isExpression,
   isToken,
   MethodCall,
   Node,
@@ -321,27 +322,27 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
   protected constantExpression(
     n: ConstantExpression,
   ): TypeAndValue | undefined {
-    switch (n._const.tokenType) {
+    switch (n.const_.tokenType) {
       case TOKEN.FLOATCONSTANT:
         return {
           type: BasicType.FLOAT,
-          value: +n._const.image,
+          value: +n.const_.image,
         }
       case TOKEN.BOOLCONSTANT:
         return {
           type: BasicType.BOOL,
-          value: n._const.image === "true",
+          value: n.const_.image === "true",
         }
       case TOKEN.INTCONSTANT:
         return {
           type: BasicType.INT,
-          value: evalIntConstant(n._const.image),
+          value: evalIntConstant(n.const_.image),
         }
       case TOKEN.UINTCONSTANT:
         return {
           type: BasicType.UINT,
           value: evalIntConstant(
-            n._const.image.substring(0, n._const.image.length - 1),
+            n.const_.image.substring(0, n.const_.image.length - 1),
           ),
         }
       default:
@@ -671,7 +672,7 @@ declare module "./nodes" {
     typeSpecifierNonArrayBinding?: StructBinding
   }
 
-  export interface BaseNode {
+  export interface BaseExpressionNode {
     resolvedType?: NormalizedType
   }
 }
@@ -1373,6 +1374,14 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     return super.visit(u)
   }
 
+  protected visit(n: Node | undefined): NormalizedType | undefined {
+    const resolvedType = super.visit(n)
+    if (n && isExpression(n)) {
+      n.resolvedType = resolvedType
+    }
+    return resolvedType
+  }
+
   protected uniformBlock(n: UniformBlock): NormalizedType | undefined {
     for (const declaration of n.declarations) {
       const ts = declaration.fsType.typeSpecifier
@@ -1523,8 +1532,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
           op === n.op.tokenType && lhs === lType.type && rhs === rType.type,
       )
       if (validOp) {
-        n.resolvedType = { kind: "basic", type: validOp[3] }
-        return n.resolvedType
+        return { kind: "basic", type: validOp[3] }
       } else {
         markErr(n)
       }
@@ -1656,20 +1664,19 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
           markError(n.index, "S0021")
         }
       }
-      n.resolvedType = oType.of
+      return oType.of
       // TODO: if constant expression, check array access size
     } else if (oType?.kind === "basic") {
       const vecElem = getVectorElementType(oType.type)
       const mDim = getMatrixDimensions(oType.type)
       if (vecElem) {
-        n.resolvedType = { kind: "basic", type: vecElem }
+        return { kind: "basic", type: vecElem }
       } else if (mDim) {
         // return column
         const [, mRows] = mDim
-        n.resolvedType = BasicType(getVectorType(TOKEN.FLOAT, mRows))
+        return BasicType(getVectorType(TOKEN.FLOAT, mRows))
       }
     }
-    return n.resolvedType
   }
 
   protected variableExpression(
@@ -1714,7 +1721,6 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
       const f = n.field.image
       const field = oType.fields[f]
       if (field) {
-        n.resolvedType = field.type
         return field.type
       } else {
         markError(
@@ -2028,7 +2034,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
   protected constantExpression(
     n: ConstantExpression,
   ): NormalizedType | undefined {
-    const c = n._const
+    const c = n.const_
     if (c.tokenType === TOKEN.INTCONSTANT) {
       const val = evaluateConstantExpression(n)!.value
       if (val > 0xffff_ffff) {
