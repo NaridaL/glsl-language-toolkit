@@ -19,7 +19,18 @@ export function resolveNodeDefinition(node: Node): Token | undefined {
     if (node.binding?.parameter) {
       return node.binding.parameter.pName
     } else if (node.binding?.declarator) {
-      return node.binding?.declarator.name
+      return node.binding.declarator.name
+    }
+  } else if (node.kind === "typeSpecifier") {
+    if (node.typeSpecifierNonArrayBinding) {
+      return node.typeSpecifierNonArrayBinding.type.specifier.name
+    }
+  } else if (node.kind === "fieldAccess") {
+    if (
+      node.on.kind === "variableExpression" &&
+      node.on.binding?.type?.kind === "struct"
+    ) {
+      return node.on.binding.type.fields[node.field.image]?.declarator?.name
     }
   }
 }

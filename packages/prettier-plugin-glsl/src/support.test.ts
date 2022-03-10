@@ -72,18 +72,27 @@ describe("definition lookup", () => {
     testFindDeclaration(dedent`
       struct 'S' { float f; };
       void f('S' s) {}`))
+  test("struct as type in array", () =>
+    testFindDeclaration(dedent`
+      struct 'S' { float f; };
+      void f('S'[] s) {}`))
   test("struct as constructor", () =>
     testFindDeclaration(dedent`
       struct 'S' { float f; };
       void f() { S s = 'S'(2.0); }`))
-  test("struct field", () =>
+  test("struct field on variable", () =>
     testFindDeclaration(dedent`
-      struct 'S' { float 'foo'; };
+      struct S { float 'foo'; };
       void f() { S s; s.'foo'; }`))
+  test("struct field on return value", () =>
+    testFindDeclaration(dedent`
+      struct S { float 'foo'; };
+      S[2] s() { S s; return S[](s, s); }
+      void f() { s()[1].'foo'; }`))
   test("struct as constructor field type", () =>
     testFindDeclaration(dedent`
-      struct 'S' { float foo; }
-      struct T { 'S' s; }`))
+      struct 'S' { float foo; };
+      struct T { 'S' s; };`))
   test("function parameter inside macro definition", () =>
     testFindDeclaration(dedent`
       #define DOT2(G) G dot2(G 'a') { return dot('a', a); }`))

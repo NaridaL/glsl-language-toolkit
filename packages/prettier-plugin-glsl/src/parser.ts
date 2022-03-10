@@ -52,13 +52,7 @@ import {
   UniformBlock,
   WhileStatement,
 } from "./nodes"
-import {
-  ALL_TOKENS,
-  checkLexingErrors,
-  GLSL_LEXER,
-  RESERVED_KEYWORDS,
-  TOKEN,
-} from "./lexer"
+import { ALL_TOKENS, checkLexingErrors, GLSL_LEXER, RESERVED_KEYWORDS, TOKEN } from "./lexer"
 import { DEV, ExpandedLocation, substrContext } from "./util"
 import { applyLineContinuations } from "./preprocessor"
 
@@ -828,7 +822,7 @@ class GLSLParser extends EmbeddedActionsParser {
       this.OR([
         {
           GATE: () =>
-            this.LA(1).tokenType === TOKEN.IDENTIFIER &&
+            this.LA(1).tokenType === TOKEN.NON_PP_IDENTIFIER &&
             this.LA(1).image === "defined",
           ALT: () => {
             const op = this.CONSUME(TOKEN.IDENTIFIER)
@@ -1484,6 +1478,16 @@ class GLSLParser extends EmbeddedActionsParser {
     this.ppDefs.push(d)
     return d
   })
+  public ppSingle = this.RR("ppSingle", (): PpNode => {
+    this.CONSUME(TOKEN.HASH)
+    const dir = this.OR([
+      { ALT: () => this.CONSUME(TOKEN.IFDEF) },
+      { ALT: () => this.CONSUME(TOKEN.IFNDEF) },
+    ])
+
+    const token = this.CONSUME(TOKEN.IDENTIFIER)
+    return { kind: "ppDir", dir, tokens: [token], node: undefined }
+  })
   public ppExtension = this.RR("ppExtension", (): PpExtension => {
     this.CONSUME(TOKEN.HASH)
     this.CONSUME(TOKEN.EXTENSION)
@@ -1499,6 +1503,7 @@ class GLSLParser extends EmbeddedActionsParser {
         { ALT: () => this.SUBRULE(this.ppDefine) },
         { ALT: () => this.SUBRULE(this.ppExtension) },
         { ALT: () => this.SUBRULE(this.ppNone) },
+        { ALT: () => this.SUBRULE(this.ppSingle) },
         { ALT: () => this.SUBRULE(this.ppMulti) },
       ]),
   )
@@ -1570,7 +1575,7 @@ class GLSLParser extends EmbeddedActionsParser {
       const firstToken = this.LA(1)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const result = implementation(...args)
-      if (isNode(result) && !result.firstToken) {
+      if (result && isNode(result) && !result.firstToken) {
         this.FINALIZE(result, firstToken)
       }
       return result
@@ -1669,7 +1674,7 @@ function checkTokenErrors(lexingResult: ILexingResult): void {
   }
 
   for (const token of lexingResult.tokens) {
-    if (token.tokenType === TOKEN.IDENTIFIER) {
+    if (token.tokenType === TOKEN.NON_PP_IDENTIFIER) {
       if (token.image.includes("__")) {
         markError(
           token,

@@ -1,6 +1,13 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { createToken, ILexingResult, Lexer, TokenType } from "chevrotain"
+import {
+  createToken,
+  ILexingResult,
+  IToken,
+  Lexer,
+  tokenMatcher,
+  TokenType,
+} from "chevrotain"
 import { pull } from "lodash"
 
 import { DEV, substrContext } from "./util"
@@ -162,21 +169,6 @@ export namespace TOKEN {
     pattern: /\/\*[\s\S]*?\*\//,
     group: "COMMENTS",
   })
-  export const PP = createToken({ name: "PP", pattern: Lexer.NA })
-  const createPP = (name: string, pattern: string) =>
-    createToken({ name, pattern, categories: PP, longer_alt: IDENTIFIER })
-  export const DEFINE = createPP("DEFINE", "define")
-  export const UNDEF = createPP("UNDEF", "undef")
-  export const ENDIF = createPP("ENDIF", "endif")
-  export const IFDEF = createPP("IFDEF", "ifdef")
-  export const IFNDEF = createPP("IFNDEF", "ifndef")
-  export const ELIF = createPP("ELIF", "elif")
-  export const ERROR = createPP("ERROR", "error")
-  export const VERSION = createPP("VERSION", "version")
-  export const PRAGMA = createPP("PRAGMA", "pragma")
-  export const LINE = createPP("LINE", "line")
-  export const EXTENSION = createPP("EXTENSION", "extension")
-  export const HASH = createToken({ name: "HASH", pattern: "#" })
 
   // ASSIGNMENT OPERATORS
   export const MULASSIGN = createToken({
@@ -431,10 +423,45 @@ export namespace TOKEN {
     label: "';'",
   })
 
+  // Category which includes the preprocessor directive tokens such as define,
+  // if etc...
+  // To avoid this category, an alternative solution might be to manually
+  // convert the preprocessor directive tokens to identifier tokens if they are
+  // not part of a preprocessor directive as part of the preprocessing phase.
   export const IDENTIFIER = createToken({
     name: "IDENTIFIER",
-    pattern: /\w[\w\d]*/i,
+    pattern: Lexer.NA,
   })
+  export const NON_PP_IDENTIFIER = createToken({
+    name: "NON_PP_IDENTIFIER",
+    pattern: /\w[\w\d]*/i,
+    categories: IDENTIFIER,
+  })
+
+  export const PP = createToken({
+    name: "PP",
+    pattern: Lexer.NA,
+    categories: IDENTIFIER,
+  })
+  const createPP = (name: string, pattern: string) =>
+    createToken({
+      name,
+      pattern,
+      categories: PP,
+      longer_alt: NON_PP_IDENTIFIER,
+    })
+  export const DEFINE = createPP("DEFINE", "define")
+  export const UNDEF = createPP("UNDEF", "undef")
+  export const ENDIF = createPP("ENDIF", "endif")
+  export const IFDEF = createPP("IFDEF", "ifdef")
+  export const IFNDEF = createPP("IFNDEF", "ifndef")
+  export const ELIF = createPP("ELIF", "elif")
+  export const ERROR = createPP("ERROR", "error")
+  export const VERSION = createPP("VERSION", "version")
+  export const PRAGMA = createPP("PRAGMA", "pragma")
+  export const LINE = createPP("LINE", "line")
+  export const EXTENSION = createPP("EXTENSION", "extension")
+  export const HASH = createToken({ name: "HASH", pattern: "#" })
 
   export const KEYWORD = createToken({ name: "KEYWORD", pattern: Lexer.NA })
   const createKeyword = (const1: string, category?: TokenType) =>
@@ -442,7 +469,7 @@ export namespace TOKEN {
       name: const1,
       pattern: const1.toLowerCase(),
       label: "'" + const1.toLowerCase() + "'",
-      longer_alt: IDENTIFIER,
+      longer_alt: NON_PP_IDENTIFIER,
       categories: category ? [KEYWORD, category] : KEYWORD,
     })
 
@@ -483,7 +510,7 @@ export namespace TOKEN {
     createToken({
       name: t.toUpperCase(),
       pattern: t,
-      longer_alt: IDENTIFIER,
+      longer_alt: NON_PP_IDENTIFIER,
       categories: BASIC_TYPE,
     })
   export const BOOL = createBasicType("bool")
@@ -495,7 +522,7 @@ export namespace TOKEN {
   export const MAT2X2 = createToken({
     name: "mat2x2".toUpperCase(),
     pattern: /mat2(?:x2)?/,
-    longer_alt: IDENTIFIER,
+    longer_alt: NON_PP_IDENTIFIER,
     categories: BASIC_TYPE,
     label: "mat2",
   })
@@ -504,7 +531,7 @@ export namespace TOKEN {
   export const MAT3X3 = createToken({
     name: "mat3x3".toUpperCase(),
     pattern: /mat3(?:x3)?/,
-    longer_alt: IDENTIFIER,
+    longer_alt: NON_PP_IDENTIFIER,
     categories: BASIC_TYPE,
     label: "mat3",
   })
@@ -513,7 +540,7 @@ export namespace TOKEN {
   export const MAT4X4 = createToken({
     name: "MAT4X4",
     pattern: /mat4(?:x4)?/,
-    longer_alt: IDENTIFIER,
+    longer_alt: NON_PP_IDENTIFIER,
     categories: BASIC_TYPE,
     label: "mat4",
   })
@@ -549,7 +576,7 @@ export namespace TOKEN {
   export const BOOLCONSTANT = createToken({
     name: "BOOLCONSTANT",
     pattern: /true|false/,
-    longer_alt: IDENTIFIER,
+    longer_alt: NON_PP_IDENTIFIER,
     categories: CONSTANT,
   })
   export const FLOATCONSTANT = createToken({
@@ -575,10 +602,11 @@ export namespace TOKEN {
 }
 // IDENTIFIER needs to go last, but must be declared first
 // so it can be referenced in longerAlt
-export const ALL_TOKENS = pull(Object.values(TOKEN), TOKEN.IDENTIFIER).flatMap(
-  (x) => (Array.isArray(x) ? x : [x]),
-)
-ALL_TOKENS.push(TOKEN.IDENTIFIER)
+export const ALL_TOKENS = pull(
+  Object.values(TOKEN),
+  TOKEN.NON_PP_IDENTIFIER,
+).flatMap((x) => (Array.isArray(x) ? x : [x]))
+ALL_TOKENS.push(TOKEN.NON_PP_IDENTIFIER)
 
 export const GLSL_LEXER = new Lexer(ALL_TOKENS, { ensureOptimizations: DEV })
 
@@ -602,6 +630,10 @@ export function checkLexingErrors(input: string, lexingResult: ILexingResult) {
           .join(),
     )
   }
+}
+
+export function isIdentifier(token: IToken): boolean {
+  return tokenMatcher(token, TOKEN.IDENTIFIER)
 }
 
 export function lex(input: string) {

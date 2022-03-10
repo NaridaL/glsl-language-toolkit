@@ -1,4 +1,4 @@
-import { EOF, tokenMatcher } from "chevrotain"
+import { EOF } from "chevrotain"
 import { noop } from "lodash"
 
 import {
@@ -39,7 +39,7 @@ const PREPROC_EVALUATOR = new (class extends AbstractVisitor<int32> {
 
   protected unaryExpression(n: UnaryExpression): int32 {
     switch (n.op.tokenType) {
-      case TOKEN.IDENTIFIER:
+      case TOKEN.NON_PP_IDENTIFIER:
         // must be "defined"
         return +this.isDefined((n.on as VariableExpression).var.image)
       case TOKEN.DASH:
@@ -80,7 +80,7 @@ const PREPROC_EVALUATOR = new (class extends AbstractVisitor<int32> {
 
 function isPreprocIdentifier(t: Token) {
   return (
-    t.tokenType === TOKEN.IDENTIFIER ||
+    t.tokenType === TOKEN.NON_PP_IDENTIFIER ||
     t.tokenType.CATEGORIES?.includes(TOKEN.KEYWORD) ||
     t.tokenType.CATEGORIES?.includes(TOKEN.BASIC_TYPE)
   )
@@ -497,7 +497,7 @@ export function preprocMacros(
 
   function recurse(outputting: boolean): void {
     for (; i < tokens.length; i++) {
-      if (tokenMatcher(la(), TOKEN.HASH)) {
+      if (la().tokenType === TOKEN.HASH) {
         if (i > 0 && la(-1).endLine === la().startLine) {
           markError(
             "P0001",

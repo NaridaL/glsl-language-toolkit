@@ -22,7 +22,7 @@ test("parse multi-dim array", () => {
                 {
                   arraySpecifier: undefined,
 
-                  firstToken: "IDENTIFIER(ff) 22-23",
+                  firstToken: "NON_PP_IDENTIFIER(ff) 22-23",
                   init: {
                     args: [
                       {
@@ -67,7 +67,7 @@ test("parse multi-dim array", () => {
                   },
                   kind: "declarator",
                   lastToken: "RIGHT_PAREN()) 42-42",
-                  name: "IDENTIFIER(ff) 22-23",
+                  name: "NON_PP_IDENTIFIER(ff) 22-23",
                 },
               ],
               firstToken: "FLOAT(float) 13-17",
@@ -106,7 +106,7 @@ test("parse multi-dim array", () => {
         firstToken: "VOID(void) 0-3",
         kind: "functionDefinition",
         lastToken: "RIGHT_BRACE(}) 45-45",
-        name: "IDENTIFIER(foo) 5-7",
+        name: "NON_PP_IDENTIFIER(foo) 5-7",
         params: [],
         returnType: {
           firstToken: "VOID(void) 0-3",
@@ -129,6 +129,10 @@ test("parse multi-dim array", () => {
     kind: "translationUnit",
     lastToken: "RIGHT_BRACE(}) 45-45",
   })
+})
+
+test("calling a variable ifdef works", () => {
+  parseInput("float defined = 2.0;")
 })
 
 test("findPositionNode", () => {

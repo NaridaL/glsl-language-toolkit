@@ -10,7 +10,6 @@ import {
   ArrayAccess,
   ArraySpecifier,
   AssignmentExpression,
-  BaseNode,
   BinaryExpression,
   CommaExpression,
   CompoundStatement,
@@ -42,16 +41,10 @@ import {
   VariableExpression,
   WhileStatement,
 } from "./nodes"
-import { doOp, TOKEN } from "./lexer"
+import { doOp, isIdentifier, TOKEN } from "./lexer"
 import { applyBuiltinFunction, Matrix } from "./builtins"
 import { parseInput } from "./parser"
-import {
-  allDefined,
-  assertNever,
-  CheckError,
-  mapExpandedLocation,
-  safeMap,
-} from "./util"
+import { allDefined, assertNever, CheckError, mapExpandedLocation, safeMap } from "./util"
 import { ERRORS } from "./errors"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
@@ -673,6 +666,14 @@ declare module "./nodes" {
   export interface FunctionPrototype extends BaseNode {
     returnTypeResolved?: NormalizedType
   }
+
+  export interface TypeSpecifier extends BaseNode {
+    typeSpecifierNonArrayBinding?: StructBinding
+  }
+
+  export interface BaseNode {
+    resolvedType?: NormalizedType
+  }
 }
 
 interface Scope {
@@ -731,7 +732,7 @@ function findMatchingFunctionDefinition(
 
 function getGenTypes(ts: TypeSpecifier): TokenType[] | undefined {
   return isToken(ts.typeSpecifierNonArray) &&
-    ts.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER
+    ts.typeSpecifierNonArray.tokenType === TOKEN.NON_PP_IDENTIFIER
     ? GEN_TYPES[ts.typeSpecifierNonArray.image]
     : undefined
 }
@@ -830,10 +831,7 @@ class BinderVisitor extends AbstractVisitor<any> {
     super.functionCall(n)
     const ts = n.callee
     if (isToken(ts.typeSpecifierNonArray)) {
-      if (
-        ts.typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER &&
-        !ts.arraySpecifier
-      ) {
+      if (isIdentifier(ts.typeSpecifierNonArray) && !ts.arraySpecifier) {
         // this could be a regular function call (not a constructor)
         const b = this.resolve(ts.typeSpecifierNonArray.image)
         if (b?.kind === "function") {
@@ -1035,13 +1033,13 @@ class BinderVisitor extends AbstractVisitor<any> {
     const typeSpecifierNonArray = typeSpecifier.typeSpecifierNonArray
     let result: NormalizedType | undefined
     if (isToken(typeSpecifierNonArray)) {
-      if (typeSpecifierNonArray.tokenType === TOKEN.IDENTIFIER) {
+      if (isIdentifier(typeSpecifierNonArray)) {
         // refers to a struct
         const binding = this.resolve(typeSpecifierNonArray.image)
         if (binding?.kind === "struct") {
           result = binding.type
+          typeSpecifier.typeSpecifierNonArrayBinding = binding
         } else if (binding) {
-          // TODO markError
           markError(
             typeSpecifierNonArray,
             typeSpecifierNonArray.image + " refers to TODO, not a struct",
@@ -1525,7 +1523,8 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
           op === n.op.tokenType && lhs === lType.type && rhs === rType.type,
       )
       if (validOp) {
-        return { kind: "basic", type: validOp[3] }
+        n.resolvedType = { kind: "basic", type: validOp[3] }
+        return n.resolvedType
       } else {
         markErr(n)
       }
@@ -1657,19 +1656,20 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
           markError(n.index, "S0021")
         }
       }
-      return oType.of
+      n.resolvedType = oType.of
       // TODO: if constant expression, check array access size
     } else if (oType?.kind === "basic") {
       const vecElem = getVectorElementType(oType.type)
       const mDim = getMatrixDimensions(oType.type)
       if (vecElem) {
-        return { kind: "basic", type: vecElem }
+        n.resolvedType = { kind: "basic", type: vecElem }
       } else if (mDim) {
         // return column
         const [, mRows] = mDim
-        return BasicType(getVectorType(TOKEN.FLOAT, mRows))
+        n.resolvedType = BasicType(getVectorType(TOKEN.FLOAT, mRows))
       }
     }
+    return n.resolvedType
   }
 
   protected variableExpression(
@@ -1714,6 +1714,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
       const f = n.field.image
       const field = oType.fields[f]
       if (field) {
+        n.resolvedType = field.type
         return field.type
       } else {
         markError(
