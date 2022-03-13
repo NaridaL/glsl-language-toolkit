@@ -11,6 +11,7 @@ import {
 } from "prettier"
 import * as doc from "prettier/doc"
 import { IToken, TokenType } from "chevrotain"
+import { findLast } from "lodash"
 
 import {
   AbstractVisitor,
@@ -25,7 +26,18 @@ import {
 } from "./nodes"
 import { TOKEN } from "./lexer"
 import { parseInput } from "./parser"
-import isNextLineEmpty = util.isNextLineEmpty
+
+interface PrettierComment extends Token {
+  leading: boolean
+  trailing: boolean
+  printed: boolean
+}
+
+declare module "./nodes" {
+  interface BaseNode {
+    comments?: PrettierComment[]
+  }
+}
 
 const {
   utils: { propagateBreaks },
@@ -63,20 +75,43 @@ export const CHILDREN_VISITOR: AbstractVisitor<Node[]> & {
 })() as any
 
 export const languages: SupportInfo["languages"] = [
-  { name: "glsl", parsers: ["glsl-parser"] },
+  {
+    name: "glsl",
+    parsers: ["glsl-parser"],
+    // https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
+    extensions: [
+      ".glsl",
+      ".fp",
+      ".frag",
+      ".frg",
+      ".fs",
+      ".fsh",
+      ".fshader",
+      ".geo",
+      ".geom",
+      ".glslf",
+      ".glslv",
+      ".gs",
+      ".gshader",
+      ".rchit",
+      ".rmiss",
+      ".shader",
+      ".tesc",
+      ".tese",
+      ".vert",
+      ".vrx",
+      ".vsh",
+      ".vshader",
+    ],
+  },
 ]
 
 function locEnd(node: Node | IToken) {
-  return (
-    (isToken(node)
-      ? node
-      : (node as unknown as { lastToken: IToken }).lastToken
-    ).endOffset! + 1
-  )
+  return (isToken(node) ? node : node.lastToken!).endOffset! + 1
 }
 
 export const parsers: Plugin<Node | IToken>["parsers"] = {
-  "glsl-parse": {
+  "glsl-parser": {
     parse(text, parsers, options) {
       const translationUnit = parseInput(text)
       translationUnit.comments?.forEach(
@@ -86,11 +121,7 @@ export const parsers: Plugin<Node | IToken>["parsers"] = {
     },
     astFormat: "glsl-ast",
     locStart(node: Node | IToken) {
-      return (
-        isToken(node)
-          ? node
-          : (node as unknown as { firstToken: IToken }).firstToken
-      ).startOffset
+      return (isToken(node) ? node : node.firstToken!).startOffset
     },
     locEnd,
   },
@@ -281,6 +312,36 @@ function formatMacroDefinition(
     )
 }
 
+function printDanglingComments(
+  path: AstPath,
+  options: any,
+  sameIndent: any,
+  filter: (arg0: any) => any,
+) {
+  const parts: Doc = []
+  const node = path.getValue() as Node
+
+  if (!node || !node.comments) {
+    return ""
+  }
+
+  path.each(() => {
+    const comment = path.getValue() as PrettierComment
+    if (!comment.leading && !comment.trailing && (!filter || filter(comment))) {
+      parts.push(printComment(path, options))
+    }
+  }, "comments")
+
+  if (parts.length === 0) {
+    return ""
+  }
+
+  if (sameIndent) {
+    return join(hardline, parts)
+  }
+  return indent([hardline, join(hardline, parts)])
+}
+
 export const printers: Plugin<Node | IToken>["printers"] = {
   "glsl-ast": {
     print(
@@ -296,8 +357,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
       if (isToken(n)) {
         return n.image
       }
-      const p = <N extends Node, S extends keyof N>(_: N, s: S) =>
-        path.call(print, s)
+      const p = <N extends Node>(s: keyof N) => path.call(print, s)
 
       const tok = <N extends Node>(
         n: N,
@@ -323,7 +383,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                 x.push(hardline)
               }
               x.push(print(path))
-              if (isNextLineEmpty(options.originalText, value, locEnd)) {
+              if (util.isNextLineEmpty(options.originalText, value, locEnd)) {
                 x.push(hardline)
               }
             }, "declarations")
@@ -332,17 +392,18 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           }
           case "precisionDeclaration":
             return [
-              "precision",
+              "precision ",
               n.precisionQualifier.image,
+              " ",
               path.call(print, "typeSpecifierNoPrec"),
               ";",
             ]
           case "fullySpecifiedType": {
             const parts: Doc = []
             if (n.typeQualifier) {
-              parts.push(p(n, "typeQualifier"))
+              parts.push(p<typeof n>("typeQualifier"))
             }
-            parts.push(p(n, "typeSpecifier"))
+            parts.push(p<typeof n>("typeSpecifier"))
             return parts
           }
           case "typeSpecifier": {
@@ -350,9 +411,9 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             if (n.precisionQualifier) {
               parts.push(n.precisionQualifier.image, " ")
             }
-            parts.push(p(n, "typeSpecifierNonArray"))
+            parts.push(p<typeof n>("typeSpecifierNonArray"))
             if (n.arraySpecifier) {
-              parts.push(p(n, "arraySpecifier"))
+              parts.push(p<typeof n>("arraySpecifier"))
             }
             return parts
           }
@@ -365,10 +426,10 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               parts.push(n.interpolationQualifier.image, " ")
             }
             if (n.layoutQualifier) {
-              parts.push(p(n, "layoutQualifier"), " ")
+              parts.push(p<typeof n>("layoutQualifier"), " ")
             }
             if (n.storageQualifier) {
-              parts.push(p(n, "storageQualifier"))
+              parts.push(p<typeof n>("storageQualifier"))
             }
             return parts
           }
@@ -402,9 +463,9 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "functionDefinition":
             return [
               group([
-                p(n, "returnType"),
+                p<typeof n>("returnType"),
                 " ",
-                p(n, "name"),
+                p<typeof n>("name"),
                 "(",
                 indent([
                   softline,
@@ -413,33 +474,33 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                 softline,
                 ")",
               ]),
-              n.kind === "functionPrototype" ? ";" : [" ", p(n, "body")],
+              n.kind === "functionPrototype" ? ";" : [" ", p<typeof n>("body")],
             ]
           case "parameterDeclaration":
             return [
               n.parameterTypeQualifier
-                ? [p(n, "parameterTypeQualifier"), " "]
+                ? [p<typeof n>("parameterTypeQualifier"), " "]
                 : "",
               n.parameterQualifier?.tokenType === TOKEN.OUT ||
               n.parameterQualifier?.tokenType === TOKEN.INOUT
                 ? n.parameterQualifier?.image + " "
                 : "",
-              p(n, "typeSpecifier"),
+              p<typeof n>("typeSpecifier"),
               " ",
-              p(n, "pName"),
-              p(n, "arraySpecifier"),
+              p<typeof n>("pName"),
+              p<typeof n>("arraySpecifier"),
             ]
           case "initDeclaratorListDeclaration":
           case "structDeclaration":
             return group([
-              p(n, "fsType"),
+              p<typeof n>("fsType"),
               " ",
               indent(join([",", line], path.map(print, "declarators"))),
               ";",
             ])
           case "declarator": {
-            const name = p(n, "name")
-            const arraySpecifier = p(n, "arraySpecifier")
+            const name = p<typeof n>("name")
+            const arraySpecifier = p<typeof n>("arraySpecifier")
             if (!n.init) {
               return [name, arraySpecifier]
             } else {
@@ -450,24 +511,24 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                 arraySpecifier,
                 " =",
                 group(indent(line), { id: groupId }),
-                indentIfBreak(p(n, "init"), { groupId }),
+                indentIfBreak(p<typeof n>("init"), { groupId }),
               ])
             }
           }
           case "arraySpecifier":
-            return ["[", p(n, "size"), "]"]
+            return ["[", p<typeof n>("size"), "]"]
           case "arrayAccess":
             return [
-              paren(p(n, "on"), getPrecedence(n.on, inMacro) > 2),
+              paren(p<typeof n>("on"), getPrecedence(n.on, inMacro) > 2),
               "[",
-              p(n, "index"),
+              p<typeof n>("index"),
               "]",
             ]
           case "structSpecifier":
             return group([
               "struct",
               " ",
-              p(n, "name"),
+              p<typeof n>("name"),
               " ",
               "{",
               indent([
@@ -480,21 +541,42 @@ export const printers: Plugin<Node | IToken>["printers"] = {
 
           ///////// STATEMENTS
           case "compoundStatement": {
-            const x: Doc = []
+            const parts: Doc = []
+
+            const nodeHasComment = !!n.comments?.some(
+              (c) => !c.leading && !c.trailing && !c.printed,
+            )
 
             path.each((path, index, statements) => {
               const value = path.getValue()
-              x.push(hardline)
-              x.push(print(path))
-              if (isNextLineEmpty(options.originalText, value, locEnd)) {
-                x.push(hardline)
+              if (index !== 0) {
+                parts.push(hardline)
+              }
+              parts.push(print(path))
+              if (util.isNextLineEmpty(options.originalText, value, locEnd)) {
+                parts.push(hardline)
               }
             }, "statements")
 
-            return group(["{", indent(x), line, "}"])
+            // print dangling comments
+            if (nodeHasComment) {
+              path.each((path) => {
+                const comment = path.getValue() as unknown as PrettierComment
+                if (!comment.leading && !comment.trailing) {
+                  parts.push(printComment(path, options))
+                  comment.printed = true
+                }
+              }, "comments")
+            }
+
+            return group([
+              "{",
+              parts.length ? [indent([hardline, parts]), hardline] : "",
+              "}",
+            ])
           }
           case "returnStatement": {
-            const what = p(n, "what")
+            const what = p<typeof n>("what")
             return ["return", " ", what, ";"]
             // return ["return", " ", conditionalGroup([what, indent(what)]), ";"]
           }
@@ -506,23 +588,30 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             return "discard;"
           case "selectionStatement": {
             const parts: Doc[] = []
-            const yes = adjustClause(n.yes, p(n, "yes"), false)
+            const yes = adjustClause(n.yes, p<typeof n>("yes"), false)
             const opening = group([
               "if (",
-              group([indent([softline, p(n, "condition")]), softline]),
+              group([indent([softline, p<typeof n>("condition")]), softline]),
               ")",
               yes,
             ])
             parts.push(opening)
             if (n.no) {
-              const elseOnSameLine = n.yes.kind === "compoundStatement"
+              const commentOnOwnLine =
+                n.yes.comments?.some(
+                  (c) => c.trailing && c.tokenType === TOKEN.LINE_COMMENT,
+                ) ||
+                findLast(n.yes.comments, (c) => !c.leading && !c.trailing)
+                  ?.tokenType === TOKEN.LINE_COMMENT
+              const elseOnSameLine =
+                n.yes.kind === "compoundStatement" && !commentOnOwnLine
               parts.push(elseOnSameLine ? " " : hardline)
               parts.push(
                 "else",
                 group(
                   adjustClause(
                     n.no,
-                    p(n, "no"),
+                    p<typeof n>("no"),
                     n.no.kind === "selectionStatement",
                   ),
                 ),
@@ -530,50 +619,81 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             }
             return parts
           }
-          case "forStatement":
+          case "forStatement": {
+            const statement = adjustClause(
+              n.statement,
+              p<typeof n>("statement"),
+              false,
+            )
+
+            // We want to keep dangling comments above the loop to stay consistent.
+            // Any comment positioned between the for statement and the parentheses
+            // is going to be printed before the statement.
+            // const dangling = printDanglingComments(
+            //   path,
+            //   options,
+            //   /* sameLine */ true,
+            // )
+            // TODO
+            const dangling = false
+            const printedComments = dangling ? [dangling, softline] : ""
+
+            if (
+              n.initExpression.kind === "expressionStatement" &&
+              !n.initExpression.expression &&
+              !n.conditionExpression &&
+              !n.loopExpression
+            ) {
+              return [printedComments, group(["for (;;)", statement])]
+            }
             return [
+              printedComments,
               group([
-                tok(n, TOKEN.FOR),
-                " ",
-                tok(n, TOKEN.LEFT_PAREN),
-                indent([
+                "for (",
+                group([
+                  indent([
+                    softline,
+                    p<typeof n>("initExpression"),
+                    line,
+                    p<typeof n>("conditionExpression"),
+                    ";",
+                    line,
+                    p<typeof n>("loopExpression"),
+                  ]),
                   softline,
-                  p(n, "initExpression"),
-                  line,
-                  p(n, "conditionExpression"),
-                  tok(n, TOKEN.SEMICOLON),
-                  line,
-                  p(n, "loopExpression"),
                 ]),
-                softline,
-                tok(n, TOKEN.RIGHT_PAREN),
+                ")",
+                statement,
               ]),
-              n.statement.kind === "compoundStatement"
-                ? [" ", p(n, "statement")]
-                : group([indent([line, p(n, "statement")])]),
             ]
-          case "whileStatement":
+          }
+          case "whileStatement": {
+            const statement = adjustClause(
+              n.statement,
+              p<typeof n>("statement"),
+              false,
+            )
             return [
               "while (",
-              // p(n, "conditionExpression"),
-              "true",
-              ") ",
-              p(n, "statement"),
+              group(p<typeof n>("conditionExpression")),
+              ")",
+              statement,
             ]
+          }
           case "doWhileStatement":
             return [
               "do",
-              p(n, "statement"),
+              p<typeof n>("statement"),
               "while",
               "(",
-              p(n, "conditionExpression"),
+              group(p<typeof n>("conditionExpression")),
               ")",
             ]
 
           ////////// EXPRESSIONS
           case "functionCall":
             return group([
-              p(n, "callee"),
+              p<typeof n>("callee"),
               "(",
               indent([softline, join([",", line], path.map(print, "args"))]),
               softline,
@@ -581,37 +701,44 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             ])
           case "methodCall":
             return [
-              paren(p(n, "on"), getPrecedence(n.on, inMacro) > 2),
+              paren(p<typeof n>("on"), getPrecedence(n.on, inMacro) > 2),
               ".",
-              p(n, "functionCall"),
+              p<typeof n>("functionCall"),
             ]
           case "postfixExpression":
             return [
-              paren(p(n, "on"), getPrecedence(n.on, inMacro) > 2),
-              p(n, "op"),
+              paren(p<typeof n>("on"), getPrecedence(n.on, inMacro) > 2),
+              p<typeof n>("op"),
             ]
           case "unaryExpression":
             return [
-              p(n, "op"),
-              paren(p(n, "on"), getPrecedence(n.on, inMacro) > 3),
+              p<typeof n>("op"),
+              paren(p<typeof n>("on"), getPrecedence(n.on, inMacro) > 3),
             ]
           case "assignmentExpression": {
             const groupId = Symbol("assignment")
             return group([
-              p(n, "lhs"),
+              p<typeof n>("lhs"),
               " ",
-              p(n, "op"),
+              p<typeof n>("op"),
               group(indent(line), { id: groupId }),
-              indentIfBreak(p(n, "rhs"), { groupId }),
+              indentIfBreak(p<typeof n>("rhs"), { groupId }),
             ])
           }
           case "conditionalExpression":
             return [
               paren(
-                p(n, "condition"),
+                p<typeof n>("condition"),
                 getPrecedence(n.condition, inMacro) >= 15,
               ),
-              indent([line, "? ", p(n, "yes"), line, ": ", p(n, "no")]),
+              indent([
+                line,
+                "? ",
+                p<typeof n>("yes"),
+                line,
+                ": ",
+                p<typeof n>("no"),
+              ]),
             ]
           case "commaExpression":
           case "binaryExpression": {
@@ -656,12 +783,12 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           }
 
           case "expressionStatement":
-            return [p(n, "expression"), ";"]
+            return [p<typeof n>("expression"), ";"]
           case "fieldAccess":
             return [
-              paren(p(n, "on"), getPrecedence(n.on, inMacro) > 2),
+              paren(p<typeof n>("on"), getPrecedence(n.on, inMacro) > 2),
               ".",
-              p(n, "field"),
+              p<typeof n>("field"),
             ]
           case "constantExpression": {
             const c = n.const_
@@ -677,14 +804,14 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             const doc = group([
               "#define",
               " ",
-              p(n, "what"),
+              p<typeof n>("what"),
               n.params
                 ? ["(", join([", "], path.map(print, "params")), ")"]
                 : "",
               indent([
                 line,
                 n.node
-                  ? paren(p(n, "node"), isExpression(n.node))
+                  ? paren(p<typeof n>("node"), isExpression(n.node))
                   : fill(join(line, path.map(print, "tokens")).parts),
               ]),
             ])
@@ -699,7 +826,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                 " ",
                 indent(
                   n.node
-                    ? p(n, "node")
+                    ? p<typeof n>("node")
                     : fill(join(line, path.map(print, "tokens")).parts),
                 ),
               ]),
@@ -749,43 +876,44 @@ export const printers: Plugin<Node | IToken>["printers"] = {
     canAttachComment(_node) {
       return true
     },
-    printComment(
-      // Path to the current comment node
-      commentPath: AstPath,
-      // Current options
-      options,
-    ): Doc {
-      const n = commentPath.getValue() as Token
-      if (n.tokenType === TOKEN.MULTILINE_COMMENT && n.image[2] === "*") {
-        const src = n.image
-          .substring(3, n.image.length - 2)
-          .split("\n")
-          .map((l: string) =>
-            l === " *" ? "" : l.startsWith(" * ") ? l.substring(3) : l,
-          )
-          .join("\n")
-          .trim()
-        const formattedSource = format(src, {
-          ...options,
-          printWidth: options.printWidth - 3,
-          parser: "markdown",
-          proseWrap: "always",
-          plugins: [],
-        })
-        const formattedSourceLines = formattedSource.split("\n")
-        // Remove the final newline which markdown formatter always adds.
-        formattedSourceLines.pop()
-
-        const e = n.endOffset!
-        return (
-          "/**\n" +
-          formattedSourceLines
-            .map((l) => (l === "" ? " *" : " * " + l))
-            .join("\n") +
-          "\n */"
-        )
-      }
-      return n.image
-    },
+    printComment,
   },
+}
+
+function printComment(
+  // Path to the current comment node
+  commentPath: AstPath,
+  // Current options
+  options: ParserOptions<Node | IToken>,
+): Doc {
+  const n = commentPath.getValue() as Token
+  if (n.tokenType === TOKEN.MULTILINE_COMMENT && n.image[2] === "*") {
+    const src = n.image
+      .substring(3, n.image.length - 2)
+      .split("\n")
+      .map((l: string) =>
+        l === " *" ? "" : l.startsWith(" * ") ? l.substring(3) : l,
+      )
+      .join("\n")
+      .trim()
+    const formattedSource = format(src, {
+      ...options,
+      printWidth: options.printWidth - 3,
+      parser: "markdown",
+      proseWrap: "always",
+      plugins: [],
+    })
+    const formattedSourceLines = formattedSource.split("\n")
+    // Remove the final newline which markdown formatter always adds.
+    formattedSourceLines.pop()
+
+    return (
+      "/**\n" +
+      formattedSourceLines
+        .map((l) => (l === "" ? " *" : " * " + l))
+        .join("\n") +
+      "\n */"
+    )
+  }
+  return n.image
 }

@@ -986,16 +986,16 @@ gvec4 textureProjOffset(gsampler3D sampler, vec4 P, ivec3 offset);
 gvec4 textureProjOffset(gsampler3D sampler, vec4 P, ivec3 offset, float bias);
 
 float textureProjOffset(
-sampler2DShadow sampler,
-vec4 P,
-ivec2 offset,
-float bias
+  sampler2DShadow sampler,
+  vec4 P,
+  ivec2 offset,
+  float bias
 );
 float textureProjOffset(
-sampler2DShadow sampler,
-vec4 P,
-ivec2 offset,
-float bias
+  sampler2DShadow sampler,
+  vec4 P,
+  ivec2 offset,
+  float bias
 );
 
 /**
@@ -1005,16 +1005,16 @@ float bias
 gvec4 textureLodOffset(gsampler2D sampler, vec2 P, float lod, ivec2 offset);
 gvec4 textureLodOffset(gsampler3D sampler, vec3 P, float lod, ivec3 offset);
 float textureLodOffset(
-sampler2DShadow sampler,
-vec3 P,
-float lod,
-ivec2 offset
+  sampler2DShadow sampler,
+  vec3 P,
+  float lod,
+  ivec2 offset
 );
 gvec4 textureLodOffset(
-gsampler2DArray sampler,
-vec3 P,
-float lod,
-ivec2 offset
+  gsampler2DArray sampler,
+  vec3 P,
+  float lod,
+  ivec2 offset
 );
 
 /**
@@ -1036,10 +1036,10 @@ gvec4 textureProjLodOffset(gsampler2D sampler, vec4 P, float lod, ivec2 offset);
 gvec4 textureProjLodOffset(gsampler3D sampler, vec4 P, float lod, ivec3 offset);
 
 float textureProjLodOffset(
-sampler2DShadow sampler,
-vec4 P,
-float lod,
-ivec2 offset
+  sampler2DShadow sampler,
+  vec4 P,
+  float lod,
+  ivec2 offset
 );
 
 /**
@@ -1070,40 +1070,40 @@ float textureGrad(sampler2DArrayShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy);
  * `textureGrad` and `textureOffset`.
  */
 gvec4 textureGradOffset(
-gsampler2D sampler,
-vec2 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  gsampler2D sampler,
+  vec2 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 gvec4 textureGradOffset(
-gsampler3D sampler,
-vec3 P,
-vec3 dPdx,
-vec3 dPdy,
-ivec3 offset
+  gsampler3D sampler,
+  vec3 P,
+  vec3 dPdx,
+  vec3 dPdy,
+  ivec3 offset
 );
 
 float textureGradOffset(
-sampler2DShadow sampler,
-vec3 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  sampler2DShadow sampler,
+  vec3 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 gvec4 textureGradOffset(
-gsampler2DArray sampler,
-vec3 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  gsampler2DArray sampler,
+  vec3 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 float textureGradOffset(
-sampler2DArrayShadow sampler,
-vec4 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  sampler2DArrayShadow sampler,
+  vec4 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 
 /**
@@ -1121,32 +1121,32 @@ float textureProjGrad(sampler2DShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy);
  * textureProjGrad, as well as with offset, as described in textureOffset.
  */
 gvec4 textureProjGradOffset(
-gsampler2D sampler,
-vec3 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  gsampler2D sampler,
+  vec3 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 gvec4 textureProjGradOffset(
-gsampler2D sampler,
-vec4 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  gsampler2D sampler,
+  vec4 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 gvec4 textureProjGradOffset(
-gsampler3D sampler,
-vec4 P,
-vec3 dPdx,
-vec3 dPdy,
-ivec3 offset
+  gsampler3D sampler,
+  vec4 P,
+  vec3 dPdx,
+  vec3 dPdy,
+  ivec3 offset
 );
 float textureProjGradOffset(
-sampler2DShadow sampler,
-vec4 P,
-vec2 dPdx,
-vec2 dPdy,
-ivec2 offset
+  sampler2DShadow sampler,
+  vec4 P,
+  vec2 dPdx,
+  vec2 dPdy,
+  ivec2 offset
 );
 
 /**

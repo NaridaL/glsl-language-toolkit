@@ -1,10 +1,19 @@
 {
   "name": "prettier-plugin-glsl",
-  "version": "1.0.0",
-  "description": "",
-  "main": "out/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NaridaL/glsl-language-toolkit.git",
+    "directory": "packages/prettier-plugin-glsl"
+  },
+  "files": [
+    "src",
+    "lib"
+  ],
+  "version": "0.0.1-alpha.0",
+  "description": "Prettier (https://prettier.io) plugin for GLSL (Open GL Shading Language).",
+  "exports": "./lib/prettier-plugin.cjs.js",
   "type": "commonjs",
-  "types": "out/index.d.ts",
+  "types": "lib/prettier-plugin.d.ts",
   "scripts": {
     "test": "jest",
     "test-watch": "jest --watch",
@@ -12,19 +21,21 @@
     "lint": "eslint src --ext ts",
     "lint-fix": "eslint src --ext ts --fix",
     "build": "rollup --config",
-    "clean": "",
+    "clean": "rimraf lib",
     "fmt": "prettier --write ."
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Adrian Leonhard",
+  "license": "MIT",
   "dependencies": {
     "@netflix/nerror": "^1.1.3",
     "@types/dedent": "^0.7.0",
     "chevrotain": "^10.1.2",
     "colors": "^1.4.0",
-    "lodash": "^4.17.21",
-    "prettier": "^2.5.1"
+    "lodash": "^4.17.21"
+  },
+  "peerDependencies": {
+    "prettier": "^2.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.3.1",

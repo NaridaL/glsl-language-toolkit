@@ -1180,7 +1180,7 @@ class GLSLParser extends EmbeddedActionsParser {
           ALT: (): ForStatement => {
             this.CONSUME3(TOKEN.FOR)
             this.CONSUME3(TOKEN.LEFT_PAREN)
-            const initExpression = this.OR3([
+            const initExpression = this.OR3<Statement>([
               {
                 GATE: this.BACKTRACK(this.initDeclaratorList),
                 ALT: () => this.SUBRULE(this.initDeclaratorList),

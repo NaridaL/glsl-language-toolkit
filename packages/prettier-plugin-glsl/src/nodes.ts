@@ -182,7 +182,8 @@ export interface WhileStatement extends BaseNode {
 
 export interface ForStatement extends BaseNode {
   kind: "forStatement"
-  initExpression: Expression | undefined
+  // initExpression includes semicolon for parsing reasons.
+  initExpression: Statement
   conditionExpression: Expression | InitDeclaratorListDeclaration | undefined
   loopExpression: Expression | undefined
   statement: Statement

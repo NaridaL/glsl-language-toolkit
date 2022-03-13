@@ -4,22 +4,18 @@ import typescript from "typescript"
 import { terser } from "rollup-plugin-terser"
 
 const pkg = require("./package.json")
+let compress = false
 export default [
   {
-    input: "src/index.test.ts",
-    output: [
-      ["es", false],
-      ["es", true],
-      ["commonjs", false],
-    ].map(([format, compress]) => ({
-      format: format,
+    input: "src/prettier-plugin.ts",
+    output: {
+      format: "commonjs",
       entryFileNames: "[name].[format]" + (compress ? ".min" : "") + ".js",
       sourcemap: true,
       sourcemapExcludeSources: true,
       dir: "lib",
       exports: "named",
       globals: {
-        "javasetmap.ts": "javasetmap_ts",
         chevrotain: "chevrotain",
         lodash: "lodash",
       },
@@ -38,9 +34,15 @@ export default [
             }),
           ]
         : [],
-    })),
+    },
     external: Object.keys(pkg.dependencies || {}),
-    plugins: [typescriptPlugin({ typescript })].filter((x) => x),
+    plugins: [
+      typescriptPlugin({
+        typescript,
+        tsconfig: "tsconfig.build.json",
+        outDir: "lib",
+      }),
+    ].filter((x) => x),
     onwarn: function (warning, warn) {
       if ("THIS_IS_UNDEFINED" === warning.code) return
       if ("CIRCULAR_DEPENDENCY" === warning.code) {

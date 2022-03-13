@@ -11,7 +11,7 @@ import fileSize = require("filesize")
 
 function fmt(source: string, printWidth = 80): string {
   return prettier.format(source, {
-    parser: "glsl-parse",
+    parser: "glsl-parser",
     plugins: [prettierPlugin],
 
     printWidth,
@@ -46,9 +46,6 @@ function loadFixture(fixture: string): string {
  *   w
  */
 
-test("prettier", () => {
-  testFormat("void foo(){return ha;}", "void foo() { return ha; }")
-})
 test("chained binary expressions all break on same op precedence", () => {
   testFormat(
     "int i = a+b+cccccccccccccccccccccccccccccc;",
@@ -58,17 +55,20 @@ test("chained binary expressions all break on same op precedence", () => {
 })
 describe("indentation", () => {
   test("binary expression in if", () => {
-    const src = dedent`
-      void main() {
-        if (
-          aaaaaaaaaa +
-            // a comment
-            bbbbbbbbbb +
-            eeeeee * fffffff +
-            cccccccccc
-        ) {}
-      }`
-    testFormat(src, src, 40)
+    testFormat(
+      dedent`
+        void main() {
+          if (
+            aaaaaaaaaa +
+              // a comment
+              bbbbbbbbbb +
+              eeeeee * fffffff +
+              cccccccccc
+          ) {}
+        }`,
+      undefined,
+      40,
+    )
   })
   test("binary expression as arg", () => {
     const src = dedent`
@@ -91,6 +91,73 @@ test("comment in empty compound statement", () => {
       }
     }`)
 })
+test("comment after else", () =>
+  testFormat(
+    dedent`
+      void main() {
+        if (foo) {
+          // just a comment
+        } 
+        else // hello there
+        {
+          bar();
+        }
+      }`,
+    dedent`
+      void main() {
+        if (foo) {
+          // just a comment
+        } // hello there
+        else {
+          bar();
+        }
+      }`,
+  ))
+
+test("format es", () => {
+  const x = dedent`
+    function main() {
+      if (foo) {
+        // just a comment
+      } 
+      // hello there
+      else 
+      {
+        bar();
+      }
+    }`
+  const x2 = prettier.format(x, {
+    // parser: "estree",
+
+    printWidth: 80,
+  })
+  expect(x2).toEqual(" sdasd")
+})
+
+test("comment before else", () =>
+  testFormat(
+    dedent`
+      void main() {
+        if (foo) {
+          // just a comment
+        } 
+        // hello there
+        else 
+        {
+          bar();
+        }
+      }`,
+    dedent`
+      void main() {
+        if (foo) {
+          // just a comment
+        } 
+        // hello there
+        else {
+          bar();
+        }
+      }`,
+  ))
 describe("newline is kept", () => {
   test("between two macro definition", () => {
     testFormat(
@@ -121,12 +188,15 @@ test("constants", () => {
   testFormat("float f = .200;", "float f = 0.2;")
   testFormat("float f = 2.;", "float f = 2.0;")
 })
-test("for loop", () => {
-  testFormat("void f() { for(;;); }", "void f() { for (;; ) ; }")
-})
+test("for loop", () =>
+  testFormat(dedent`
+    void f() {
+      for (;;);
+    }`))
 test("simplifies qualifiers", () => {
   testFormat("flat centroid in float f;", "flat in float f;")
 })
+
 test("format raymarchingPrimitives.glsl", () => {
   testFormat(
     loadFixture("raymarchingPrimitives.glsl"),
@@ -228,6 +298,8 @@ describe("shadertoy top 100 ", () => {
       })
       test(filename + " " + fileSize(contents.length), async () => {
         const formatted = fmt(contents)
+        const formatted2 = fmt(formatted)
+        expect(formatted2).toEqual(formatted)
         writeFileSync("testout/" + filename, formatted, { encoding: "utf8" })
       })
     }
