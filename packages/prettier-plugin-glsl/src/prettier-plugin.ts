@@ -18,19 +18,19 @@ import {
   BinaryExpression,
   CommaExpression,
   isExpression,
-  isNode,
   isToken,
   Node,
   Token,
   TypeQualifier,
 } from "./nodes"
-import { TOKEN } from "./lexer"
+import { isBitwiseOperator, TOKEN } from "./lexer"
 import { parseInput } from "./parser"
 
 interface PrettierComment extends Token {
   leading: boolean
   trailing: boolean
   printed: boolean
+  value: string
 }
 
 declare module "./nodes" {
@@ -112,10 +112,10 @@ function locEnd(node: Node | IToken) {
 
 export const parsers: Plugin<Node | IToken>["parsers"] = {
   "glsl-parser": {
-    parse(text, parsers, options) {
+    parse(text, _parsers, _options) {
       const translationUnit = parseInput(text)
       translationUnit.comments?.forEach(
-        (c) => ((c as any).value = JSON.stringify(c)),
+        (c) => ((c as PrettierComment).value = JSON.stringify(c)),
       )
       return translationUnit
     },
@@ -376,19 +376,16 @@ export const printers: Plugin<Node | IToken>["printers"] = {
         switch (n.kind) {
           ////////// DECLARATIONS
           case "translationUnit": {
-            const x: Doc = [line]
-            path.each((path, index) => {
+            const parts: Doc = []
+            path.each((path, _index) => {
               const value = path.getValue()
-              if (index !== 0) {
-                x.push(hardline)
-              }
-              x.push(print(path))
+              parts.push(print(path))
               if (util.isNextLineEmpty(options.originalText, value, locEnd)) {
-                x.push(hardline)
+                parts.push(hardline)
               }
+              parts.push(hardline)
             }, "declarations")
-            x.push(hardline)
-            return x
+            return parts
           }
           case "precisionDeclaration":
             return [
@@ -751,14 +748,29 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             //   p.y - h,
             // )
 
+            const needsParen = () => {
+              const parent = path.getParentNode() as Node | undefined
+              // Comma expression passed as an argument to a function needs parentheses.
+              if (!parent) {
+                return false
+              }
+              if (
+                parent.kind === "functionCall" &&
+                n.kind === "commaExpression"
+              ) {
+                return true
+              }
+
+              if (
+                parent.kind === "binaryExpression" &&
+                isBitwiseOperator(parent.op.tokenType)
+              ) {
+                return true
+              }
+
+              return false
+            }
             const shouldIndent = true
-            const parent = path.getParentNode()
-            // Comma expression passed as an argument to a function needs parentheses.
-            const needsParen =
-              n.kind === "commaExpression" &&
-              !!parent &&
-              isNode(parent) &&
-              parent.kind === "functionCall"
 
             if (shouldIndent) {
               // Separate the leftmost expression, possibly with its leading comments.
@@ -774,7 +786,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                     ...headParts,
                     indent(rest),
                   ],
-                  needsParen,
+                  needsParen(),
                 ),
               )
             } else {
@@ -833,6 +845,10 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               options,
             )
           }
+          case "ppPragma":
+            return n.dir.image
+              .replace(/^#\s+/, "#")
+              .replace(/^#pragma\s{2,}/, "#pragma ")
           case "ppCall": {
             return group([
               n.callee.image,

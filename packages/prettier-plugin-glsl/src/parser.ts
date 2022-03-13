@@ -37,6 +37,7 @@ import {
   PpDir,
   PpExtension,
   PpNode,
+  PpPragma,
   PrecisionDeclaration,
   SelectionStatement,
   Statement,
@@ -63,11 +64,6 @@ const VERSION_REGEXP = /\s*#\s*version\s+(\d+)\s+es\s*/
 // "i;" in a function could either be an expressionStatement containing a
 // variableExpression or an initDeclaratorList of type "struct i" with no
 // declarations. As neither of these is a useful construct, we always parse
-
-export function ilog<T>(x: T): T {
-  console.log(x)
-  return x
-}
 
 // ambiguous declarations/statements as TODO.
 class GLSLParser extends EmbeddedActionsParser {
@@ -1471,7 +1467,7 @@ class GLSLParser extends EmbeddedActionsParser {
       { ALT: () => this.CONSUME(TOKEN.IF) },
       { ALT: () => this.CONSUME(TOKEN.ELIF) },
       { ALT: () => this.CONSUME(TOKEN.ERROR) },
-      { ALT: () => this.CONSUME(TOKEN.PRAGMA) },
+      { ALT: () => this.CONSUME(TOKEN.VERSION) },
       { ALT: () => this.CONSUME(TOKEN.LINE) },
     ])
 
@@ -1479,6 +1475,10 @@ class GLSLParser extends EmbeddedActionsParser {
     const d: PpNode = { kind: "ppDir", dir, tokens, node: undefined }
     this.ppDefs.push(d)
     return d
+  })
+  public ppPragma = this.RR("ppPragma", (): PpPragma => {
+    const dir = this.CONSUME(TOKEN.PRAGMA_DIRECTIVE)
+    return { kind: "ppPragma", dir }
   })
   public ppSingle = this.RR("ppSingle", (): PpNode => {
     this.CONSUME(TOKEN.HASH)
@@ -1507,6 +1507,7 @@ class GLSLParser extends EmbeddedActionsParser {
         { ALT: () => this.SUBRULE(this.ppNone) },
         { ALT: () => this.SUBRULE(this.ppSingle) },
         { ALT: () => this.SUBRULE(this.ppMulti) },
+        { ALT: () => this.SUBRULE(this.ppPragma) },
       ]),
   )
 

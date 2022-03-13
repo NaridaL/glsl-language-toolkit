@@ -329,11 +329,16 @@ export interface PpExtension extends BaseNode {
 }
 
 export interface PpDir extends BaseNode {
-  dir: Token
   kind: "ppDir"
+  dir: Token
   tokens: Token[]
   // node if we successfully parsed one
   node: Node | undefined
+}
+
+export interface PpPragma extends BaseNode {
+  kind: "ppPragma"
+  dir: Token
 }
 
 export interface PpCall extends BaseNode {
@@ -342,7 +347,7 @@ export interface PpCall extends BaseNode {
   args: { tokens: Token[]; node: Node | undefined }[]
 }
 
-export type PpNode = PpDefine | PpDir | PpExtension | PpCall
+export type PpNode = PpDefine | PpDir | PpExtension | PpCall | PpPragma
 
 export type Declaration =
   | FunctionDefinition

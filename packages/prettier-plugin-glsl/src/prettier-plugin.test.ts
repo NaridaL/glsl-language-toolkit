@@ -13,6 +13,7 @@ function fmt(source: string, printWidth = 80): string {
   return prettier.format(source, {
     parser: "glsl-parser",
     plugins: [prettierPlugin],
+    pluginSearchDirs: ["./src/testutil"],
 
     printWidth,
   })
@@ -22,12 +23,14 @@ function testFormat(
   source: string,
   expected: string = source,
   printWidth?: number,
+  trim = true,
 ): void {
-  const formattedOnce = fmt(source, printWidth).trim()
-  expect(formattedOnce).toBe(expected.trim())
+  const doTrim = (s: string) => (trim ? s.trim() : s)
+  const formattedOnce = doTrim(fmt(source, printWidth))
+  expect(formattedOnce).toBe(doTrim(expected))
   // Formatting should be stable, i.e. formatting something already formatted
   // should never result in changes.
-  const formattedTwice = fmt(formattedOnce, printWidth).trim()
+  const formattedTwice = doTrim(fmt(formattedOnce, printWidth))
   expect(formattedTwice).toBe(formattedOnce)
 }
 
@@ -117,15 +120,20 @@ test("comment after else", () =>
 test("format es", () => {
   const x = dedent`
     function main() {
-      if (foo) {
-        // just a comment
-      } 
-      // hello there
-      else 
-      {
-        bar();
-      }
+      v = v ^ a ^ b;
     }`
+  // v = v ^ (v >> 16);
+  // const x = dedent`
+  //   function main() {
+  //     if (foo) {
+  //       // just a comment
+  //     }
+  //     // hello there
+  //     else
+  //     {
+  //       bar();
+  //     }
+  //   }`
   const x2 = prettier.format(x, {
     // parser: "estree",
 
@@ -133,7 +141,15 @@ test("format es", () => {
   })
   expect(x2).toEqual(" sdasd")
 })
-
+test("#version directive", () => {
+  testFormat("#version   300  es", "#version 300 es\n", undefined, false)
+})
+test("#pragma directive outputs symbols as-is", () => {
+  testFormat(
+    "#  pragma  glslify: noise = require('glsl-noise/simplex/3d')",
+    "#pragma glslify: noise = require('glsl-noise/simplex/3d')",
+  )
+})
 test("comment before else", () =>
   testFormat(
     dedent`
@@ -174,13 +190,23 @@ describe("newline is kept", () => {
 })
 
 test("required paren are kept", () => {
-  // testFormat("int i = -(9+b);", "int i = -(9 + b);")
-  // testFormat("int i = (a ? b : c) ? d : e;", "int i = (a ? b : c) ? d : e;")
-  // testFormat("int i = (a = b) ? d : e;", "int i = (a = b) ? d : e;")
-  // testFormat("int i = (a+b).xy;", "int i = (a + b).xy;")
-  // testFormat("int i = (a + b)[0];", "int i = (a + b)[0];")
-  // testFormat("int i = (a + b).length();", "int i = (a + b).length();")
+  testFormat("int i = -(9+b);", "int i = -(9 + b);")
+  testFormat("int i = (a ? b : c) ? d : e;", "int i = (a ? b : c) ? d : e;")
+  testFormat("int i = (a = b) ? d : e;", "int i = (a = b) ? d : e;")
+  testFormat("int i = (a+b).xy;", "int i = (a + b).xy;")
+  testFormat("int i = (a + b)[0];", "int i = (a + b)[0];")
+  testFormat("int i = (a + b).length();", "int i = (a + b).length();")
   testFormat("int i = foo((1, 2), 3);", "int i = foo((1, 2), 3);")
+})
+describe("useful paren are kept/added", () => {
+  test("v = v ^ (v >> 16)", () =>
+    testFormat(
+      "void main() { v = v ^ (v >> 16); }",
+      dedent`
+        void main() {
+          v = v ^ (v >> 16);
+        }`,
+    ))
 })
 test("constants", () => {
   testFormat("float f = 2.2E+23;", "float f = 2.2e23;")

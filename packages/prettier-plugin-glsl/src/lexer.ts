@@ -458,7 +458,10 @@ export namespace TOKEN {
   export const ELIF = createPP("ELIF", "elif")
   export const ERROR = createPP("ERROR", "error")
   export const VERSION = createPP("VERSION", "version")
-  export const PRAGMA = createPP("PRAGMA", "pragma")
+  export const PRAGMA_DIRECTIVE = createToken({
+    name: "PRAGMA_DIRECTIVE",
+    pattern: /#\s*pragma\s+[^\r\n]*/,
+  })
   export const LINE = createPP("LINE", "line")
   export const EXTENSION = createPP("EXTENSION", "extension")
   export const HASH = createToken({ name: "HASH", pattern: "#" })
@@ -690,4 +693,12 @@ export function doOp(op: TokenType, a: any, b: any) {
     default:
       throw new Error()
   }
+}
+
+export function isBitwiseOperator(tokenType: TokenType): boolean {
+  return (
+    tokenType === TOKEN.CARET ||
+    tokenType === TOKEN.VERTICAL_BAR ||
+    tokenType === TOKEN.AMPERSAND
+  )
 }

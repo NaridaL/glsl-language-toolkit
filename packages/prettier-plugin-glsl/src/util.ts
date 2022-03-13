@@ -160,3 +160,8 @@ export function lineColToOffset(
   }
   return i + col - 1
 }
+
+export function ilog<T>(x: T): T {
+  console.log(x)
+  return x
+}
