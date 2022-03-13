@@ -231,7 +231,7 @@ class GLSLParser extends EmbeddedActionsParser {
       return (
         this.OPTION(() => {
           const op = this.CONSUME(TOKEN.ASSIGN_OP)
-          const rhs = this.SUBRULE1(this.conditionalExpression)
+          const rhs = this.SUBRULE1(this.assignmentExpression)
           return { kind: "assignmentExpression", lhs: result, op, rhs }
         }) ?? result
       )
@@ -1351,6 +1351,7 @@ class GLSLParser extends EmbeddedActionsParser {
             this.CONSUME(TOKEN.PRECISION)
             const precisionQualifier = this.CONSUME(TOKEN.PRECISION_QUALIFIER)
             const typeSpecifierNoPrec = this.SUBRULE(this.typeSpecifierNoPrec)
+            this.CONSUME3(TOKEN.SEMICOLON)
             return {
               kind: "precisionDeclaration",
               precisionQualifier,
@@ -1416,6 +1417,7 @@ class GLSLParser extends EmbeddedActionsParser {
               { ALT: () => tokens.push(this.CONSUME(TOKEN.SHIFT_OP)) },
               { ALT: () => tokens.push(this.CONSUME(TOKEN.CONSTANT)) },
               { ALT: () => tokens.push(this.CONSUME(TOKEN.KEYWORD)) },
+              { ALT: () => tokens.push(this.CONSUME2(TOKEN.IDENTIFIER)) },
             ],
           }),
         )

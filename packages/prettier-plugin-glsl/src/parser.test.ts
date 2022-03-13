@@ -135,6 +135,16 @@ test("calling a variable ifdef works", () => {
   parseInput("float defined = 2.0;")
 })
 
+test("parse nested assignments", () => {
+  parseInput(dedent`
+    void main() {
+      // int a, b;
+      a = b = 2;
+    }`)
+})
+test("precision declaration", () => {
+  parseInput("precision mediump float;")
+})
 test("findPositionNode", () => {
   const tree = parseInput(dedent`
     void main() {

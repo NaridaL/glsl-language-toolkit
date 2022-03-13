@@ -107,7 +107,7 @@ in bool gl_HelperInvocation;
  *    as accessing a texture map. There is no way in the language for these
  *    functions to be emulated by a shader.
  *
- * 2. They represent a trivial operation(clamp, mix, etc.) that is very simple
+ * 2. They represent a trivial operation (clamp, mix, etc.) that is very simple
  *    for the user to write, but they are very common and may have direct
  *    hardware support. It is a very hard problem for the compiler to map
  *    expressions to complex assembler instructions.
@@ -119,42 +119,43 @@ in bool gl_HelperInvocation;
  * libraries, but they support vector input as well as the more traditional
  * scalar input. Applications should be encouraged to use the built-in functions
  * rather than do the equivalent computations in their own shader code since the
- * built-in functions are assumed to be optimal(e.g., perhaps supported directly
- * in hardware). When the built-in functions are specified below, where the
- * input arguments(and corresponding output) can be float, vec2, vec3, or vec4,
- * genType is used as the argument. Where the input arguments(and corresponding
- * output) can be int, ivec2, ivec3, or ivec4, genIType is used as the argument.
- * Where the input arguments(and corresponding output) can be uint, uvec2,
- * uvec3, or uvec4, genUType is used as the argument. Where the input
- * arguments(or corresponding output) can be bool, bvec2, bvec3, or bvec4,
- * genBType is used as the argument. For any specific use of a function, the
- * actual types substituted for genType, genIType, genUType, or genBType have to
- * have the same number of components for all arguments and for the return type.
- * Similarly for mat, which can be any matrix basic type. The precision of
- * built-in functions is dependent on the function and arguments. There are
- * three categories:
+ * built-in functions are assumed to be optimal (e.g., perhaps supported
+ * directly in hardware). When the built-in functions are specified below, where
+ * the input arguments (and corresponding output) can be `float`, `vec2`,
+ * `vec3`, or `vec4`, `genType` is used as the argument. Where the input
+ * arguments (and corresponding output) can be `int`, `ivec2`, `ivec3`, or
+ * `ivec4`, `genIType` is used as the argument. Where the input arguments (and
+ * corresponding output) can be `uint`, `uvec2`, `uvec3`, or `uvec4`, `genUType`
+ * is used as the argument. Where the input arguments (or corresponding output)
+ * can be `bool`, `bvec2`, `bvec3`, or `bvec4`, `genBType` is used as the
+ * argument. For any specific use of a function, the actual types substituted
+ * for `genType`, `genIType`, `genUType`, or `genBType` have to have the same
+ * number of components for all arguments and for the return type. Similarly for
+ * `mat`, which can be any matrix basic type. The precision of built-in
+ * functions is dependent on the function and arguments. There are three
+ * categories:
  *
- * - Some functions have predefined precisions. The precision is specified e.g.
- *   `highp ivec2 textureSize(gsampler2D sampler, int lod)`
+ * 1. Some functions have predefined precisions. The precision is specified e.g.
+ *    `highp ivec2 textureSize(gsampler2D sampler, int lod)`
  *
- * - For the texture sampling functions, the precision of the return type
- *   matches the precision of the sampler type.
+ * 2. For the texture sampling functions, the precision of the return type
+ *    matches the precision of the sampler type.
  *
- *   ```
- *   uniform lowp sampler2D sampler;
- *   highp vec2 coord;
- *   // ...
- *   lowp vec4 col = texture(sampler, coord); // texture() returns lowp
- *   ```
+ *    ```
+ *    uniform lowp sampler2D sampler;
+ *    highp vec2 coord;
+ *    // ...
+ *    lowp vec4 col = texture(sampler, coord); // texture() returns lowp
+ *    ```
  *
- * - For other built-in functions, a call will return a precision qualification
- *   matching the highest precision qualification of the call's input arguments.
- *   See Section 4.5.2 “Precision Qualifiers” for more detail.
+ * 3. For other built-in functions, a call will return a precision qualification
+ *    matching the highest precision qualification of the call's input
+ *    arguments. See Section 4.5.2 “Precision Qualifiers” for more detail.
  *
  * The built-in functions are assumed to be implemented according to the
  * equations specified in the following sections. The precision at which the
  * calculations are performed follows the general rules for precision of
- * operations as specified in section 4.5.3 “Precision Qualifiers“.
+ * operations as specified in section 4.5.3 “Precision Qualifiers”.
  *
  * Example: `normalize((x, y, z)) = (1 / sqrt(x² + y² + z²)) * (x, y, z)`
  *
@@ -378,7 +379,7 @@ genType mod(genType x, float y);
 genType mod(genType x, genType y);
 
 /**
- * Returns the fractional part of x and sets i to the integer part(as a whole
+ * Returns the fractional part of x and sets i to the integer part (as a whole
  * number floating point value). Both the return value and the output parameter
  * will have the same sign as x. If x has the value +/- INF, the return value
  * should be NaN and must be either NaN or 0.0.
@@ -825,7 +826,7 @@ bvec not(bvec x);
  * floating point, signed integer, or unsigned integer sampler, matching the
  * basic type of the return type, as described above.
  *
- * For shadow forms(the sampler parameter is a shadow-type), a depth comparison
+ * For shadow forms (the sampler parameter is a shadow-type), a depth comparison
  * lookup on the depth texture bound to sampler is done as described in section
  * 3.8.16 “Texture Comparison Modes” of the OpenGL ES Graphics System
  * Specification. See the table below for which component specifies Dref. The
@@ -848,7 +849,7 @@ bvec not(bvec x);
  * the texture lookup. If it is mip-mapped and running on the vertex shader,
  * then the base texture is used.
  *
- * Some texture functions(non-“Lod” and non-“Grad” versions) may require
+ * Some texture functions (non-“Lod” and non-“Grad” versions) may require
  * implicit derivatives. Implicit derivatives are undefined within non-uniform
  * control flow and for vertex texture fetches. For Cube forms, the direction of
  * P is used to select which face to do a 2-dimensional texture lookup in, as
@@ -932,7 +933,7 @@ float textureLod(sampler2DShadow sampler, vec3 P, float lod);
 gvec4 textureLod(gsampler2DArray sampler, vec3 P, float lod);
 
 /**
- * Do a texture lookup as in texture but with offset added to the(u,v,w) texel
+ * Do a texture lookup as in texture but with offset added to the (u,v,w) texel
  * coordinates before looking up each texel. The offset value must be a constant
  * expression. A limited range of offset values are supported; the minimum and
  * maximum offset values are implementation-dependent and given by
@@ -985,16 +986,16 @@ gvec4 textureProjOffset(gsampler3D sampler, vec4 P, ivec3 offset);
 gvec4 textureProjOffset(gsampler3D sampler, vec4 P, ivec3 offset, float bias);
 
 float textureProjOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  ivec2 offset,
-  float bias
+sampler2DShadow sampler,
+vec4 P,
+ivec2 offset,
+float bias
 );
 float textureProjOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  ivec2 offset,
-  float bias
+sampler2DShadow sampler,
+vec4 P,
+ivec2 offset,
+float bias
 );
 
 /**
@@ -1004,16 +1005,16 @@ float textureProjOffset(
 gvec4 textureLodOffset(gsampler2D sampler, vec2 P, float lod, ivec2 offset);
 gvec4 textureLodOffset(gsampler3D sampler, vec3 P, float lod, ivec3 offset);
 float textureLodOffset(
-  sampler2DShadow sampler,
-  vec3 P,
-  float lod,
-  ivec2 offset
+sampler2DShadow sampler,
+vec3 P,
+float lod,
+ivec2 offset
 );
 gvec4 textureLodOffset(
-  gsampler2DArray sampler,
-  vec3 P,
-  float lod,
-  ivec2 offset
+gsampler2DArray sampler,
+vec3 P,
+float lod,
+ivec2 offset
 );
 
 /**
@@ -1035,10 +1036,10 @@ gvec4 textureProjLodOffset(gsampler2D sampler, vec4 P, float lod, ivec2 offset);
 gvec4 textureProjLodOffset(gsampler3D sampler, vec4 P, float lod, ivec3 offset);
 
 float textureProjLodOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  float lod,
-  ivec2 offset
+sampler2DShadow sampler,
+vec4 P,
+float lod,
+ivec2 offset
 );
 
 /**
@@ -1069,40 +1070,40 @@ float textureGrad(sampler2DArrayShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy);
  * `textureGrad` and `textureOffset`.
  */
 gvec4 textureGradOffset(
-  gsampler2D sampler,
-  vec2 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+gsampler2D sampler,
+vec2 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 gvec4 textureGradOffset(
-  gsampler3D sampler,
-  vec3 P,
-  vec3 dPdx,
-  vec3 dPdy,
-  ivec3 offset
+gsampler3D sampler,
+vec3 P,
+vec3 dPdx,
+vec3 dPdy,
+ivec3 offset
 );
 
 float textureGradOffset(
-  sampler2DShadow sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+sampler2DShadow sampler,
+vec3 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 gvec4 textureGradOffset(
-  gsampler2DArray sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+gsampler2DArray sampler,
+vec3 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 float textureGradOffset(
-  sampler2DArrayShadow sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+sampler2DArrayShadow sampler,
+vec4 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 
 /**
@@ -1120,32 +1121,32 @@ float textureProjGrad(sampler2DShadow sampler, vec4 P, vec2 dPdx, vec2 dPdy);
  * textureProjGrad, as well as with offset, as described in textureOffset.
  */
 gvec4 textureProjGradOffset(
-  gsampler2D sampler,
-  vec3 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+gsampler2D sampler,
+vec3 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 gvec4 textureProjGradOffset(
-  gsampler2D sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+gsampler2D sampler,
+vec4 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 gvec4 textureProjGradOffset(
-  gsampler3D sampler,
-  vec4 P,
-  vec3 dPdx,
-  vec3 dPdy,
-  ivec3 offset
+gsampler3D sampler,
+vec4 P,
+vec3 dPdx,
+vec3 dPdy,
+ivec3 offset
 );
 float textureProjGradOffset(
-  sampler2DShadow sampler,
-  vec4 P,
-  vec2 dPdx,
-  vec2 dPdy,
-  ivec2 offset
+sampler2DShadow sampler,
+vec4 P,
+vec2 dPdx,
+vec2 dPdy,
+ivec2 offset
 );
 
 /**
@@ -1193,8 +1194,8 @@ float textureProjGradOffset(
  *    ES Graphics System Specification, is relaxed for derivative calculations,
  *    because the method may be a function of fragment location. Other
  *    properties that are desirable, but not required, are:
- * 4. Functions should be evaluated within the interior of a
- *    primitive(interpolated, not extrapolated).
+ * 4. Functions should be evaluated within the interior of a primitive
+ *    (interpolated, not extrapolated).
  * 5. Functions for dFdx should be evaluated while holding y constant. Functions
  *    for dFdy should be evaluated while holding x constant. However, mixed
  *    higher order derivatives, like dFdx(dFdy(y)) and dFdy(dFdx(x)) are

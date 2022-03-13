@@ -15,7 +15,9 @@ import { IToken, TokenType } from "chevrotain"
 import {
   AbstractVisitor,
   BinaryExpression,
+  CommaExpression,
   isExpression,
+  isNode,
   isToken,
   Node,
   Token,
@@ -66,8 +68,11 @@ export const languages: SupportInfo["languages"] = [
 
 function locEnd(node: Node | IToken) {
   return (
-    isToken(node) ? node : (node as unknown as { lastToken: IToken }).lastToken
-  ).endOffset!
+    (isToken(node)
+      ? node
+      : (node as unknown as { lastToken: IToken }).lastToken
+    ).endOffset! + 1
+  )
 }
 
 export const parsers: Plugin<Node | IToken>["parsers"] = {
@@ -186,47 +191,80 @@ function paren(doc: Doc, cond: boolean): Doc {
   return cond ? ["(", doc, ")"] : doc
 }
 
-function printBinaryExpression(
+function printBinaryishExpressions(
   path: AstPath<Node | IToken>,
   print: (path: AstPath<Node | IToken>) => Doc,
-  n: BinaryExpression,
+  n: BinaryExpression | CommaExpression,
   inMacro: Token[] | undefined,
 ): Doc[] {
   // Binary operation chains with the same operator precedence should either
   // completely break or not at all. E.g. a + b + ccccccccccccc should be
   // "a +\nb +\nccccccccccccc", not "a + b + \nccccccccccccc".
   const shouldFlatten =
-    n.lhs.kind === "binaryExpression" &&
-    getOpPrecedence(n.lhs.op.tokenType) === getOpPrecedence(n.op.tokenType)
-  const lhsDoc = path.call(
-    shouldFlatten
-      ? (path) =>
-          printBinaryExpression(
-            path,
-            print,
-            path.getValue() as BinaryExpression,
-            inMacro,
-          )
-      : print,
-    "lhs",
-  )
+    (n.kind === "binaryExpression" &&
+      n.lhs.kind === "binaryExpression" &&
+      getOpPrecedence(n.lhs.op.tokenType) ===
+        getOpPrecedence(n.op.tokenType)) ||
+    (n.kind === "commaExpression" && n.lhs.kind === "commaExpression")
 
-  return [
-    paren(
-      lhsDoc,
-      getPrecedence(n.lhs, inMacro) > getOpPrecedence(n.op.tokenType),
-    ),
-    " ",
-    path.call(print, "op"),
-    line,
-    paren(
-      path.call(print, "rhs"),
-      getPrecedence(n.rhs, inMacro) >= getOpPrecedence(n.op.tokenType),
-    ),
-  ]
+  const nOp = n.kind === "binaryExpression" ? n.op.tokenType : TOKEN.COMMA
+
+  let parts: Doc[]
+  if (shouldFlatten) {
+    // call printBinaryishExpressions to avoid the result being wrapped in group().
+    // lhs never needs to be wrapped in paren as we are on same level.
+    parts = path.call(
+      (path) =>
+        printBinaryishExpressions(
+          path,
+          print,
+          path.getValue() as BinaryExpression,
+          inMacro,
+        ),
+      "lhs",
+    )
+
+    parts.push(
+      " ",
+      path.call(print, "op"),
+      line,
+      paren(
+        path.call(print, "rhs"),
+        getPrecedence(n.rhs, inMacro) >= getOpPrecedence(nOp),
+      ),
+    )
+
+    return parts
+  } else {
+    const lhsDoc = path.call(print, "lhs")
+    return [
+      paren(lhsDoc, getPrecedence(n.lhs, inMacro) > getOpPrecedence(nOp)),
+      n.kind === "commaExpression" ? "," : [" ", path.call(print, "op")],
+      line,
+      paren(
+        path.call(print, "rhs"),
+        getPrecedence(n.rhs, inMacro) >= getOpPrecedence(nOp),
+      ),
+    ]
+  }
 }
 
-function glug(doc: Doc, options: ParserOptions<Node | IToken>): string {
+function adjustClause(node: Node, clause: Doc, forceSpace: boolean) {
+  if (node.kind === "expressionStatement" && !node.expression) {
+    return ";"
+  }
+
+  if (node.kind === "compoundStatement" || forceSpace) {
+    return [" ", clause]
+  }
+
+  return indent([line, clause])
+}
+
+function formatMacroDefinition(
+  doc: Doc,
+  options: ParserOptions<Node | IToken>,
+): string {
   propagateBreaks(doc)
   const formatted = printDocToString(
     doc,
@@ -234,7 +272,6 @@ function glug(doc: Doc, options: ParserOptions<Node | IToken>): string {
       printWidth: options.printWidth - 2,
     }),
   ).formatted
-  console.log("formatted", formatted)
   return formatted
     .trim()
     .replace(
@@ -293,6 +330,13 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             x.push(hardline)
             return x
           }
+          case "precisionDeclaration":
+            return [
+              "precision",
+              n.precisionQualifier.image,
+              path.call(print, "typeSpecifierNoPrec"),
+              ";",
+            ]
           case "fullySpecifiedType": {
             const parts: Doc = []
             if (n.typeQualifier) {
@@ -436,13 +480,11 @@ export const printers: Plugin<Node | IToken>["printers"] = {
 
           ///////// STATEMENTS
           case "compoundStatement": {
-            const x: Doc = [line]
+            const x: Doc = []
 
             path.each((path, index, statements) => {
               const value = path.getValue()
-              if (index !== 0) {
-                x.push(hardline)
-              }
+              x.push(hardline)
               x.push(print(path))
               if (isNextLineEmpty(options.originalText, value, locEnd)) {
                 x.push(hardline)
@@ -457,24 +499,37 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             // return ["return", " ", conditionalGroup([what, indent(what)]), ";"]
           }
           case "breakStatement":
-            return ["break", ";"]
-          case "selectionStatement":
-            return [
-              group([
-                "if (",
-                group([indent([softline, p(n, "condition")]), softline]),
-                ") ",
-                p(n, "yes"),
-              ]),
-              n.no
-                ? [
-                    hardline,
-                    "else",
-                    n.no.kind === "selectionStatement" ? " " : line,
+            return "break;"
+          case "continueStatement":
+            return "continue;"
+          case "discardStatement":
+            return "discard;"
+          case "selectionStatement": {
+            const parts: Doc[] = []
+            const yes = adjustClause(n.yes, p(n, "yes"), false)
+            const opening = group([
+              "if (",
+              group([indent([softline, p(n, "condition")]), softline]),
+              ")",
+              yes,
+            ])
+            parts.push(opening)
+            if (n.no) {
+              const elseOnSameLine = n.yes.kind === "compoundStatement"
+              parts.push(elseOnSameLine ? " " : hardline)
+              parts.push(
+                "else",
+                group(
+                  adjustClause(
+                    n.no,
                     p(n, "no"),
-                  ]
-                : "",
-            ]
+                    n.no.kind === "selectionStatement",
+                  ),
+                ),
+              )
+            }
+            return parts
+          }
           case "forStatement":
             return [
               group([
@@ -558,8 +613,48 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               ),
               indent([line, "? ", p(n, "yes"), line, ": ", p(n, "no")]),
             ]
-          case "binaryExpression":
-            return group(printBinaryExpression(path, print, n, inMacro))
+          case "commaExpression":
+          case "binaryExpression": {
+            const parts = printBinaryishExpressions(path, print, n, inMacro)
+
+            // const q = vec2(
+            //   length(p.xz - 0.5 * b * vec2(1.0 - f, 1.0 + f)) *
+            //     sign(p.x * b.y + p.z * b.x - b.x * b.y) -
+            //     ra,
+            //   p.y - h,
+            // )
+
+            const shouldIndent = true
+            const parent = path.getParentNode()
+            // Comma expression passed as an argument to a function needs parentheses.
+            const needsParen =
+              n.kind === "commaExpression" &&
+              !!parent &&
+              isNode(parent) &&
+              parent.kind === "functionCall"
+
+            if (shouldIndent) {
+              // Separate the leftmost expression, possibly with its leading comments.
+              const headParts = parts.slice(0, 1)
+              const rest = parts.slice(headParts.length)
+
+              return group(
+                paren(
+                  [
+                    // Don't include the initial expression in the indentation
+                    // level. The first item is guaranteed to be the first
+                    // left-most expression.
+                    ...headParts,
+                    indent(rest),
+                  ],
+                  needsParen,
+                ),
+              )
+            } else {
+              return group(parts)
+            }
+          }
+
           case "expressionStatement":
             return [p(n, "expression"), ";"]
           case "fieldAccess":
@@ -594,10 +689,10 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               ]),
             ])
             options.inMacro = undefined
-            return glug(doc, options)
+            return formatMacroDefinition(doc, options)
           }
           case "ppDir": {
-            return glug(
+            return formatMacroDefinition(
               group([
                 "#",
                 n.dir.image,
@@ -612,22 +707,24 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             )
           }
           case "ppCall": {
-            return [
+            return group([
               n.callee.image,
               "(",
-              path.map(
-                (
-                  path: AstPath<Node | IToken>,
-                  index: number,
-                  value: { tokens: Token[]; node: Node | undefined }[],
-                ): doc.builders.Doc => {
-                  console.log("vaaa", value)
-                  return value[index].tokens.map((t) => t.image)
-                },
-                "args",
+              join(
+                [",", line],
+                path.map(
+                  (
+                    path: AstPath<Node | IToken>,
+                    index: number,
+                    value: { tokens: Token[]; node: Node | undefined }[],
+                  ): doc.builders.Doc => {
+                    return value[index].tokens.map((t) => t.image)
+                  },
+                  "args",
+                ),
               ),
               ")",
-            ]
+            ])
           }
           default:
             throw new Error(
@@ -680,20 +777,12 @@ export const printers: Plugin<Node | IToken>["printers"] = {
         formattedSourceLines.pop()
 
         const e = n.endOffset!
-        // TODO: more than one line to next comment
-        const isFollowedByNewLineThenComment =
-          options.originalText[e + 1] === "\n" &&
-          options.originalText[e + 2] === "\n" &&
-          options.originalText[e + 3] === "/" &&
-          (options.originalText[e + 4] === "*" ||
-            options.originalText[e + 4] === "/")
         return (
           "/**\n" +
           formattedSourceLines
             .map((l) => (l === "" ? " *" : " * " + l))
             .join("\n") +
-          "\n */" +
-          (isFollowedByNewLineThenComment ? "\n" : "")
+          "\n */"
         )
       }
       return n.image

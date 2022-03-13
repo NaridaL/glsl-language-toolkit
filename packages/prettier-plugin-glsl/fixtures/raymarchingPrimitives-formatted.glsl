@@ -3,26 +3,33 @@
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // https://www.youtube.com/c/InigoQuilez
 // https://iquilezles.org/
+
 // A list of useful distance function to simple primitives. All
 // these functions (except for ellipsoid) return an exact
 // euclidean distance, meaning they produce a better SDF than
 // what you'd get if you were constructing them from boolean
 // operations (such as cutting an infinite cylinder with two planes).
+
 // List of other 3D SDFs:
 //    https://www.shadertoy.com/playlist/43cXRl
 // and
 //    http://iquilezles.org/www/articles/distfunctions/distfunctions.htm
+
 #if HW_PERFORMANCE == 0
 #define AA (1)
 #else
 #define AA (2) // make this 2 or 3 for antialiasing
 #endif
+
 //------------------------------------------------------------------
 float dot2(vec2 v) { return dot(v, v); }
 float dot2(vec3 v) { return dot(v, v); }
 float ndot(vec2 a, vec2 b) { return a.x * b.x - a.y * b.y; }
+
 #define MUL(A, B) ((A) * (B))
+
 #define ADD(A, B) ((A) + (B))
+
 #define MAX3(genType)                                                          \
   genType max3(genType a, genType b, genType c) {                              \
     /* comment here */                                                         \
@@ -31,11 +38,13 @@ float ndot(vec2 a, vec2 b) { return a.x * b.x - a.y * b.y; }
   }
 MAX3(float)
 MAX3(vec3)
+
 genType max3(genType a, genType b, genType c) {
   /* comment here */
   a + b;
   return max(a, max(b, c));
 }
+
 float sdPlane(vec3 p) {
   return p.y;
 
@@ -43,11 +52,14 @@ float sdPlane(vec3 p) {
 
   ADD(1, 2) * 2;
 }
+
 float sdSphere(vec3 p, float s) { return length(p) - s; }
+
 float sdBox(vec3 p, vec3 b) {
   vec3 d = abs(p) - b;
   return min(max(d.x, max(d.y, d.z)), 0.0) + length(max(d, 0.0));
 }
+
 float sdBoundingBox(vec3 p, vec3 b, float e) {
   p = abs(p) - b;
   vec3 q = abs(p + e) - e;
@@ -68,14 +80,17 @@ float sdEllipsoid(
   float k1 = length(p / (r * r));
   return k0 * (k0 - 1.0) / k1;
 }
+
 float sdTorus(vec3 p, vec2 t) {
   return length(vec2(length(p.xz) - t.x, p.y)) - t.y;
 }
+
 float sdCappedTorus(vec3 p, vec2 sc, float ra, float rb) {
   p.x = abs(p.x);
   float k = sc.y * p.x > sc.x * p.y ? dot(p.xy, sc) : length(p.xy);
   return sqrt(dot(p, p) + ra * ra - 2.0 * ra * k) - rb;
 }
+
 float sdHexPrism(vec3 p, vec2 h) {
   vec3 q = abs(p);
 
@@ -89,6 +104,7 @@ float sdHexPrism(vec3 p, vec2 h) {
     );
   return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
 }
+
 float sdOctogonPrism(vec3 p, float r, float h) {
   const vec3 k = vec3(
       -0.9238795325, // sqrt(2+sqrt(2))/2
@@ -104,11 +120,13 @@ float sdOctogonPrism(vec3 p, float r, float h) {
   vec2 d = vec2(length(p.xy) * sign(p.y), p.z - h);
   return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
 }
+
 float sdCapsule(vec3 p, vec3 a, vec3 b, float r) {
   vec3 pa = p - a, ba = b - a;
   float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
   return length(pa - ba * h) - r;
 }
+
 float sdRoundCone(vec3 p, float r1, float r2, float h) {
   vec2 q = vec2(length(p.xz), p.y);
 
@@ -121,6 +139,7 @@ float sdRoundCone(vec3 p, float r1, float r2, float h) {
 
   return dot(q, vec2(a, b)) - r1;
 }
+
 float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2) {
   // sampling independent computations (only depend on shape)
   vec3 ba = b - a;
@@ -143,6 +162,7 @@ float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2) {
   if (sign(y) * a2 * y2 < k) return sqrt(x2 + y2) * il2 - r1;
   return (sqrt(x2 * a2 * il2) + y * rr) * il2 - r1;
 }
+
 float sdTriPrism(vec3 p, vec2 h) {
   const float k = sqrt(3.0);
   h.x *= 0.5 * k;
@@ -155,11 +175,13 @@ float sdTriPrism(vec3 p, vec2 h) {
   float d2 = abs(p.z) - h.y;
   return length(max(vec2(d1, d2), 0.0)) + min(max(d1, d2), 0.0);
 }
+
 // vertical
 float sdCylinder(vec3 p, vec2 h) {
   vec2 d = abs(vec2(length(p.xz), p.y)) - h;
   return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
 }
+
 // arbitrary orientation
 float sdCylinder(vec3 p, vec3 a, vec3 b, float r) {
   vec3 pa = p - a;
@@ -176,6 +198,7 @@ float sdCylinder(vec3 p, vec3 a, vec3 b, float r) {
       : (x > 0.0 ? x2 : 0.0) + (y > 0.0 ? y2 : 0.0);
   return sign(d) * sqrt(abs(d)) / baba;
 }
+
 // vertical
 float sdCone(vec3 p, vec2 c, float h) {
   vec2 q = h * vec2(c.x, -c.y) / c.y;
@@ -188,6 +211,7 @@ float sdCone(vec3 p, vec2 c, float h) {
   float s = max(k * (w.x * q.y - w.y * q.x), k * (w.y - q.y));
   return sqrt(d) * sign(s);
 }
+
 float sdCappedCone(vec3 p, float h, float r1, float r2) {
   vec2 q = vec2(length(p.xz), p.y);
 
@@ -198,6 +222,7 @@ float sdCappedCone(vec3 p, float h, float r1, float r2) {
   float s = cb.x < 0.0 && ca.y < 0.0 ? -1.0 : 1.0;
   return s * sqrt(min(dot2(ca), dot2(cb)));
 }
+
 float sdCappedCone(vec3 p, vec3 a, vec3 b, float ra, float rb) {
   float rba = rb - ra;
   float baba = dot(b - a, b - a);
@@ -220,6 +245,7 @@ float sdCappedCone(vec3 p, vec3 a, vec3 b, float ra, float rb) {
   return s *
   sqrt(min(cax * cax + cay * cay * baba, cbx * cbx + cby * cby * baba));
 }
+
 // c is the sin/cos of the desired cone angle
 float sdSolidAngle(vec3 pos, vec2 c, float ra) {
   vec2 p = vec2(length(pos.xz), pos.y);
@@ -227,6 +253,7 @@ float sdSolidAngle(vec3 pos, vec2 c, float ra) {
   float m = length(p - c * clamp(dot(p, c), 0.0, ra));
   return max(l, m * sign(c.y * p.x - c.x * p.y));
 }
+
 float sdOctahedron(vec3 p, float s) {
   p = abs(p);
   float m = p.x + p.y + p.z - s;
@@ -237,6 +264,7 @@ float sdOctahedron(vec3 p, float s) {
   o = max(6.0 * p - m * 2.0 - o * 3.0 + (o.x + o.y + o.z), 0.0);
   return length(p - s * o / (o.x + o.y + o.z));
   #endif
+
   // exact distance
   #if 1
   vec3 q;
@@ -248,11 +276,13 @@ float sdOctahedron(vec3 p, float s) {
   float k = clamp(0.5 * (q.z - q.y + s), 0.0, s);
   return length(vec3(q.x, q.y - s + k, q.z - k));
   #endif
+
   // bound, not exact
   #if 0
   return m * 0.57735027;
   #endif
 }
+
 float sdPyramid(vec3 p, float h) {
   float m2 = h * h + 0.25;
 
@@ -277,6 +307,7 @@ float sdPyramid(vec3 p, float h) {
   return sqrt((d2 + q.z * q.z) / m2) * sign(max(q.z, -p.y));
   ;
 }
+
 // la,lb=semi axis, h=height, ra=corner
 float sdRhombus(vec3 p, float la, float lb, float h, float ra) {
   p = abs(p);
@@ -290,15 +321,22 @@ float sdRhombus(vec3 p, float la, float lb, float h, float ra) {
     );
   return min(max(q.x, q.y), 0.0) + length(max(q, 0.0));
 }
+
 //------------------------------------------------------------------
+
 vec2 opU(vec2 d1, vec2 d2) { return d1.x < d2.x ? d1 : d2; }
+
 //------------------------------------------------------------------
+
 #define ZERO (min(iFrame, 0))
+
 //------------------------------------------------------------------
+
 vec2 map(vec3 pos) {
   vec2 res = vec2(1e10, 0.0);
 
   { res = opU(res, vec2(sdSphere(pos - vec3(-2.0, 0.25, 0.0), 0.25), 26.9)); }
+
   // bounding box
   if (sdBox(pos - vec3(0.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x) {
     // more primitives
@@ -329,6 +367,7 @@ vec2 map(vec3 pos) {
       )
     );
   }
+
   // bounding box
   if (sdBox(pos - vec3(1.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x) {
     // more primitives
@@ -369,6 +408,7 @@ vec2 map(vec3 pos) {
       vec2(sdHexPrism(pos - vec3(1.0, 0.2, -3.0), vec2(0.2, 0.05)), 18.4)
     );
   }
+
   // bounding box
   if (sdBox(pos - vec3(-1.0, 0.35, -1.0), vec3(0.35, 0.35, 2.5)) < res.x) {
     // more primitives
@@ -396,6 +436,7 @@ vec2 map(vec3 pos) {
       )
     );
   }
+
   // bounding box
   if (sdBox(pos - vec3(2.0, 0.3, -1.0), vec3(0.35, 0.3, 2.5)) < res.x) {
     // more primitives
@@ -446,8 +487,10 @@ vec2 map(vec3 pos) {
       vec2(sdRoundCone(pos - vec3(2.0, 0.2, 1.0), 0.2, 0.1, 0.3), 37.0)
     );
   }
+
   return res;
 }
+
 // http://iquilezles.org/www/articles/boxfunctions/boxfunctions.htm
 vec2 iBox(vec3 ro, vec3 rd, vec3 rad) {
   vec3 m = 1.0 / rd;
@@ -457,6 +500,7 @@ vec2 iBox(vec3 ro, vec3 rd, vec3 rad) {
   vec3 t2 = -n + k;
   return vec2(max(max(t1.x, t1.y), t1.z), min(min(t2.x, t2.y), t2.z));
 }
+
 vec2 raycast(vec3 ro, vec3 rd) {
   vec2 res = vec2(-1.0, -1.0);
 
@@ -470,6 +514,7 @@ vec2 raycast(vec3 ro, vec3 rd) {
     res = vec2(tp1, 1.0);
   }
   //else return res;
+
   // raymarch primitives
   vec2 tb = iBox(ro - vec3(0.0, 0.4, -0.5), rd, vec3(2.5, 0.41, 3.0));
   if (tb.x < tb.y && tb.y > 0.0 && tb.x < tmax) {
@@ -487,8 +532,10 @@ vec2 raycast(vec3 ro, vec3 rd) {
       t += h.x;
     }
   }
+
   return res;
 }
+
 // http://iquilezles.org/www/articles/rmshadows/rmshadows.htm
 float calcSoftshadow(vec3 ro, vec3 rd, float mint, float tmax) {
   // bounding volume
@@ -506,6 +553,7 @@ float calcSoftshadow(vec3 ro, vec3 rd, float mint, float tmax) {
   }
   return clamp(res, 0.0, 1.0);
 }
+
 // http://iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
 vec3 calcNormal(vec3 pos) {
   #if 0
@@ -514,7 +562,9 @@ vec3 calcNormal(vec3 pos) {
     e.xyy * map(pos + e.xyy).x +
     e.yyx * map(pos + e.yyx).x +
     e.yxy * map(pos + e.yxy).x +
-    e.xxx * map(pos + e.xxx).x
+    e.xxx * map(pos + e.xxx).x,
+
+    jkljl + j
   );
   #else
   // inspired by tdhooper and klems - a way to prevent the compiler from inlining map() 4 times
@@ -527,6 +577,7 @@ vec3 calcNormal(vec3 pos) {
   return normalize(n);
   #endif
 }
+
 float calcAO(vec3 pos, vec3 nor) {
   float occ = 0.0;
   float sca = 1.0;
@@ -539,6 +590,7 @@ float calcAO(vec3 pos, vec3 nor) {
   }
   return clamp(1.0 - 3.0 * occ, 0.0, 1.0) * (0.5 + 0.5 * nor.y);
 }
+
 // http://iquilezles.org/www/articles/checkerfiltering/checkerfiltering.htm
 float checkersGradBox(vec2 p, vec2 dpdx, vec2 dpdy) {
   // filter kernel
@@ -551,6 +603,7 @@ float checkersGradBox(vec2 p, vec2 dpdx, vec2 dpdy) {
   // xor pattern
   return 0.5 - 0.5 * i.x * i.y;
 }
+
 vec3 render(vec3 ro, vec3 rd, vec3 rdx, vec3 rdy) {
   // background
   vec3 col = vec3(0.7, 0.7, 0.9) - max(rd.y, 0.0) * 0.3;
@@ -577,6 +630,7 @@ vec3 render(vec3 ro, vec3 rd, vec3 rdx, vec3 rdy) {
       col = 0.15 + f * vec3(0.05);
       ks = 0.4;
     }
+
     // lighting
     float occ = calcAO(pos, nor);
 
@@ -620,12 +674,15 @@ vec3 render(vec3 ro, vec3 rd, vec3 rdx, vec3 rdy) {
       dif *= occ;
       lin += col * 0.25 * dif * vec3(1.0, 1.0, 1.0);
     }
+
     col = lin;
 
     col = mix(col, vec3(0.7, 0.7, 0.9), 1.0 - exp(-0.0001 * t * t * t));
   }
+
   return vec3(clamp(col, 0.0, 1.0));
 }
+
 mat3 setCamera(vec3 ro, vec3 ta, float cr) {
   vec3 cw = normalize(ta - ro);
   vec3 cp = vec3(sin(cr), cos(cr), 0.0);
@@ -633,6 +690,7 @@ mat3 setCamera(vec3 ro, vec3 ta, float cr) {
   vec3 cv = cross(cu, cw);
   return mat3(cu, cv, cw);
 }
+
 void mainImage(out vec4 fragColor, vec2 fragCoord) {
   vec2 mo = iMouse.xy / iResolution.xy;
   float time = 32.0 + iTime * 1.5;
@@ -658,6 +716,7 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
       #else
       vec2 p = (2.0 * fragCoord - iResolution.xy) / iResolution.y;
       #endif
+
       // focal length
       const float fl = 2.5;
 
@@ -677,6 +736,7 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
 
       // gain
       // col = col*3.0/(2.5+col);
+
       // gamma
       col = pow(col, vec3(0.4545));
 
@@ -685,5 +745,6 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
     }
   tot /= float(AA * AA);
   #endif
+
   fragColor = vec4(tot, 1.0);
 }
