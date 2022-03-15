@@ -53,7 +53,13 @@ import {
   UniformBlock,
   WhileStatement,
 } from "./nodes"
-import { ALL_TOKENS, checkLexingErrors, GLSL_LEXER, RESERVED_KEYWORDS, TOKEN } from "./lexer"
+import {
+  ALL_TOKENS,
+  checkLexingErrors,
+  GLSL_LEXER,
+  RESERVED_KEYWORDS,
+  TOKEN,
+} from "./lexer"
 import { DEV, ExpandedLocation, substrContext } from "./util"
 import { applyLineContinuations } from "./preprocessor"
 

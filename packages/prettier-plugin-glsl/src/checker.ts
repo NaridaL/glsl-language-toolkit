@@ -45,7 +45,13 @@ import {
 import { doOp, isIdentifier, TOKEN } from "./lexer"
 import { applyBuiltinFunction, Matrix } from "./builtins"
 import { parseInput } from "./parser"
-import { allDefined, assertNever, CheckError, mapExpandedLocation, safeMap } from "./util"
+import {
+  allDefined,
+  assertNever,
+  CheckError,
+  mapExpandedLocation,
+  safeMap,
+} from "./util"
 import { ERRORS } from "./errors"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
