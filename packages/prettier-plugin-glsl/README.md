@@ -35,6 +35,8 @@ will be formatted as.
 
 Comments which start with `/**` will be passed to the markdown formatter.
 
+For an example, see [./builtins.glsl](./builtins.glsl).
+
 ## Installation
 
 ```sh
@@ -52,7 +54,7 @@ recognized as GLSL files by default.
 
 As GLSL includes a C++-style preprocessor, this presents some difficulties when
 formatting. For example, the plugin does not attempt to be able to format crazy
-(but technically valid) constructs such as.
+(but technically valid) constructs such as:
 
 ```glsl
 #define LPAREN
