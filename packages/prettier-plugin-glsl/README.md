@@ -20,14 +20,14 @@ This plugin will attempt to parse `#define` macros as top-level declarations,
 statements or expressions. If successful, these will be formatted as usual.
 
 For example,
-`#define MAX3(genType) genType max3(genType a, genType b, genType c) { /* comment */ return max(max(a, b), b); }`
+`#define MAX3(genType) genType max3(genType a, genType b, genType c) { /* comment */ return max(max(a, b), c); }`
 will be formatted as.
 
 ```glsl
 #define MAX3(genType)                                                          \
   genType max3(genType a, genType b, genType c) {                              \
     /* comment */                                                              \
-    return max(max(a, b), b);                                                  \
+    return max(max(a, b), c);                                                  \
   }
 ```
 
