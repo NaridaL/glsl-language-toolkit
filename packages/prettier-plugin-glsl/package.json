@@ -24,7 +24,12 @@
     "build": "rollup --config",
     "clean": "rimraf lib"
   },
-  "keywords": [],
+  "keywords": [
+    "formatter",
+    "glsl",
+    "prettier",
+    "plugin"
+  ],
   "author": "Adrian Leonhard",
   "license": "MIT",
   "dependencies": {

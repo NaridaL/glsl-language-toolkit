@@ -1,3 +1,6 @@
+![npm](https://img.shields.io/npm/v/prettier-plugin-glsl?style=flat-square)
+![NPM](https://img.shields.io/npm/l/prettier-plugin-glsl?style=flat-square)
+
 # prettier-plugin-glsl
 
 This is a plugin for [Prettier](https://prettier.io), the opinionated code
@@ -25,10 +28,10 @@ will be formatted as.
 
 ```glsl
 #define MAX3(genType)                                                          \
-  genType max3(genType a, genType b, genType c) {                              \
+  genType max3(genType a, genType b, genType c) { \
     /* comment */                                                              \
-    return max(max(a, b), c);                                                  \
-  }
+ return max(max(a, b), c);                                                  \
+ }
 ```
 
 ### Formatting of comments
@@ -70,23 +73,23 @@ works fine:
 #define AA 2
 #define ZERO (min(iFrame, 0))
 void main() {
-  // ...
-  #if AA > 1
-  for (int m = ZERO; m < AA; m++)
+    // ...
+    #if AA > 1
+    for (int m = ZERO; m < AA; m++)
     for (int n = ZERO; n < AA; n++) {
-      // pixel coordinates
-      vec2 o = vec2(float(m), float(n)) / float(AA) - 0.5;
-      vec2 p = (2.0 * (fragCoord + o) - iResolution.xy) / iResolution.y;
-      #else
-      vec2 p = (2.0 * fragCoord - iResolution.xy) / iResolution.y;
-      #endif
+        // pixel coordinates
+        vec2 o = vec2(float(m), float(n)) / float(AA) - 0.5;
+        vec2 p = (2.0 * (fragCoord + o) - iResolution.xy) / iResolution.y;
+        #else
+        vec2 p = (2.0 * fragCoord - iResolution.xy) / iResolution.y;
+        #endif
 
-      // use p
+        // use p
 
-      #if AA > 1
+        #if AA > 1
     }
-  tot /= float(AA * AA);
-  #endif
+    tot /= float(AA * AA);
+    #endif
 }
 ```
 
@@ -100,9 +103,9 @@ if (a())
 #else
 if (b())
 #endif
-{}
+{ }
 else
-{}
+{ }
 ```
 
 In general this approach works well. Of the top 100
