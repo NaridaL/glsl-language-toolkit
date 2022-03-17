@@ -30,7 +30,7 @@
     "packages/glsl-lsp-server"
   ],
   "devDependencies": {
-    "prettier": "^2.5.1",
+    "prettier": "^2.6.0",
     "rimraf": "^3.0.2",
     "typescript": "^4.6.2"
   }

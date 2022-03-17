@@ -120,7 +120,7 @@ test("comment after else", () =>
 test("format es", () => {
   const x = dedent`
     function main() {
-      v = v ^ a ^ b;
+      let i = func(sssssssssssssssssssssssssss, sssssssssssssssssssssssssss,ssssssssssssssssss);
     }`
   // v = v ^ (v >> 16);
   // const x = dedent`
@@ -174,6 +174,20 @@ test("comment before else", () =>
         }
       }`,
   ))
+describe("initDeclaratorList", () => {
+  let x = !!"sdads"
+  test("single function does not start on new line", () => {
+    testFormat(
+      dedent`
+      void main() {
+        int i = fun(aaaaaaaaaaaaa, bbbbbbbbbbbb, ccccccccccc), k = 3;
+        int j = fun(aaaaaaaaaaaaa, bbbbbbbbbbbb, ccccccccccc) * 2;
+      }`,
+      undefined,
+      40,
+    )
+  })
+})
 describe("newline is kept", () => {
   test("between two macro definition", () => {
     testFormat(
@@ -222,8 +236,20 @@ test("for loop", () =>
 test("simplifies qualifiers", () => {
   testFormat("flat centroid in float f;", "flat in float f;")
 })
+test("multiple inits in for loop are on same line", () => {
+  testFormat(dedent`
+    void main() {
+      for (int i = 0, j = 2; ; ) {}
+    }`)
+})
 
 test("format raymarchingPrimitives.glsl", () => {
+  // let dif = clamp(
+  //   dot(nor, normalize(vec3(0.5, 0.0, 0.6))),
+  //   0.0,
+  //   1.0,
+  //   ssssssssssssssssssssssssss,
+  // )
   testFormat(
     loadFixture("raymarchingPrimitives.glsl"),
     loadFixture("raymarchingPrimitives-formatted.glsl"),

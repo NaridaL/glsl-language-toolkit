@@ -15,6 +15,7 @@ import { findLast } from "lodash"
 
 import {
   AbstractVisitor,
+  AssignmentExpression,
   BinaryExpression,
   CommaExpression,
   isExpression,
@@ -342,6 +343,72 @@ function printDanglingComments(
   return indent([hardline, join(hardline, parts)])
 }
 
+function isAssignment(node: Node): node is AssignmentExpression {
+  return node.kind === "assignmentExpression"
+}
+
+function chooseAssignmentLayout(
+  path: AstPath<Node | IToken>,
+  options: ParserOptions<Node | IToken> & { inMacro?: Token[] },
+  leftDoc: Doc,
+  rightPropertyName: string,
+):
+  | "break-after-operator"
+  | "chain"
+  | "chain-tail"
+  | "only-left"
+  | "never-break-after-operator"
+  | "fluid" {
+  const node = path.getValue() as Node
+  const rightNode = (node as any)[rightPropertyName] as Node
+
+  if (!rightNode) {
+    return "only-left"
+  }
+
+  // Short assignment chains (only 2 segments) are NOT formatted as chains.
+  //   1) a = b = c; (expression statements)
+  //   2) int a = b = c;
+
+  const isTail = !isAssignment(rightNode)
+  const shouldUseChainFormatting = path.match(
+    isAssignment,
+    isAssignmentOrVariableDeclarator,
+    (node) =>
+      !isTail ||
+      (node.kind !== "expressionStatement" &&
+        node.kind !== "variableDeclaration"),
+  )
+
+  if (shouldUseChainFormatting) {
+    return !isTail ? "chain" : "chain-tail"
+  }
+
+  const isHeadOfLongChain = !isTail && isAssignment(rightNode.rhs)
+
+  if (
+    isHeadOfLongChain ||
+    hasLeadingOwnLineComment$2(options.originalText, rightNode)
+  ) {
+    return "break-after-operator"
+  }
+
+  if (
+    rightNode.kind === "binaryExpression" ||
+    rightNode.kind === "commaExpression" ||
+    (rightNode.kind === "conditionalExpression" &&
+      rightNode.condition.kind === "binaryExpression")
+  ) {
+    return "break-after-operator"
+  }
+
+  if (rightNode.kind === "constantExpression") {
+    return "never-break-after-operator"
+  }
+
+  return "fluid"
+}
+
 export const printers: Plugin<Node | IToken>["printers"] = {
   "glsl-ast": {
     print(
@@ -488,19 +555,44 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               p<typeof n>("arraySpecifier"),
             ]
           case "initDeclaratorListDeclaration":
-          case "structDeclaration":
+          case "structDeclaration": {
+            const printed = path.map(print, "declarators")
+
+            const parentNode = path.getParentNode() as Node
+            const isParentForLoop = parentNode.kind === "forStatement"
+            const hasInit = n.declarators.some((decl) => decl.init)
+
+            // If we have multiple declarations, or if the only declaration is
+            // on its own line due to a comment, indent the declarations.
+            // TODO: hasComment?
             return group([
               p<typeof n>("fsType"),
               " ",
-              indent(join([",", line], path.map(print, "declarators"))),
+              printed.length === 1
+                ? printed
+                : indent(
+                    join(
+                      [",", hasInit && !isParentForLoop ? hardline : line],
+                      printed,
+                    ),
+                  ),
               ";",
             ])
+          }
+
           case "declarator": {
             const name = p<typeof n>("name")
             const arraySpecifier = p<typeof n>("arraySpecifier")
             if (!n.init) {
               return [name, arraySpecifier]
             } else {
+              const layout = chooseAssignmentLayout(
+                path,
+                options,
+                print,
+                leftDoc,
+                rightPropertyName,
+              )
               const groupId = Symbol("declarator")
               // TODO: need this group?
               return group([

@@ -106,19 +106,19 @@ float sdHexPrism(vec3 p, vec2 h) {
   p = abs(p);
   p.xy -= 2.0 * min(dot(k.xy, p.xy), 0.0) * k.xy;
   vec2 d = vec2(
-      length(p.xy - vec2(clamp(p.x, -k.z * h.x, k.z * h.x), h.x)) *
-        sign(p.y - h.x),
-      p.z - h.y
-    );
+    length(p.xy - vec2(clamp(p.x, -k.z * h.x, k.z * h.x), h.x)) *
+      sign(p.y - h.x),
+    p.z - h.y
+  );
   return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
 }
 
 float sdOctogonPrism(vec3 p, float r, float h) {
   const vec3 k = vec3(
-      -0.9238795325, // sqrt(2+sqrt(2))/2
-      0.3826834323, // sqrt(2-sqrt(2))/2
-      0.4142135623 // sqrt(2)-1
-    );
+    -0.9238795325, // sqrt(2+sqrt(2))/2
+    0.3826834323, // sqrt(2-sqrt(2))/2
+    0.4142135623 // sqrt(2)-1
+  );
   // reflections
   p = abs(p);
   p.xy -= 2.0 * min(dot(vec2(k.x, k.y), p.xy), 0.0) * vec2(k.x, k.y);
@@ -130,7 +130,8 @@ float sdOctogonPrism(vec3 p, float r, float h) {
 }
 
 float sdCapsule(vec3 p, vec3 a, vec3 b, float r) {
-  vec3 pa = p - a, ba = b - a;
+  vec3 pa = p - a,
+    ba = b - a;
   float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
   return length(pa - ba * h) - r;
 }
@@ -202,8 +203,8 @@ float sdCylinder(vec3 p, vec3 a, vec3 b, float r) {
   float x2 = x * x;
   float y2 = y * y * baba;
   float d = max(x, y) < 0.0
-      ? -min(x2, y2)
-      : (x > 0.0 ? x2 : 0.0) + (y > 0.0 ? y2 : 0.0);
+    ? -min(x2, y2)
+    : (x > 0.0 ? x2 : 0.0) + (y > 0.0 ? y2 : 0.0);
   return sign(d) * sqrt(abs(d)) / baba;
 }
 
@@ -306,7 +307,7 @@ float sdPyramid(vec3 p, float h) {
 
   float a = m2 * (q.x + s) * (q.x + s) + q.y * q.y;
   float b = m2 * (q.x + 0.5 * t) * (q.x + 0.5 * t) +
-      (q.y - m2 * t) * (q.y - m2 * t);
+    (q.y - m2 * t) * (q.y - m2 * t);
 
   float d2 = min(q.y, -q.x * m2 - q.y * 0.5) > 0.0 ? 0.0 : min(a, b);
 
@@ -321,11 +322,11 @@ float sdRhombus(vec3 p, float la, float lb, float h, float ra) {
   vec2 b = vec2(la, lb);
   float f = clamp(ndot(b, b - 2.0 * p.xz) / dot(b, b), -1.0, 1.0);
   vec2 q = vec2(
-      length(p.xz - 0.5 * b * vec2(1.0 - f, 1.0 + f)) *
-        sign(p.x * b.y + p.z * b.x - b.x * b.y) -
-        ra,
-      p.y - h
-    );
+    length(p.xz - 0.5 * b * vec2(1.0 - f, 1.0 + f)) *
+      sign(p.x * b.y + p.z * b.x - b.x * b.y) -
+      ra,
+    p.y - h
+  );
   return min(max(q.x, q.y), 0.0) + length(max(q, 0.0));
 }
 
@@ -608,9 +609,9 @@ float checkersGradBox(vec2 p, vec2 dpdx, vec2 dpdy) {
   vec2 w = abs(dpdx) + abs(dpdy) + 0.001;
   // analytical integral (box filter)
   vec2 i = 2.0 *
-      (abs(fract((p - 0.5 * w) * 0.5) - 0.5) -
-        abs(fract((p + 0.5 * w) * 0.5) - 0.5)) /
-      w;
+    (abs(fract((p - 0.5 * w) * 0.5) - 0.5) -
+      abs(fract((p + 0.5 * w) * 0.5) - 0.5)) /
+    w;
   // xor pattern
   return 0.5 - 0.5 * i.x * i.y;
 }
@@ -675,7 +676,7 @@ vec3 render(vec3 ro, vec3 rd, vec3 rdx, vec3 rdy) {
     // back
     {
       float dif = clamp(dot(nor, normalize(vec3(0.5, 0.0, 0.6))), 0.0, 1.0) *
-          clamp(1.0 - pos.y, 0.0, 1.0);
+        clamp(1.0 - pos.y, 0.0, 1.0);
       dif *= occ;
       lin += col * 0.55 * dif * vec3(0.25, 0.25, 0.25);
     }
@@ -709,11 +710,11 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
   // camera
   vec3 ta = vec3(0.5, -0.5, -0.6);
   vec3 ro = ta +
-      vec3(
-        4.5 * cos(0.1 * time + 7.0 * mo.x),
-        1.3 + 2.0 * mo.y,
-        4.5 * sin(0.1 * time + 7.0 * mo.x)
-      );
+    vec3(
+      4.5 * cos(0.1 * time + 7.0 * mo.x),
+      1.3 + 2.0 * mo.y,
+      4.5 * sin(0.1 * time + 7.0 * mo.x)
+    );
   // camera-to-world transformation
   mat3 ca = setCamera(ro, ta, 0.0);
 
@@ -736,9 +737,9 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
 
       // ray differentials
       vec2 px = (2.0 * (fragCoord + vec2(1.0, 0.0)) - iResolution.xy) /
-          iResolution.y;
+        iResolution.y;
       vec2 py = (2.0 * (fragCoord + vec2(0.0, 1.0)) - iResolution.xy) /
-          iResolution.y;
+        iResolution.y;
       vec3 rdx = ca * normalize(vec3(px, fl));
       vec3 rdy = ca * normalize(vec3(py, fl));
 
