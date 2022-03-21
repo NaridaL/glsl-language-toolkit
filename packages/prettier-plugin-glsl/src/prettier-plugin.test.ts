@@ -40,19 +40,10 @@ function loadFixture(fixture: string): string {
   })
 }
 
-/**
- *
- * const i =
- *   (2.0 *
- *     (abs(fract((p - 0.5 * w) * 0.5) - 0.5) -
- *       abs(fract((p + 0.5 * w) * 0.5) - 0.5))) /
- *   w
- */
-
 test("chained binary expressions all break on same op precedence", () => {
   testFormat(
     "int i = a+b+cccccccccccccccccccccccccccccc;",
-    "int i = a +\n  b +\n  cccccccccccccccccccccccccccccc;",
+    "int i =\n  a +\n  b +\n  cccccccccccccccccccccccccccccc;",
     40,
   )
 })
@@ -63,10 +54,10 @@ describe("indentation", () => {
         void main() {
           if (
             aaaaaaaaaa +
-              // a comment
-              bbbbbbbbbb +
-              eeeeee * fffffff +
-              cccccccccc
+            // a comment
+            bbbbbbbbbb +
+            eeeeee * fffffff +
+            cccccccccc
           ) {}
         }`,
       undefined,
@@ -183,7 +174,22 @@ describe("initDeclaratorList", () => {
         int i = fun(aaaaaaaaaaaaa, bbbbbbbbbbbb, ccccccccccc), k = 3;
         int j = fun(aaaaaaaaaaaaa, bbbbbbbbbbbb, ccccccccccc) * 2;
       }`,
-      undefined,
+      dedent`
+      void main() {
+        int i = fun(
+            aaaaaaaaaaaaa,
+            bbbbbbbbbbbb,
+            ccccccccccc
+          ),
+          k = 3;
+        int j =
+          fun(
+            aaaaaaaaaaaaa,
+            bbbbbbbbbbbb,
+            ccccccccccc
+          ) *
+          2;
+      }`,
       40,
     )
   })
@@ -199,6 +205,19 @@ describe("newline is kept", () => {
         #define A (1)
       
         #define B (2)`,
+    )
+  })
+  test("after multiline macro definition", () => {
+    testFormat(
+      dedent`
+        #define A()        \
+          void foo() {     \
+            return;        \
+          }
+        
+        A()`,
+      undefined,
+      20,
     )
   })
 })
@@ -352,7 +371,9 @@ describe("shadertoy top 100 ", () => {
         const formatted = fmt(contents)
         const formatted2 = fmt(formatted)
         expect(formatted2).toEqual(formatted)
-        writeFileSync("testout/" + filename, formatted, { encoding: "utf8" })
+        writeFileSync("fixtures/shadertoy/testout/" + filename, formatted, {
+          encoding: "utf8",
+        })
       })
     }
   }

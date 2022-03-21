@@ -18,6 +18,7 @@ import {
   AssignmentExpression,
   BinaryExpression,
   CommaExpression,
+  Declarator,
   isExpression,
   isToken,
   Node,
@@ -52,6 +53,7 @@ const {
     softline,
     hardline,
     fill,
+    lineSuffixBoundary,
   },
 } = doc
 
@@ -107,6 +109,10 @@ export const languages: SupportInfo["languages"] = [
   },
 ]
 
+function locStart(node: Node | IToken) {
+  return (isToken(node) ? node : node.firstToken!).startOffset
+}
+
 function locEnd(node: Node | IToken) {
   return (isToken(node) ? node : node.lastToken!).endOffset! + 1
 }
@@ -121,9 +127,7 @@ export const parsers: Plugin<Node | IToken>["parsers"] = {
       return translationUnit
     },
     astFormat: "glsl-ast",
-    locStart(node: Node | IToken) {
-      return (isToken(node) ? node : node.firstToken!).startOffset
-    },
+    locStart,
     locEnd,
   },
 }
@@ -347,10 +351,23 @@ function isAssignment(node: Node): node is AssignmentExpression {
   return node.kind === "assignmentExpression"
 }
 
+function isAssignmentOrVariableDeclarator(
+  node: Node,
+): node is AssignmentExpression | Declarator {
+  return node.kind === "assignmentExpression" || node.kind === "declarator"
+}
+
+function hasLeadingOwnLineComment(
+  originalText: string,
+  rightNode: Node,
+): boolean {
+  // TODO
+  return false
+}
+
 function chooseAssignmentLayout(
   path: AstPath<Node | IToken>,
   options: ParserOptions<Node | IToken> & { inMacro?: Token[] },
-  leftDoc: Doc,
   rightPropertyName: string,
 ):
   | "break-after-operator"
@@ -374,10 +391,10 @@ function chooseAssignmentLayout(
   const shouldUseChainFormatting = path.match(
     isAssignment,
     isAssignmentOrVariableDeclarator,
-    (node) =>
+    (node: Node) =>
       !isTail ||
       (node.kind !== "expressionStatement" &&
-        node.kind !== "variableDeclaration"),
+        node.kind !== "initDeclaratorListDeclaration"),
   )
 
   if (shouldUseChainFormatting) {
@@ -388,7 +405,7 @@ function chooseAssignmentLayout(
 
   if (
     isHeadOfLongChain ||
-    hasLeadingOwnLineComment$2(options.originalText, rightNode)
+    hasLeadingOwnLineComment(options.originalText, rightNode)
   ) {
     return "break-after-operator"
   }
@@ -586,22 +603,57 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             if (!n.init) {
               return [name, arraySpecifier]
             } else {
-              const layout = chooseAssignmentLayout(
-                path,
-                options,
-                print,
-                leftDoc,
-                rightPropertyName,
-              )
+              const layout = chooseAssignmentLayout(path, options, "init")
               const groupId = Symbol("declarator")
+              const leftDoc = name
+              const operator = " ="
+              const rightDoc = p<typeof n>("init")
               // TODO: need this group?
-              return group([
-                name,
-                arraySpecifier,
-                " =",
-                group(indent(line), { id: groupId }),
-                indentIfBreak(p<typeof n>("init"), { groupId }),
-              ])
+              // return group([
+              //   name,
+              //   arraySpecifier,
+              //   " =",
+              //   group(indent(line), { id: groupId }),
+              //   indentIfBreak(p<typeof n>("init"), { groupId }),
+              // ])
+              switch (layout) {
+                // First break after operator, then the sides are broken independently on their own lines
+                case "break-after-operator":
+                  return group([
+                    group(leftDoc),
+                    operator,
+                    group(indent([line, rightDoc])),
+                  ])
+
+                // First break right-hand side, then left-hand side
+                case "never-break-after-operator":
+                  return group([group(leftDoc), operator, " ", rightDoc])
+
+                // First break right-hand side, then after operator
+                case "fluid": {
+                  const groupId = Symbol("assignment")
+                  return group([
+                    group(leftDoc),
+                    operator,
+                    group(indent(line), { id: groupId }),
+                    lineSuffixBoundary,
+                    indentIfBreak(rightDoc, { groupId }),
+                  ])
+                }
+
+                // Parts of assignment chains aren't wrapped in groups.
+                // Once one of them breaks, the chain breaks too.
+                case "chain":
+                  return [group(leftDoc), operator, line, rightDoc]
+
+                case "chain-tail":
+                  return [group(leftDoc), operator, indent([line, rightDoc])]
+
+                case "only-left":
+                  return leftDoc
+                default:
+                  throw new Error()
+              }
             }
           }
           case "arraySpecifier":
@@ -665,8 +717,12 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             ])
           }
           case "returnStatement": {
-            const what = p<typeof n>("what")
-            return ["return", " ", what, ";"]
+            if (n.what) {
+              const what = p<typeof n>("what")
+              return ["return", " ", what, ";"]
+            } else {
+              return "return;"
+            }
             // return ["return", " ", conditionalGroup([what, indent(what)]), ";"]
           }
           case "breakStatement":
@@ -773,8 +829,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             return [
               "do",
               p<typeof n>("statement"),
-              "while",
-              "(",
+              "while (",
               group(p<typeof n>("conditionExpression")),
               ")",
             ]
@@ -832,20 +887,35 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "commaExpression":
           case "binaryExpression": {
             const parts = printBinaryishExpressions(path, print, n, inMacro)
+            const parent = path.getParentNode() as Node
+            const isInsideParenthesis =
+              parent.kind === "selectionStatement" ||
+              parent.kind === "whileStatement" ||
+              parent.kind === "switchStatement" ||
+              parent.kind === "doWhileStatement"
 
-            // const q = vec2(
-            //   length(p.xz - 0.5 * b * vec2(1.0 - f, 1.0 + f)) *
-            //     sign(p.x * b.y + p.z * b.x - b.x * b.y) -
-            //     ra,
-            //   p.y - h,
-            // )
+            // if (
+            //   this.hasPlugin("dynamicImports") && this.lookahead().type === tt.parenLeft
+            // ) {
+            //
+            // looks super weird, we want to break the children if the parent breaks
+            //
+            // if (
+            //   this.hasPlugin("dynamicImports") &&
+            //   this.lookahead().type === tt.parenLeft
+            // ) {
+            if (isInsideParenthesis) {
+              return parts
+            }
 
             const needsParen = () => {
               const parent = path.getParentNode() as Node | undefined
-              // Comma expression passed as an argument to a function needs parentheses.
               if (!parent) {
                 return false
               }
+
+              // Comma expressions passed as arguments need parentheses.
+              // E.g. foo((a, b), c)
               if (
                 parent.kind === "functionCall" &&
                 n.kind === "commaExpression"
@@ -853,6 +923,8 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                 return true
               }
 
+              // Bitwise operators are wrapped in parentheses for clarity.
+              // E.g. a << (u & 16)
               if (
                 parent.kind === "binaryExpression" &&
                 isBitwiseOperator(parent.op.tokenType)
@@ -862,9 +934,22 @@ export const printers: Plugin<Node | IToken>["printers"] = {
 
               return false
             }
-            const shouldIndent = true
 
-            if (shouldIndent) {
+            const parentParent = path.getParentNode(1) as Node
+
+            // Avoid indenting sub-expressions in some cases where the first sub-expression is already
+            // indented accordingly. We should indent sub-expressions where the first case isn't indented.
+            const shouldNotIndent =
+              parent.kind === "returnStatement" ||
+              parent.kind === "forStatement" ||
+              (parent.kind === "conditionalExpression" &&
+                parentParent.kind !== "returnStatement" &&
+                parentParent.kind !== "functionCall") ||
+              parent.kind === "assignmentExpression" ||
+              parent.kind === "declarator"
+            if (shouldNotIndent) {
+              return group(parts)
+            } else {
               // Separate the leftmost expression, possibly with its leading comments.
               const headParts = parts.slice(0, 1)
               const rest = parts.slice(headParts.length)
@@ -881,8 +966,6 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                   needsParen(),
                 ),
               )
-            } else {
-              return group(parts)
             }
           }
 

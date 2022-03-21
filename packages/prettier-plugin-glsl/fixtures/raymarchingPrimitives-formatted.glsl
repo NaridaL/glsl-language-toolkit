@@ -42,6 +42,7 @@ float ndot(vec2 a, vec2 b) {
     a + b;                                                                     \
     return max(a, max(b, c));                                                  \
   }
+
 MAX3(float)
 MAX3(vec3)
 
@@ -202,9 +203,10 @@ float sdCylinder(vec3 p, vec3 a, vec3 b, float r) {
   float y = abs(paba - baba * 0.5) - baba * 0.5;
   float x2 = x * x;
   float y2 = y * y * baba;
-  float d = max(x, y) < 0.0
-    ? -min(x2, y2)
-    : (x > 0.0 ? x2 : 0.0) + (y > 0.0 ? y2 : 0.0);
+  float d =
+    max(x, y) < 0.0
+      ? -min(x2, y2)
+      : (x > 0.0 ? x2 : 0.0) + (y > 0.0 ? y2 : 0.0);
   return sign(d) * sqrt(abs(d)) / baba;
 }
 
@@ -252,7 +254,7 @@ float sdCappedCone(vec3 p, vec3 a, vec3 b, float ra, float rb) {
   float s = cbx < 0.0 && cay < 0.0 ? -1.0 : 1.0;
 
   return s *
-    sqrt(min(cax * cax + cay * cay * baba, cbx * cbx + cby * cby * baba));
+  sqrt(min(cax * cax + cay * cay * baba, cbx * cbx + cby * cby * baba));
 }
 
 // c is the sin/cos of the desired cone angle
@@ -306,8 +308,8 @@ float sdPyramid(vec3 p, float h) {
   float t = clamp((q.y - 0.5 * p.z) / (m2 + 0.25), 0.0, 1.0);
 
   float a = m2 * (q.x + s) * (q.x + s) + q.y * q.y;
-  float b = m2 * (q.x + 0.5 * t) * (q.x + 0.5 * t) +
-    (q.y - m2 * t) * (q.y - m2 * t);
+  float b =
+    m2 * (q.x + 0.5 * t) * (q.x + 0.5 * t) + (q.y - m2 * t) * (q.y - m2 * t);
 
   float d2 = min(q.y, -q.x * m2 - q.y * 0.5) > 0.0 ? 0.0 : min(a, b);
 
@@ -608,7 +610,8 @@ float checkersGradBox(vec2 p, vec2 dpdx, vec2 dpdy) {
   // filter kernel
   vec2 w = abs(dpdx) + abs(dpdy) + 0.001;
   // analytical integral (box filter)
-  vec2 i = 2.0 *
+  vec2 i =
+    2.0 *
     (abs(fract((p - 0.5 * w) * 0.5) - 0.5) -
       abs(fract((p + 0.5 * w) * 0.5) - 0.5)) /
     w;
@@ -675,7 +678,8 @@ vec3 render(vec3 ro, vec3 rd, vec3 rdx, vec3 rdy) {
     }
     // back
     {
-      float dif = clamp(dot(nor, normalize(vec3(0.5, 0.0, 0.6))), 0.0, 1.0) *
+      float dif =
+        clamp(dot(nor, normalize(vec3(0.5, 0.0, 0.6))), 0.0, 1.0) *
         clamp(1.0 - pos.y, 0.0, 1.0);
       dif *= occ;
       lin += col * 0.55 * dif * vec3(0.25, 0.25, 0.25);
@@ -709,7 +713,8 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
 
   // camera
   vec3 ta = vec3(0.5, -0.5, -0.6);
-  vec3 ro = ta +
+  vec3 ro =
+    ta +
     vec3(
       4.5 * cos(0.1 * time + 7.0 * mo.x),
       1.3 + 2.0 * mo.y,
@@ -736,10 +741,10 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
       vec3 rd = ca * normalize(vec3(p, fl));
 
       // ray differentials
-      vec2 px = (2.0 * (fragCoord + vec2(1.0, 0.0)) - iResolution.xy) /
-        iResolution.y;
-      vec2 py = (2.0 * (fragCoord + vec2(0.0, 1.0)) - iResolution.xy) /
-        iResolution.y;
+      vec2 px =
+        (2.0 * (fragCoord + vec2(1.0, 0.0)) - iResolution.xy) / iResolution.y;
+      vec2 py =
+        (2.0 * (fragCoord + vec2(0.0, 1.0)) - iResolution.xy) / iResolution.y;
       vec3 rdx = ca * normalize(vec3(px, fl));
       vec3 rdy = ca * normalize(vec3(py, fl));
 

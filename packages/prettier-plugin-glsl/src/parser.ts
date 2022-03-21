@@ -61,7 +61,7 @@ import {
   TOKEN,
 } from "./lexer"
 import { DEV, ExpandedLocation, substrContext } from "./util"
-import { applyLineContinuations } from "./preprocessor"
+import { applyLineContinuations, fixLocations } from "./preprocessor"
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const VERSION_REGEXP = /\s*#\s*version\s+(\d+)\s+es\s*/
@@ -1699,17 +1699,19 @@ function checkTokenErrors(lexingResult: ILexingResult): void {
 }
 
 export function parseInput(originalInput: string): TranslationUnit {
-  const { result: input, changes } = applyLineContinuations(originalInput)
+  const noLineCont = applyLineContinuations(originalInput)
 
-  const lexingResult = GLSL_LEXER.tokenize(input)
-  checkLexingErrors(input, lexingResult)
+  const lexingResult = GLSL_LEXER.tokenize(noLineCont.result)
+  checkLexingErrors(noLineCont.result, lexingResult)
+
+  fixLocations(lexingResult.tokens, noLineCont.changes)
 
   checkTokenErrors(lexingResult)
 
   // "input" is a setter which will reset the glslParser's state.
   GLSL_PARSER.input = lexingResult.tokens
   const result = GLSL_PARSER.translationUnit()
-  checkParsingErrors(input, GLSL_PARSER.errors)
+  checkParsingErrors(noLineCont.result, GLSL_PARSER.errors)
 
   const ppDefs = GLSL_PARSER.ppDefs
 

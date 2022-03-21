@@ -34,10 +34,6 @@ export function dedent(
   let result = ""
   for (let i = 0; i < raw.length; i++) {
     result += raw[i]
-      // join lines when there is a suppressed newline
-      .replace(/\\\n[ \t]*/g, "")
-      // handle escaped backticks
-      .replace(/\\`/g, "`")
 
     if (i < (args.length <= 1 ? 0 : args.length - 1)) {
       result += args.length <= i + 1 ? undefined : args[i + 1]

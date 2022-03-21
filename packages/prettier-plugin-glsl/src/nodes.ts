@@ -2,8 +2,8 @@ import { IToken } from "chevrotain"
 
 export interface Token extends IToken {
   macroSource?: Token
-  // original line number, as parsed from input with applied line continuations
-  // needed by preprocessor to figure out which tokens are in one line
+  // Line number, as parsed from input with applied line continuations.
+  // Needed by preprocessor to figure out which tokens are in one line.
   lineNoCont?: number
 }
 
