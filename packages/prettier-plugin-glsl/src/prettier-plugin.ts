@@ -297,10 +297,7 @@ function adjustClause(node: Node, clause: Doc, forceSpace: boolean) {
   return indent([line, clause])
 }
 
-function formatMacroDefinition(
-  doc: Doc,
-  options: ParserOptions<Node | IToken>,
-): string {
+function formatMacroDefinition(doc: Doc, options: GlslParserOptions): string {
   propagateBreaks(doc)
   const formatted = printDocToString(
     doc,
@@ -319,7 +316,7 @@ function formatMacroDefinition(
 
 function printDanglingComments(
   path: AstPath,
-  options: any,
+  options: GlslParserOptions,
   sameIndent: any,
   filter: (arg0: any) => any,
 ) {
@@ -367,8 +364,8 @@ function hasLeadingOwnLineComment(
 
 function chooseAssignmentLayout(
   path: AstPath<Node | IToken>,
-  options: ParserOptions<Node | IToken> & { inMacro?: Token[] },
-  rightPropertyName: string,
+  options: GlslParserOptions,
+  rightNode: Node | undefined,
 ):
   | "break-after-operator"
   | "chain"
@@ -376,9 +373,6 @@ function chooseAssignmentLayout(
   | "only-left"
   | "never-break-after-operator"
   | "fluid" {
-  const node = path.getValue() as Node
-  const rightNode = (node as any)[rightPropertyName] as Node
-
   if (!rightNode) {
     return "only-left"
   }
@@ -426,13 +420,67 @@ function chooseAssignmentLayout(
   return "fluid"
 }
 
+/**
+ * Print an `AssignmentExpression` or a variable `Declarator`.
+ */
+function printAssignmentLike(
+  path: AstPath,
+  options: GlslParserOptions,
+  leftDoc: Doc,
+  operator: Doc,
+  rightDoc: Doc,
+  rightNode: Node | undefined,
+): Doc {
+  const layout = chooseAssignmentLayout(path, options, rightNode)
+  // TODO: need this group?
+  // return group([
+  //   name,
+  //   arraySpecifier,
+  //   " =",
+  //   group(indent(line), { id: groupId }),
+  //   indentIfBreak(p<typeof n>("init"), { groupId }),
+  // ])
+  switch (layout) {
+    // First break after operator, then the sides are broken independently on their own lines
+    case "break-after-operator":
+      return group([group(leftDoc), operator, group(indent([line, rightDoc]))])
+
+    // First break right-hand side, then left-hand side
+    case "never-break-after-operator":
+      return group([group(leftDoc), operator, " ", rightDoc])
+
+    // First break right-hand side, then after operator
+    case "fluid": {
+      const groupId = Symbol("assignment")
+      return group([
+        group(leftDoc),
+        operator,
+        group(indent(line), { id: groupId }),
+        lineSuffixBoundary,
+        indentIfBreak(rightDoc, { groupId }),
+      ])
+    }
+
+    // Parts of assignment chains aren't wrapped in groups.
+    // Once one of them breaks, the chain breaks too.
+    case "chain":
+      return [group(leftDoc), operator, line, rightDoc]
+
+    case "chain-tail":
+      return [group(leftDoc), operator, indent([line, rightDoc])]
+
+    case "only-left":
+      return leftDoc
+    default:
+      throw new Error()
+  }
+}
+
+type GlslParserOptions = ParserOptions<Node | IToken> & { inMacro?: Token[] }
+
 export const printers: Plugin<Node | IToken>["printers"] = {
   "glsl-ast": {
-    print(
-      path,
-      options: ParserOptions<Node | IToken> & { inMacro?: Token[] },
-      print,
-    ): Doc {
+    print(path, options: GlslParserOptions, print): Doc {
       const inMacro = options.inMacro
       const n = path.getValue()
       if (!n) {
@@ -598,63 +646,16 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           }
 
           case "declarator": {
-            const name = p<typeof n>("name")
             const arraySpecifier = p<typeof n>("arraySpecifier")
-            if (!n.init) {
-              return [name, arraySpecifier]
-            } else {
-              const layout = chooseAssignmentLayout(path, options, "init")
-              const groupId = Symbol("declarator")
-              const leftDoc = name
-              const operator = " ="
-              const rightDoc = p<typeof n>("init")
-              // TODO: need this group?
-              // return group([
-              //   name,
-              //   arraySpecifier,
-              //   " =",
-              //   group(indent(line), { id: groupId }),
-              //   indentIfBreak(p<typeof n>("init"), { groupId }),
-              // ])
-              switch (layout) {
-                // First break after operator, then the sides are broken independently on their own lines
-                case "break-after-operator":
-                  return group([
-                    group(leftDoc),
-                    operator,
-                    group(indent([line, rightDoc])),
-                  ])
-
-                // First break right-hand side, then left-hand side
-                case "never-break-after-operator":
-                  return group([group(leftDoc), operator, " ", rightDoc])
-
-                // First break right-hand side, then after operator
-                case "fluid": {
-                  const groupId = Symbol("assignment")
-                  return group([
-                    group(leftDoc),
-                    operator,
-                    group(indent(line), { id: groupId }),
-                    lineSuffixBoundary,
-                    indentIfBreak(rightDoc, { groupId }),
-                  ])
-                }
-
-                // Parts of assignment chains aren't wrapped in groups.
-                // Once one of them breaks, the chain breaks too.
-                case "chain":
-                  return [group(leftDoc), operator, line, rightDoc]
-
-                case "chain-tail":
-                  return [group(leftDoc), operator, indent([line, rightDoc])]
-
-                case "only-left":
-                  return leftDoc
-                default:
-                  throw new Error()
-              }
-            }
+            const leftDoc = [n.name.image, arraySpecifier]
+            return printAssignmentLike(
+              path,
+              options,
+              leftDoc,
+              " =",
+              p<typeof n>("init"),
+              n.init,
+            )
           }
           case "arraySpecifier":
             return ["[", p<typeof n>("size"), "]"]
@@ -668,15 +669,13 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "structSpecifier":
             return group([
               "struct",
-              " ",
-              p<typeof n>("name"),
-              " ",
-              "{",
+              n.name ? " " + n.name.image : "",
+              " {",
               indent([
-                softline,
-                join(softline, path.map(print, "declarations")),
+                hardline,
+                join(hardline, path.map(print, "declarations")),
               ]),
-              softline,
+              hardline,
               "}",
             ])
 
@@ -860,14 +859,15 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               paren(p<typeof n>("on"), getPrecedence(n.on, inMacro) > 3),
             ]
           case "assignmentExpression": {
-            const groupId = Symbol("assignment")
-            return group([
-              p<typeof n>("lhs"),
-              " ",
-              p<typeof n>("op"),
-              group(indent(line), { id: groupId }),
-              indentIfBreak(p<typeof n>("rhs"), { groupId }),
-            ])
+            const leftDoc = p<typeof n>("lhs")
+            return printAssignmentLike(
+              path,
+              options,
+              leftDoc,
+              " " + n.op.image,
+              p<typeof n>("rhs"),
+              n.rhs,
+            )
           }
           case "conditionalExpression":
             return [
@@ -1075,7 +1075,7 @@ function printComment(
   // Path to the current comment node
   commentPath: AstPath,
   // Current options
-  options: ParserOptions<Node | IToken>,
+  options: GlslParserOptions,
 ): Doc {
   const n = commentPath.getValue() as Token
   if (n.tokenType === TOKEN.MULTILINE_COMMENT && n.image[2] === "*") {

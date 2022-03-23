@@ -24,14 +24,16 @@ statements or expressions. If successful, these will be formatted as usual.
 
 For example,
 `#define MAX3(genType) genType max3(genType a, genType b, genType c) { /* comment */ return max(max(a, b), c); }`
-will be formatted as.
+will be formatted as:
+
+<!-- Printed at 60 wide, so it fits on npm.js renderer site. -->
 
 ```glsl
-#define MAX3(genType)                                                          \
-  genType max3(genType a, genType b, genType c) { \
-    /* comment */                                                              \
- return max(max(a, b), c);                                                  \
- }
+#define MAX3(genType)                                      \
+  genType max3(genType a, genType b, genType c) {          \
+    /* comment */                                          \
+    return max(max(a, b), c);                              \
+  }
 ```
 
 ### Formatting of comments
@@ -52,6 +54,13 @@ recognized as GLSL files by default.
 `.fp` `.frag` `.frg` `.fs` `.fsh` `.fshader` `.geo` `.geom` `.glsl` `.glslf`
 `.glslv` `.gs` `.gshader` `.rchit` `.rmiss` `.shader` `.tesc` `.tese` `.vert`
 `.vrx` `.vsh` `.vshader`
+
+Note that `.frag` files are recognized as JavaScript files by default. Add the
+following to your Prettier configuration to format them as GLSL.
+
+```json
+"overrides": [{"files": ["*.frag"], "options": {"parser": "glsl-parser"}}]
+```
 
 ## Limitations due to preprocessor
 
