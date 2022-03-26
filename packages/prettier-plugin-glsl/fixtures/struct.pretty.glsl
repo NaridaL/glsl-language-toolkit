@@ -10,10 +10,13 @@ struct S {
       MACRO_INVOCATION(2, 3)
   ] eee, ddd;
   float arrayDeclaratorOnField[
-    LONG_CONSTANT
-  ],
+      LONG_CONSTANT
+    ],
     ff[22],
     fff;
+  float arrayDeclaratorOnField[
+    LONG_CONSTANT
+  ];
 
   bool c; // comment
 } s1,

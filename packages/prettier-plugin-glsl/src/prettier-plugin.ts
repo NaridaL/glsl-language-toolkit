@@ -22,6 +22,7 @@ import {
   isExpression,
   isToken,
   Node,
+  StructDeclaration,
   Token,
   TypeQualifier,
 } from "./nodes"
@@ -622,10 +623,12 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               printed.length === 0 ? "" : " ",
               printed.length === 1
                 ? printed
-                : indent(
-                    join(
-                      [",", hasInit && !isParentForLoop ? hardline : line],
-                      printed,
+                : group(
+                    indent(
+                      join(
+                        [",", hasInit && !isParentForLoop ? hardline : line],
+                        printed,
+                      ),
                     ),
                   ),
               ";",
@@ -658,18 +661,28 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               p<typeof n>("index"),
               "]",
             ]
-          case "structSpecifier":
+          case "structSpecifier": {
+            const parts: Doc = []
+            path.each((path, index, declarations: StructDeclaration[]) => {
+              const value = path.getValue()
+              parts.push(hardline)
+              parts.push(print(path))
+              if (
+                index !== declarations.length - 1 &&
+                util.isNextLineEmpty(options.originalText, value, locEnd)
+              ) {
+                parts.push(hardline)
+              }
+            }, "declarations")
             return group([
               "struct",
               n.name ? " " + n.name.image : "",
               " {",
-              indent([
-                hardline,
-                join(hardline, path.map(print, "declarations")),
-              ]),
+              indent(parts),
               hardline,
               "}",
             ])
+          }
 
           ///////// STATEMENTS
           case "compoundStatement": {
