@@ -491,19 +491,6 @@ export const printers: Plugin<Node | IToken>["printers"] = {
       }
       const p = <N extends Node>(s: keyof N) => path.call(print, s)
 
-      const tok = <N extends Node>(
-        n: N,
-        tokenType: TokenType,
-        index = 0,
-      ): Doc => {
-        if (!n.tokens) {
-          return tokenType.PATTERN! as string
-        } else {
-          // TODO: get preprocess stuff
-          return n.tokens.find((t) => t.tokenType === tokenType)!.image
-        }
-      }
-
       try {
         switch (n.kind) {
           ////////// DECLARATIONS
@@ -632,7 +619,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             // TODO: hasComment?
             return group([
               p<typeof n>("fsType"),
-              " ",
+              printed.length === 0 ? "" : " ",
               printed.length === 1
                 ? printed
                 : indent(
@@ -658,7 +645,12 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             )
           }
           case "arraySpecifier":
-            return ["[", p<typeof n>("size"), "]"]
+            return group([
+              "[",
+              indent([softline, p<typeof n>("size")]),
+              softline,
+              "]",
+            ])
           case "arrayAccess":
             return [
               paren(p<typeof n>("on"), getPrecedence(n.on, inMacro) > 2),
@@ -687,7 +679,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               (c) => !c.leading && !c.trailing && !c.printed,
             )
 
-            path.each((path, index, statements) => {
+            path.each((path, index) => {
               const value = path.getValue()
               if (index !== 0) {
                 parts.push(hardline)
@@ -826,11 +818,11 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           }
           case "doWhileStatement":
             return [
-              "do",
+              "do ",
               p<typeof n>("statement"),
-              "while (",
+              " while (",
               group(p<typeof n>("conditionExpression")),
-              ")",
+              ");",
             ]
 
           ////////// EXPRESSIONS
@@ -1044,6 +1036,39 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               ")",
             ])
           }
+          case "switchStatement": {
+            return [
+              "switch (",
+              group([
+                indent([softline, p<typeof n>("initExpression")]),
+                softline,
+              ]),
+              ") {",
+              n.cases.length
+                ? indent([hardline, join(hardline, path.map(print, "cases"))])
+                : "",
+              hardline,
+              "}",
+            ]
+          }
+          case "caseBlock": {
+            const caseLabel = p<typeof n>("caseLabel")
+            const parts: Doc = []
+            path.each((path, index) => {
+              const value = path.getValue()
+              parts.push(hardline)
+              parts.push(print(path))
+              if (util.isNextLineEmpty(options.originalText, value, locEnd)) {
+                parts.push(hardline)
+              }
+            }, "statements")
+            return [caseLabel, indent(parts)]
+          }
+          case "caseLabel": {
+            return n.case_ === undefined
+              ? "default:"
+              : ["case ", p<typeof n>("case_"), ":"]
+          }
           default:
             throw new Error(
               "unexpected n type " +
@@ -1087,20 +1112,20 @@ function printComment(
       )
       .join("\n")
       .trim()
-    const formattedSource = format(src, {
+    const formattedComment = format(src, {
       ...options,
       printWidth: options.printWidth - 3,
       parser: "markdown",
       proseWrap: "always",
       plugins: [],
     })
-    const formattedSourceLines = formattedSource.split("\n")
+    const formattedCommentLines = formattedComment.split("\n")
     // Remove the final newline which markdown formatter always adds.
-    formattedSourceLines.pop()
+    formattedCommentLines.pop()
 
     return (
       "/**\n" +
-      formattedSourceLines
+      formattedCommentLines
         .map((l) => (l === "" ? " *" : " * " + l))
         .join("\n") +
       "\n */"

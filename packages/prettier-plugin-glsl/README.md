@@ -1,11 +1,11 @@
-![npm](https://img.shields.io/npm/v/prettier-plugin-glsl?style=flat-square)
-![NPM](https://img.shields.io/npm/l/prettier-plugin-glsl?style=flat-square)
+[![npm](https://img.shields.io/npm/v/prettier-plugin-glsl?style=flat-square)](https://www.npmjs.com/package/prettier-plugin-glsl)
+[![NPM](https://img.shields.io/npm/l/prettier-plugin-glsl?style=flat-square)](https://github.com/NaridaL/glsl-language-toolkit/blob/main/packages/prettier-plugin-glsl/LICENSE)
 
 # prettier-plugin-glsl
 
 This is a plugin for [Prettier](https://prettier.io), the opinionated code
 formatter, for GLSL, the shading language used in WebGL and other places. It
-uses a custom parser based on [chevrotain](https://chevrotain.io/) and does not
+uses a custom parser based on [Chevrotain](https://chevrotain.io/) and does not
 require any external dependencies.
 
 **NB: this is still in active development, breaking/formatting changes may be
@@ -26,7 +26,7 @@ For example,
 `#define MAX3(genType) genType max3(genType a, genType b, genType c) { /* comment */ return max(max(a, b), c); }`
 will be formatted as:
 
-<!-- Printed at 60 wide, so it fits on npm.js renderer site. -->
+<!-- Printed at 60 wide, so it fits on npmjs.com rendered site. -->
 
 ```glsl
 #define MAX3(genType)                                      \
@@ -69,8 +69,8 @@ formatting. For example, the plugin does not attempt to be able to format crazy
 (but technically valid) constructs such as:
 
 ```glsl
-#define LPAREN
-void main() LPAREN
+#define LBRACE {
+void main() LBRACE
 }
 ```
 
@@ -82,23 +82,23 @@ works fine:
 #define AA 2
 #define ZERO (min(iFrame, 0))
 void main() {
-    // ...
-    #if AA > 1
-    for (int m = ZERO; m < AA; m++)
-    for (int n = ZERO; n < AA; n++) {
-        // pixel coordinates
-        vec2 o = vec2(float(m), float(n)) / float(AA) - 0.5;
-        vec2 p = (2.0 * (fragCoord + o) - iResolution.xy) / iResolution.y;
-        #else
-        vec2 p = (2.0 * fragCoord - iResolution.xy) / iResolution.y;
-        #endif
-
-        // use p
-
-        #if AA > 1
-    }
-    tot /= float(AA * AA);
+  // ...
+  #if AA > 1
+  for (int m = ZERO; m < AA; m++)
+  for (int n = ZERO; n < AA; n++) {
+    // pixel coordinates
+    vec2 o = vec2(float(m), float(n)) / float(AA) - 0.5;
+    vec2 p = (2.0 * (fragCoord + o) - iResolution.xy) / iResolution.y;
+    #else
+    vec2 p = (2.0 * fragCoord - iResolution.xy) / iResolution.y;
     #endif
+
+    // use p
+
+    #if AA > 1
+  }
+  tot /= float(AA * AA);
+  #endif
 }
 ```
 

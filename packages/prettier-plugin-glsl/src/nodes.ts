@@ -266,12 +266,18 @@ export interface StorageQualifier extends BaseNode {
 export interface SwitchStatement extends BaseNode {
   kind: "switchStatement"
   initExpression: Expression
-  body: CompoundStatement
+  cases: CaseBlock[]
 }
 
 export interface CaseLabel extends BaseNode {
   kind: "caseLabel"
-  _case: Expression | undefined
+  case_: Expression | undefined
+}
+
+export interface CaseBlock extends BaseNode {
+  kind: "caseBlock"
+  caseLabel: CaseLabel
+  statements: Statement[]
 }
 
 export interface FullySpecifiedType extends BaseNode {
@@ -378,12 +384,14 @@ export type Statement =
   | PpNode
 export type Node =
   | ArraySpecifier
+  | CaseBlock
   | Declaration
   | Declarator
   | Expression
   | FullySpecifiedType
   | LayoutQualifier
   | ParameterDeclaration
+  | PpNode
   | Statement
   | StorageQualifier
   | StructDeclaration
@@ -391,7 +399,6 @@ export type Node =
   | TranslationUnit
   | TypeQualifier
   | TypeSpecifier
-  | PpNode
 
 export class AbstractVisitor<R> {
   protected visit(n: Node | undefined): R | undefined {
@@ -584,12 +591,19 @@ export class AbstractVisitor<R> {
 
   protected switchStatement(n: SwitchStatement): R | undefined {
     this.visit(n.initExpression)
-    this.visit(n.body)
+    for (const c of n.cases) {
+      this.visit(c)
+    }
     return
   }
 
   protected caseLabel(n: CaseLabel): R | undefined {
-    this.visit(n._case)
+    this.visit(n.case_)
+    return
+  }
+
+  protected caseBlock(n: CaseBlock): R | undefined {
+    this.visit(n.case_)
     return
   }
 
@@ -659,6 +673,10 @@ export class AbstractVisitor<R> {
   }
 
   protected ppCall(_n: PpCall): R | undefined {
+    return
+  }
+
+  protected ppPragma(_n: PpCall): R | undefined {
     return
   }
 }

@@ -11,6 +11,7 @@ import {
 
 import {
   ArraySpecifier,
+  CaseBlock,
   CaseLabel,
   CompoundStatement,
   Declaration,
@@ -53,13 +54,7 @@ import {
   UniformBlock,
   WhileStatement,
 } from "./nodes"
-import {
-  ALL_TOKENS,
-  checkLexingErrors,
-  GLSL_LEXER,
-  RESERVED_KEYWORDS,
-  TOKEN,
-} from "./lexer"
+import { ALL_TOKENS, checkLexingErrors, GLSL_LEXER, RESERVED_KEYWORDS, TOKEN } from "./lexer"
 import { DEV, ExpandedLocation, substrContext } from "./util"
 import { applyLineContinuations, fixLocations } from "./preprocessor"
 
@@ -326,13 +321,31 @@ class GLSLParser extends EmbeddedActionsParser {
   //SPEC     INOUT
   //SPEC parameter_type_specifier:
   //SPEC     statement_list
+  // public switchStatement = this.RR("switchStatement", (): SwitchStatement => {
+  //   this.CONSUME(TOKEN.SWITCH)
+  //   this.CONSUME(TOKEN.LEFT_PAREN)
+  //   const initExpression = this.SUBRULE(this.expression)
+  //   this.CONSUME(TOKEN.RIGHT_PAREN)
+  //   const body = this.SUBRULE(this.compoundStatement, { ARGS: [true] })
+  //   return { kind: "switchStatement", initExpression, body }
+  // })
   public switchStatement = this.RR("switchStatement", (): SwitchStatement => {
     this.CONSUME(TOKEN.SWITCH)
     this.CONSUME(TOKEN.LEFT_PAREN)
     const initExpression = this.SUBRULE(this.expression)
     this.CONSUME(TOKEN.RIGHT_PAREN)
-    const body = this.SUBRULE(this.compoundStatement, { ARGS: [true] })
-    return { kind: "switchStatement", initExpression, body }
+    this.CONSUME(TOKEN.LEFT_BRACE)
+    const cases: CaseBlock[] = []
+    this.MANY(() => cases.push(this.SUBRULE(this.caseBlock)))
+    this.CONSUME(TOKEN.RIGHT_BRACE)
+
+    return { kind: "switchStatement", initExpression, cases }
+  })
+  public caseBlock = this.RR("caseBlock", (): CaseBlock => {
+    const caseLabel = this.SUBRULE(this.caseLabel)
+    const statements: Statement[] = []
+    this.MANY1(() => statements.push(this.SUBRULE(this.statement)))
+    return { kind: "caseBlock", caseLabel, statements }
   })
   //SPEC init_declarator_list:
   //SPEC     single_declaration
@@ -1069,16 +1082,16 @@ class GLSLParser extends EmbeddedActionsParser {
         {
           ALT: () => {
             this.CONSUME(TOKEN.CASE)
-            const _case = this.SUBRULE(this.expression)
+            const case_ = this.SUBRULE(this.expression)
             this.CONSUME(TOKEN.COLON)
-            return { kind: "caseLabel", _case }
+            return { kind: "caseLabel", case_ }
           },
         },
         {
           ALT: () => {
             this.CONSUME2(TOKEN.DEFAULT)
             this.CONSUME2(TOKEN.COLON)
-            return { kind: "caseLabel", _case: undefined }
+            return { kind: "caseLabel", case_: undefined }
           },
         },
       ]),
@@ -1129,7 +1142,7 @@ class GLSLParser extends EmbeddedActionsParser {
         { ALT: () => this.SUBRULE(this.initDeclaratorList) },
         { ALT: () => this.SUBRULE(this.selectionStatement) },
         { ALT: () => this.SUBRULE(this.switchStatement) },
-        { ALT: () => this.SUBRULE(this.caseLabel) },
+        // { ALT: () => this.SUBRULE(this.caseLabel) }, TODO
         { ALT: () => this.SUBRULE(this.iterationStatement) },
         { ALT: () => this.SUBRULE(this.jumpStatement) },
         {

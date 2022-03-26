@@ -26,25 +26,6 @@ float dot2(in vec2 v) { return dot(v, v); }
 float dot2(in vec3 v) { return dot(v, v); }
 float ndot(in vec2 a, in vec2 b) { return a.x*b.x - a.y*b.y; }
 
-#define MUL(A, B) (A) * (B)
-
-#define ADD(A, B) ((A) + (B))
-
-
-#define MAX3(genType) \
-    genType max3(genType a, genType b, genType c) {\
-         /* comment here */\
-         a + b;\
-         return max(a, max ( b, c ));\
-    }
-
-
-MAX3(float)
-MAX3(vec3)
-
- genType max3(genType a, genType b, genType c) {         /* comment here */         a + b;         return max(a, max ( b, c ));    }
-
-
 float sdPlane(vec3 p)
 {
     return p.y;
