@@ -26,14 +26,14 @@ test("parse multi-dim array", () => {
                   init: {
                     args: [
                       {
-                        _const: "FLOATCONSTANT(1.) 36-37",
+                        const_: "FLOATCONSTANT(1.) 36-37",
 
                         firstToken: "FLOATCONSTANT(1.) 36-37",
                         kind: "constantExpression",
                         lastToken: "FLOATCONSTANT(1.) 36-37",
                       },
                       {
-                        _const: "FLOATCONSTANT(2.) 40-41",
+                        const_: "FLOATCONSTANT(2.) 40-41",
 
                         firstToken: "FLOATCONSTANT(2.) 40-41",
                         kind: "constantExpression",
@@ -46,7 +46,7 @@ test("parse multi-dim array", () => {
                         kind: "arraySpecifier",
                         lastToken: "RIGHT_BRACKET(]) 34-34",
                         size: {
-                          _const: "INTCONSTANT(2) 33-33",
+                          const_: "INTCONSTANT(2) 33-33",
 
                           firstToken: "INTCONSTANT(2) 33-33",
                           kind: "constantExpression",
@@ -82,7 +82,7 @@ test("parse multi-dim array", () => {
                     kind: "arraySpecifier",
                     lastToken: "RIGHT_BRACKET(]) 20-20",
                     size: {
-                      _const: "INTCONSTANT(2) 19-19",
+                      const_: "INTCONSTANT(2) 19-19",
 
                       firstToken: "INTCONSTANT(2) 19-19",
                       kind: "constantExpression",

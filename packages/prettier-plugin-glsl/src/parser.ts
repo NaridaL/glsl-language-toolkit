@@ -54,7 +54,13 @@ import {
   UniformBlock,
   WhileStatement,
 } from "./nodes"
-import { ALL_TOKENS, checkLexingErrors, GLSL_LEXER, RESERVED_KEYWORDS, TOKEN } from "./lexer"
+import {
+  ALL_TOKENS,
+  checkLexingErrors,
+  GLSL_LEXER,
+  RESERVED_KEYWORDS,
+  TOKEN,
+} from "./lexer"
 import { DEV, ExpandedLocation, substrContext } from "./util"
 import { applyLineContinuations, fixLocations } from "./preprocessor"
 
@@ -890,7 +896,7 @@ class GLSLParser extends EmbeddedActionsParser {
         {
           ALT: () => ({
             kind: "constantExpression",
-            _const: this.CONSUME(TOKEN.INTCONSTANT),
+            const_: this.CONSUME(TOKEN.INTCONSTANT),
           }),
         },
         {

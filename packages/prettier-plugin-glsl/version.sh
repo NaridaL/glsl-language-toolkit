@@ -6,7 +6,7 @@
 NEW_VERSION=$1
 
 if [ ! -z "$(git status --porcelain)" ] ; then
-  echo "Uncomitted changes, aborting."
+  echo "Uncommitted changes, aborting."
   exit 1
 fi
 

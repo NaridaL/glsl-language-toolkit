@@ -7,7 +7,7 @@ import * as prettier from "prettier"
 import * as prettierPlugin from "./prettier-plugin"
 import { dedent } from "./testutil"
 
-function fmt(source: string, printWidth = 80): string {
+export function fmt(source: string, printWidth = 80): string {
   return prettier.format(source, {
     parser: "glsl-parser",
     plugins: [prettierPlugin],
@@ -17,7 +17,7 @@ function fmt(source: string, printWidth = 80): string {
   })
 }
 
-function testFormat(
+export function testFormat(
   source: string,
   expected: string = source,
   printWidth?: number,

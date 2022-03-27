@@ -3,6 +3,7 @@
 import { promises as fsp, readdirSync, readFileSync, writeFileSync } from "fs"
 import expect from "expect"
 import fetch from "node-fetch"
+import { fmt } from "./prettier-plugin.test"
 
 interface ShaderToyShader {
   Shader: {
@@ -40,7 +41,7 @@ interface ShaderToyShader {
   }
 }
 
-describe.skip("shadertoy top 100 ", () => {
+describe("shadertoy top 100 ", () => {
   // Note: Shadertoy shaders can have multiple renderpasses, each of which is
   // its own translation unit/formattable file.
 

@@ -14,4 +14,9 @@ void main() {
   else {
     bar();
   }
+
+  // Comment after short binary statement shouldn't cause a break.
+  if (
+    a > b // Foobar!
+  ) {}
 }
