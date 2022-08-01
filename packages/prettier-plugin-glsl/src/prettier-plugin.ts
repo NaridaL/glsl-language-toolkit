@@ -571,6 +571,9 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             if (n.OUT) {
               parts.push("out ")
             }
+            if (n.VARYING) {
+              parts.push("varying ")
+            }
             if (n.UNIFORM) {
               parts.push("uniform ")
             }

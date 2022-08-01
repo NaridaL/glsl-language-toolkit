@@ -622,7 +622,7 @@ class GLSLParser extends EmbeddedActionsParser {
   public storageQualifier = this.RR(
     "storageQualifier",
     (): StorageQualifier => {
-      let CONST, CENTROID, IN, OUT, UNIFORM
+      let CONST, CENTROID, IN, OUT, UNIFORM, VARYING
       this.OR([
         { ALT: () => (CONST = this.CONSUME(TOKEN.CONST)) },
         {
@@ -631,12 +631,13 @@ class GLSLParser extends EmbeddedActionsParser {
             this.OR9([
               { ALT: () => (IN = this.CONSUME(TOKEN.IN)) },
               { ALT: () => (OUT = this.CONSUME(TOKEN.OUT)) },
+              { ALT: () => (VARYING = this.CONSUME(TOKEN.VARYING)) },
             ])
           },
         },
         { ALT: () => (UNIFORM = this.CONSUME(TOKEN.UNIFORM)) },
       ])
-      return { kind: "storageQualifier", CONST, CENTROID, IN, OUT, UNIFORM }
+      return { kind: "storageQualifier", CONST, CENTROID, IN, OUT, VARYING, UNIFORM }
     },
   )
 
