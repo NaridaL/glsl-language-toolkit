@@ -605,7 +605,10 @@ export class AbstractVisitor<R> {
   }
 
   protected caseBlock(n: CaseBlock): R | undefined {
-    this.visit(n.case_)
+    this.visit(n.caseLabel)
+    for (const s of n.statements) {
+      this.visit(s)
+    }
     return
   }
 
