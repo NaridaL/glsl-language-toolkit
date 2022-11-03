@@ -576,6 +576,7 @@ export namespace TOKEN {
   export const ISAMPLER2D = createBasicType("isampler2D")
   export const IN = createKeyword("IN", PARAMETER_QUALIFIER)
   export const VARYING = createKeyword("VARYING")
+  export const ATTRIBUTE = createKeyword("ATTRIBUTE")
   export const BOOLCONSTANT = createToken({
     name: "BOOLCONSTANT",
     pattern: /true|false/,
