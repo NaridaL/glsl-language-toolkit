@@ -261,6 +261,8 @@ export interface StorageQualifier extends BaseNode {
   OUT: Token | undefined
   // Actually from OpenGL ES 1.00
   VARYING: Token | undefined
+  // Actually from OpenGL ES 1.00
+  ATTRIBUTE: Token | undefined
   CONST: Token | undefined
   UNIFORM: Token | undefined
 }
