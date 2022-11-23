@@ -49,6 +49,7 @@ import {
   Token,
   TranslationUnit,
   TypeQualifier,
+  TypeQualifierDeclaration,
   TypeSpecifier,
   UnaryExpression,
   UniformBlock,
@@ -610,6 +611,7 @@ class GLSLParser extends EmbeddedActionsParser {
         layoutQualifierIds.push({ IDENTIFIER, init })
       },
     })
+    this.CONSUME(TOKEN.RIGHT_PAREN)
     return { kind: "layoutQualifier", layoutQualifierIds }
   })
 
@@ -638,7 +640,16 @@ class GLSLParser extends EmbeddedActionsParser {
         },
         { ALT: () => (UNIFORM = this.CONSUME(TOKEN.UNIFORM)) },
       ])
-      return { kind: "storageQualifier", CONST, CENTROID, IN, OUT, VARYING, ATTRIBUTE, UNIFORM }
+      return {
+        kind: "storageQualifier",
+        CONST,
+        CENTROID,
+        IN,
+        OUT,
+        VARYING,
+        ATTRIBUTE,
+        UNIFORM,
+      }
     },
   )
 
@@ -1272,12 +1283,27 @@ class GLSLParser extends EmbeddedActionsParser {
     this.CONSUME(TOKEN.IDENTIFIER)
     this.CONSUME(TOKEN.LEFT_BRACE)
   })
+
+  public typeQualifierDeclaration = this.RR(
+    "typeQualifierDeclaration",
+    (): TypeQualifierDeclaration => {
+      const typeQualifier = this.SUBRULE(this.typeQualifier)
+      this.CONSUME(TOKEN.SEMICOLON)
+      return { kind: "typeQualifierDeclaration", typeQualifier }
+    },
+  )
+
   public externalDeclaration = this.RR(
     "externalDeclaration",
     (uniformBlock?: boolean, function_?: boolean): Declaration =>
       this.OR([
         { ALT: () => this.SUBRULE(this.ppCall) },
         { ALT: () => this.SUBRULE(this.ppDirective) },
+        // type qualifier declaration
+        {
+          GATE: this.BACKTRACK(this.typeQualifierDeclaration),
+          ALT: () => this.SUBRULE(this.typeQualifierDeclaration),
+        },
         // uniform/interface block
         {
           GATE: uniformBlock

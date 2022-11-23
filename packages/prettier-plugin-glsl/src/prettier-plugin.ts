@@ -518,7 +518,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "fullySpecifiedType": {
             const parts: Doc = []
             if (n.typeQualifier) {
-              parts.push(p<typeof n>("typeQualifier"))
+              parts.push(p<typeof n>("typeQualifier"), " ")
             }
             parts.push(p<typeof n>("typeSpecifier"))
             return parts
@@ -537,23 +537,23 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           case "typeQualifier": {
             const parts: Doc = []
             if (n.invariantQualifier) {
-              parts.push("invariant ")
+              parts.push("invariant")
             }
             if (n.interpolationQualifier) {
-              parts.push(n.interpolationQualifier.image, " ")
+              parts.push(n.interpolationQualifier.image)
             }
             if (n.layoutQualifier) {
-              parts.push(p<typeof n>("layoutQualifier"), " ")
+              parts.push(p<typeof n>("layoutQualifier"))
             }
             if (n.storageQualifier) {
               parts.push(p<typeof n>("storageQualifier"))
             }
-            return parts
+            return join(" ", parts)
           }
           case "storageQualifier": {
             const parts: Doc = []
             if (n.CONST) {
-              parts.push("const ")
+              parts.push("const")
             }
             // SPEC: "A variable may be qualified as flat centroid, which will
             // mean the same thing as qualifying it only as flat."
@@ -563,24 +563,24 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               (path.getParentNode() as TypeQualifier).interpolationQualifier
                 ?.tokenType !== TOKEN.FLAT
             ) {
-              parts.push("centroid ")
+              parts.push("centroid")
             }
             if (n.IN) {
-              parts.push("in ")
+              parts.push("in")
             }
             if (n.OUT) {
-              parts.push("out ")
+              parts.push("out")
             }
             if (n.VARYING) {
-              parts.push("varying ")
+              parts.push("varying")
             }
             if (n.ATTRIBUTE) {
-              parts.push("attribute ")
+              parts.push("attribute")
             }
             if (n.UNIFORM) {
-              parts.push("uniform ")
+              parts.push("uniform")
             }
-            return parts
+            return join(" ", parts)
           }
           case "functionPrototype":
           case "functionDefinition":
@@ -1088,6 +1088,34 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               ? "default:"
               : ["case ", p<typeof n>("case_"), ":"]
           }
+          case "layoutQualifier":
+            return [
+              "layout(",
+              join(
+                ", ",
+                n.layoutQualifierIds.map((lqi): Doc => {
+                  return lqi.init === undefined
+                    ? lqi.IDENTIFIER.image
+                    : [lqi.IDENTIFIER.image, " = ", lqi.init.image]
+                }),
+              ),
+              ")",
+            ]
+          case "uniformBlock":
+            return [
+              p<typeof n>("typeQualifier"),
+              " ",
+              n.blockName.image,
+              " {",
+              indent([
+                hardline,
+                join(hardline, path.map(print, "declarations")),
+              ]),
+              hardline,
+              "};",
+            ]
+          case "typeQualifierDeclaration":
+            return [p<typeof n>("typeQualifier"), ";"]
           default:
             throw new Error(
               "unexpected n type " +

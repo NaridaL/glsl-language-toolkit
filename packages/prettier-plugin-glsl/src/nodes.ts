@@ -316,6 +316,11 @@ export interface InvariantDeclaration extends BaseNode {
   IDENTIFIER: Token
 }
 
+export interface TypeQualifierDeclaration extends BaseNode {
+  kind: "typeQualifierDeclaration"
+  typeQualifier: TypeQualifier
+}
+
 export interface StructDeclaration extends BaseNode {
   kind: "structDeclaration"
   fsType: FullySpecifiedType
@@ -365,6 +370,7 @@ export type Declaration =
   | InitDeclaratorListDeclaration
   | PrecisionDeclaration
   | InvariantDeclaration
+  | TypeQualifierDeclaration
   | UniformBlock
   | PpNode
 export type JumpStatement =
