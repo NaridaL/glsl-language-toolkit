@@ -3,7 +3,6 @@ import * as path from "path"
 import { readFileSync } from "fs"
 import { last, pick } from "lodash"
 import { TokenType } from "chevrotain"
-import "colors"
 
 import {
   AbstractVisitor,

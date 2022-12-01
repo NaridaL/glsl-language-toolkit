@@ -12,7 +12,7 @@ import { parseInput } from "./parser"
 import { ExpressionStatement, FunctionDefinition } from "./nodes"
 import { substrContext } from "./util"
 import { TOKEN } from "./lexer"
-import { getMarkerPositions } from "./testutil.test"
+import { getMarkerPositions } from "./testutil"
 import { Matrix } from "./builtins"
 import ProvidesCallback = jest.ProvidesCallback
 
