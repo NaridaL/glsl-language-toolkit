@@ -1,5 +1,4 @@
 import { Many } from "lodash"
-import "colors"
 import { isToken, Node, Token } from "./nodes"
 
 export const DEV = process.env.NODE_ENV !== "production"
@@ -10,18 +9,8 @@ export function invariant(x: unknown, message = ""): void {
   }
 }
 
-export function underline(
-  str: string,
-  start: number,
-  end: number,
-  ff = (x: string) => x.yellow.underline,
-  ff2 = (x: string) => x,
-): string {
-  return (
-    ff2(str.substring(0, start)) +
-    ff(str.substring(start, end)) +
-    ff2(str.substring(end))
-  )
+export function underline(str: string, start: number, end: number): string {
+  return str + "\n" + "-".repeat(start) + "^".repeat(end - start)
 }
 
 /**
@@ -89,13 +78,12 @@ export function substrContext(input: string, token: ExpandedLocation): string {
         if (n >= sLine && n <= eLine) {
           l = underline(
             l,
-            sLine === n ? token.startColumn - 1 : 0,
-            eLine === n ? token.endColumn : l.length,
-            (s) => s.red.underline,
+            6 + (sLine === n ? token.startColumn - 1 : 0),
+            6 + (eLine === n ? token.endColumn : l.length),
           )
         }
 
-        return ("" + n).padStart(5).green + " " + l
+        return ("" + n).padStart(5) + " " + l
       })
       .join("\n")
   )

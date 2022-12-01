@@ -4,7 +4,6 @@
 // import * as fs from "fs"
 //
 // import { createSyntaxDiagramsCode } from "chevrotain"
-// import "colors"
 // // import prettier from "prettier"
 import { mapValues } from "lodash"
 // import * as prettierPlugin from "./prettier-plugin"
