@@ -22,18 +22,18 @@ export default [
       },
       plugins: compress
         ? [
-          terser({
-            compress: {
-              passes: 3,
-              unsafe: true,
-              ecma: 7,
-            },
-            toplevel: true,
-            mangle: {
-              properties: { regex: /^_/ },
-            },
-          }),
-        ]
+            terser({
+              compress: {
+                passes: 3,
+                unsafe: true,
+                ecma: 7,
+              },
+              toplevel: true,
+              mangle: {
+                properties: { regex: /^_/ },
+              },
+            }),
+          ]
         : [],
     },
     external: Object.keys(pkg.dependencies || {}),
@@ -44,7 +44,7 @@ export default [
         outDir: "lib",
       }),
     ].filter((x) => x),
-    onwarn: function(warning, warn) {
+    onwarn: function (warning, warn) {
       if ("THIS_IS_UNDEFINED" === warning.code) return
       if ("CIRCULAR_DEPENDENCY" === warning.code) {
         const m = warning.message.match(

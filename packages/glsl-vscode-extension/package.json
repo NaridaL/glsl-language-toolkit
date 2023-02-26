@@ -84,12 +84,12 @@
   },
   "dependencies": {
     "glsl-lsp-server": "../glsl-lsp-server",
-    "vscode-languageclient": "^8.0.2"
+    "vscode-languageclient": "^8.1.0"
   },
   "devDependencies": {
-    "@types/node": "^18.11.10",
-    "@types/vscode": "^1.73.1",
-    "@vscode/test-electron": "^2.2.0",
+    "@types/node": "^18.14.2",
+    "@types/vscode": "^1.75.1",
+    "@vscode/test-electron": "^2.2.3",
     "js-yaml": "^4.1.0",
     "watch": "^1.0.2"
   }
