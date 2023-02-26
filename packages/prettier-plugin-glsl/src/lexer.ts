@@ -463,6 +463,8 @@ export namespace TOKEN {
   })
   export const LINE = createPP("LINE", "line")
   export const EXTENSION = createPP("EXTENSION", "extension")
+
+  export const INCLUDE = createPP("INCLUDE", "include")
   export const HASH = createToken({ name: "HASH", pattern: "#" })
 
   export const KEYWORD = createToken({ name: "KEYWORD", pattern: Lexer.NA })
@@ -602,6 +604,12 @@ export namespace TOKEN {
     name: "INTCONSTANT",
     pattern: /0x[\da-f]+|\d+/i,
     categories: CONSTANT,
+  })
+
+  // Only used in the context of #include.
+  export const STRING = createToken({
+    name: "STRING",
+    pattern: /"([^"\\]+|\\")+"/,
   })
 }
 // IDENTIFIER needs to go last, but must be declared first

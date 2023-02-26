@@ -362,7 +362,18 @@ export interface PpCall extends BaseNode {
   args: { tokens: Token[]; node: Node | undefined }[]
 }
 
-export type PpNode = PpDefine | PpDir | PpExtension | PpCall | PpPragma
+export interface PpInclude extends BaseNode {
+  kind: "ppInclude"
+  what: Token
+}
+
+export type PpNode =
+  | PpDefine
+  | PpDir
+  | PpExtension
+  | PpCall
+  | PpPragma
+  | PpInclude
 
 export type Declaration =
   | FunctionDefinition

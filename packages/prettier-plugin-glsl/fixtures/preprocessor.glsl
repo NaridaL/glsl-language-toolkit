@@ -16,3 +16,9 @@ MAX3(vec3)
 
 // #pragma directive outputs symbols as-is
 #  pragma  glslify: noise = require('glsl-noise/simplex/3d')
+
+#include \
+   "fakefile.glsl"
+
+// pragma should still be valid identifier
+uniform int include;
