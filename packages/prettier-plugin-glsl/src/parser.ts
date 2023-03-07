@@ -37,6 +37,7 @@ import {
   PpDefine,
   PpDir,
   PpExtension,
+  PpInclude,
   PpNode,
   PpPragma,
   PrecisionDeclaration,
@@ -1443,6 +1444,13 @@ class GLSLParser extends EmbeddedActionsParser {
     return d
   })
 
+  public ppInclude = this.RR("ppInclude", (): PpInclude => {
+    this.CONSUME(TOKEN.HASH)
+    this.CONSUME(TOKEN.INCLUDE)
+    const str = this.CONSUME(TOKEN.STRING)
+    return { kind: "ppInclude", what: str }
+  })
+
   public ppCall = this.RR("ppCall", (): PpCall => {
     const callee = this.CONSUME(TOKEN.IDENTIFIER)
     this.CONSUME(TOKEN.LEFT_PAREN)
@@ -1561,6 +1569,7 @@ class GLSLParser extends EmbeddedActionsParser {
         { ALT: () => this.SUBRULE(this.ppSingle) },
         { ALT: () => this.SUBRULE(this.ppMulti) },
         { ALT: () => this.SUBRULE(this.ppPragma) },
+        { ALT: () => this.SUBRULE(this.ppInclude) },
       ]),
   )
 
