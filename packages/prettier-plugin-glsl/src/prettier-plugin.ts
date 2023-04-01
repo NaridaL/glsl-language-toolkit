@@ -13,6 +13,7 @@ import {
   Declarator,
   FunctionCall,
   isExpression,
+  isNode,
   isToken,
   Node,
   StructDeclaration,
@@ -1219,6 +1220,10 @@ export const printers: Plugin<Node | IToken>["printers"] = {
       return true
     },
     printComment,
+    hasPrettierIgnore(path: AstPath<IToken | Node>) {
+      const value = path.getValue()
+      return (value && isNode(value) && value.comments?.some(c => /\/\/\s*prettier-ignore\b.*/.test(c.image))) ?? false
+    },
   },
 }
 
