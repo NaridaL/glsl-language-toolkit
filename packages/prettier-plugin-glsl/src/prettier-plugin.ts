@@ -1,14 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import {
-  AstPath,
-  Doc,
-  format,
-  ParserOptions,
-  Plugin,
-  SupportInfo,
-  util,
-} from "prettier"
+import { AstPath, Doc, format, ParserOptions, Plugin, SupportInfo, util } from "prettier"
 import * as doc from "prettier/doc"
 import { IToken, TokenType } from "chevrotain"
 import { findLast } from "lodash"
@@ -19,6 +11,7 @@ import {
   BinaryExpression,
   CommaExpression,
   Declarator,
+  FunctionCall,
   isExpression,
   isToken,
   Node,
@@ -28,6 +21,7 @@ import {
 } from "./nodes"
 import { isBitwiseOperator, TOKEN } from "./lexer"
 import { parseInput } from "./parser"
+import { getMatrixDimensions } from "./node-helpers"
 
 interface PrettierComment extends Token {
   leading: boolean
@@ -241,7 +235,7 @@ function printBinaryishExpressions(
     (n.kind === "binaryExpression" &&
       n.lhs.kind === "binaryExpression" &&
       getOpPrecedence(n.lhs.op.tokenType) ===
-        getOpPrecedence(n.op.tokenType)) ||
+      getOpPrecedence(n.op.tokenType)) ||
     (n.kind === "commaExpression" && n.lhs.kind === "commaExpression")
 
   const nOp = n.kind === "binaryExpression" ? n.op.tokenType : TOKEN.COMMA
@@ -492,6 +486,95 @@ export const printers: Plugin<Node | IToken>["printers"] = {
       }
       const p = <N extends Node>(s: keyof N) => path.call(print, s)
 
+      /**
+       * Print function calls to mat* with literals as a grid.
+       */
+      function printFunctionCall(n: FunctionCall): Doc {
+        const argDocs = path.map(print, "args")
+        let mDim
+        let argParts: Doc[] | undefined
+        if (
+          n.callee.arraySpecifier === undefined &&
+          isToken(n.callee.typeSpecifierNonArray) &&
+          (mDim = getMatrixDimensions(
+            n.callee.typeSpecifierNonArray.tokenType,
+          )) !== undefined &&
+          mDim[0] * mDim[1] === n.args.length
+        ) {
+          const allArgsAreConstants = n.args.every(
+            (e) =>
+              (e.kind === "constantExpression" &&
+                (e.const_.tokenType === TOKEN.FLOATCONSTANT ||
+                  e.const_.tokenType === TOKEN.INTCONSTANT)) ||
+              (e.kind === "unaryExpression" &&
+                (e.op.tokenType === TOKEN.PLUS ||
+                  e.op.tokenType === TOKEN.DASH) &&
+                e.on.kind === "constantExpression" &&
+                (e.on.const_.tokenType === TOKEN.FLOATCONSTANT ||
+                  e.on.const_.tokenType === TOKEN.INTCONSTANT)),
+          )
+          if (allArgsAreConstants) {
+            const suffixes: number[] = []
+            const prefixes: number[] = []
+            let maxPrefix = 0
+            let maxSuffix = 0
+            for (let i = 0; i < n.args.length; i++) {
+              const arg = n.args[i]
+              const printedArg = argDocs[i]
+              let periodIndex =
+                typeof printedArg === "string"
+                  ? printedArg.indexOf(".")
+                  : 1 + (printedArg as string[])[1].indexOf(".")
+              if (periodIndex === -1) {
+                periodIndex =
+                  typeof printedArg === "string"
+                    ? printedArg.length
+                    : 1 + (printedArg as string[])[1].length
+              }
+              prefixes[i] = periodIndex
+              suffixes[i] =
+                (typeof printedArg === "string"
+                  ? printedArg.length
+                  : 1 + (printedArg as string[])[1].length) -
+                periodIndex
+              maxPrefix = Math.max(maxPrefix, prefixes[i])
+              maxSuffix = Math.max(maxSuffix, suffixes[i])
+            }
+            const alignedArgs: Doc[] = argDocs.map((d, i) => {
+              const stringD = d as string
+              return [
+                " ".repeat(maxPrefix - prefixes[i]),
+                d,
+                " ".repeat(maxSuffix - suffixes[i]),
+              ]
+            })
+            argParts = []
+            const colCount = mDim[0]
+            for (let i = 0; i < alignedArgs.length; i++) {
+              if (i % colCount === 0) {
+                argParts.push(hardline)
+              } else {
+                argParts.push(" ")
+              }
+              argParts.push(alignedArgs[i])
+              if (i !== alignedArgs.length - 1) {
+                argParts.push(",")
+              }
+            }
+          }
+        }
+        if (!argParts) {
+          argParts = [softline, join([",", line], argDocs)]
+        }
+        return group([
+          p<typeof n>("callee"),
+          "(",
+          indent(argParts),
+          softline,
+          ")",
+        ])
+      }
+
       try {
         switch (n.kind) {
           ////////// DECLARATIONS
@@ -630,13 +713,13 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               printed.length === 1
                 ? printed
                 : group(
-                    indent(
-                      join(
-                        [",", hasInit && !isParentForLoop ? hardline : line],
-                        printed,
-                      ),
+                  indent(
+                    join(
+                      [",", hasInit && !isParentForLoop ? hardline : line],
+                      printed,
                     ),
                   ),
+                ),
               ";",
             ])
           }
@@ -846,13 +929,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
 
           ////////// EXPRESSIONS
           case "functionCall":
-            return group([
-              p<typeof n>("callee"),
-              "(",
-              indent([softline, join([",", line], path.map(print, "args"))]),
-              softline,
-              ")",
-            ])
+            return printFunctionCall(n)
           case "methodCall":
             return [
               paren(p<typeof n>("on"), getPrecedence(n.on, inMacro) > 2),
@@ -1121,9 +1198,9 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           default:
             throw new Error(
               "unexpected n type " +
-                n.kind +
-                "\n" +
-                JSON.stringify(n).substring(0, 100),
+              n.kind +
+              "\n" +
+              JSON.stringify(n).substring(0, 100),
             )
         }
       } catch (e) {
