@@ -1,6 +1,14 @@
 // noinspection JSUnusedGlobalSymbols
 
-import { AstPath, Doc, format, ParserOptions, Plugin, SupportInfo, util } from "prettier"
+import {
+  AstPath,
+  Doc,
+  format,
+  ParserOptions,
+  Plugin,
+  SupportInfo,
+  util,
+} from "prettier"
 import * as doc from "prettier/doc"
 import { IToken, TokenType } from "chevrotain"
 import { findLast } from "lodash"
@@ -236,7 +244,7 @@ function printBinaryishExpressions(
     (n.kind === "binaryExpression" &&
       n.lhs.kind === "binaryExpression" &&
       getOpPrecedence(n.lhs.op.tokenType) ===
-      getOpPrecedence(n.op.tokenType)) ||
+        getOpPrecedence(n.op.tokenType)) ||
     (n.kind === "commaExpression" && n.lhs.kind === "commaExpression")
 
   const nOp = n.kind === "binaryExpression" ? n.op.tokenType : TOKEN.COMMA
@@ -520,7 +528,6 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             let maxPrefix = 0
             let maxSuffix = 0
             for (let i = 0; i < n.args.length; i++) {
-              const arg = n.args[i]
               const printedArg = argDocs[i]
               let periodIndex =
                 typeof printedArg === "string"
@@ -536,29 +543,22 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               suffixes[i] =
                 (typeof printedArg === "string"
                   ? printedArg.length
-                  : 1 + (printedArg as string[])[1].length) -
-                periodIndex
+                  : 1 + (printedArg as string[])[1].length) - periodIndex
               maxPrefix = Math.max(maxPrefix, prefixes[i])
               maxSuffix = Math.max(maxSuffix, suffixes[i])
             }
-            const alignedArgs: Doc[] = argDocs.map((d, i) => {
-              const stringD = d as string
-              return [
-                " ".repeat(maxPrefix - prefixes[i]),
-                d,
-                " ".repeat(maxSuffix - suffixes[i]),
-              ]
-            })
             argParts = []
             const colCount = mDim[0]
-            for (let i = 0; i < alignedArgs.length; i++) {
-              if (i % colCount === 0) {
-                argParts.push(hardline)
-              } else {
-                argParts.push(" ")
-              }
-              argParts.push(alignedArgs[i])
-              if (i !== alignedArgs.length - 1) {
+            for (let i = 0; i < argDocs.length; i++) {
+              const leftPad = maxPrefix - prefixes[i]
+              const rightPad = maxSuffix - suffixes[i]
+              const alignedArg =
+                leftPad === 0 && rightPad === 0
+                  ? argDocs[i]
+                  : [" ".repeat(leftPad), argDocs[i], " ".repeat(rightPad)]
+              argParts.push(i % colCount === 0 ? hardline : " ")
+              argParts.push(alignedArg)
+              if (i !== argDocs.length - 1) {
                 argParts.push(",")
               }
             }
@@ -714,13 +714,13 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               printed.length === 1
                 ? printed
                 : group(
-                  indent(
-                    join(
-                      [",", hasInit && !isParentForLoop ? hardline : line],
-                      printed,
+                    indent(
+                      join(
+                        [",", hasInit && !isParentForLoop ? hardline : line],
+                        printed,
+                      ),
                     ),
                   ),
-                ),
               ";",
             ])
           }
@@ -1199,9 +1199,9 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           default:
             throw new Error(
               "unexpected n type " +
-              n.kind +
-              "\n" +
-              JSON.stringify(n).substring(0, 100),
+                n.kind +
+                "\n" +
+                JSON.stringify(n).substring(0, 100),
             )
         }
       } catch (e) {
@@ -1222,7 +1222,14 @@ export const printers: Plugin<Node | IToken>["printers"] = {
     printComment,
     hasPrettierIgnore(path: AstPath<IToken | Node>) {
       const value = path.getValue()
-      return (value && isNode(value) && value.comments?.some(c => /\/\/\s*prettier-ignore\b.*/.test(c.image))) ?? false
+      return (
+        (value &&
+          isNode(value) &&
+          value.comments?.some((c) =>
+            /\/\/\s*prettier-ignore\b.*/.test(c.image),
+          )) ??
+        false
+      )
     },
   },
 }
