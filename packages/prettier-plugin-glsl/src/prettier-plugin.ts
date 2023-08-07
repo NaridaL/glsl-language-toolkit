@@ -3,7 +3,7 @@
 import {
   AstPath,
   Doc,
-  format,
+  Options,
   ParserOptions,
   Plugin,
   SupportInfo,
@@ -46,7 +46,6 @@ declare module "./nodes" {
 }
 
 const {
-  utils: { propagateBreaks },
   printer: { printDocToString },
   builders: {
     indentIfBreak,
@@ -123,7 +122,7 @@ function locEnd(node: Node | IToken) {
 
 export const parsers: Plugin<Node | IToken>["parsers"] = {
   "glsl-parser": {
-    parse(text, _parsers, _options) {
+    parse(text, _options) {
       const translationUnit = parseInput(text)
       translationUnit.comments?.forEach(
         (c) => ((c as PrettierComment).value = JSON.stringify(c)),
@@ -302,7 +301,6 @@ function adjustClause(node: Node, clause: Doc, forceSpace: boolean) {
 }
 
 function formatMacroDefinition(doc: Doc, options: GlslParserOptions): string {
-  propagateBreaks(doc)
   const formatted = printDocToString(
     doc,
     Object.assign({}, options, {
@@ -798,7 +796,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               path.each((path) => {
                 const comment = path.getValue() as unknown as PrettierComment
                 if (!comment.leading && !comment.trailing) {
-                  parts.push(printComment(path, options))
+                  parts.push(print(path))
                   comment.printed = true
                 }
               }, "comments")
@@ -1088,7 +1086,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                 line,
                 n.node
                   ? paren(p<typeof n>("node"), isExpression(n.node))
-                  : fill(join(line, path.map(print, "tokens")).parts),
+                  : fill(join(line, path.map(print, "tokens"))),
               ]),
             ])
             options.inMacro = undefined
@@ -1103,7 +1101,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                 indent(
                   n.node
                     ? p<typeof n>("node")
-                    : fill(join(line, path.map(print, "tokens")).parts),
+                    : fill(join(line, path.map(print, "tokens"))),
                 ),
               ]),
               options,
@@ -1211,8 +1209,30 @@ export const printers: Plugin<Node | IToken>["printers"] = {
         throw e
       }
     },
+    embed(
+      path: AstPath,
+      options: Options,
+    ):
+      | null
+      | ((
+          textToDoc: (text: string, options: Options) => Promise<Doc>,
+          print: (
+            selector?: string | number | Array<string | number> | AstPath,
+          ) => Doc,
+          path: AstPath,
+          options: Options,
+        ) => Promise<Doc | undefined> | Doc | undefined) {
+      const node = path.getValue() as Node | Token
+      if (
+        !isToken(node) ||
+        (node.tokenType !== TOKEN.LINE_COMMENT &&
+          node.tokenType !== TOKEN.MULTILINE_COMMENT)
+      ) {
+        return null
+      }
+      return (textToDoc, print, path, options) => {}
+    },
 
-    // @ts-expect-error getCommentChildNodes isn't in the API for some reason
     getCommentChildNodes(node: Node | Token): Node[] {
       return isToken(node) ? [] : CHILDREN_VISITOR.visit(node)!
     },
@@ -1250,13 +1270,14 @@ function printComment(
       )
       .join("\n")
       .trim()
-    const formattedComment = format(src, {
-      ...options,
-      printWidth: options.printWidth - 3,
-      parser: "markdown",
-      proseWrap: "always",
-      plugins: [],
-    })
+    // const formattedComment: string = await format(src, {
+    //   ...options,
+    //   printWidth: options.printWidth - 3,
+    //   parser: "markdown",
+    //   proseWrap: "always",
+    //   plugins: [],
+    // })
+    const formattedComment = src
     const formattedCommentLines = formattedComment.split("\n")
     // Remove the final newline which markdown formatter always adds.
     formattedCommentLines.pop()

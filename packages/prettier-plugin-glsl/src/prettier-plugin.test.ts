@@ -7,28 +7,27 @@ import * as prettier from "prettier"
 import * as prettierPlugin from "./prettier-plugin"
 import { dedent } from "./testutil"
 
-export function fmt(source: string, printWidth = 80): string {
+export function fmt(source: string, printWidth = 80): Promise<string> {
   return prettier.format(source, {
     parser: "glsl-parser",
     plugins: [prettierPlugin],
-    pluginSearchDirs: ["./src/testutil"],
-
+    // pluginSearchDirs: ["./src/testutil"],
     printWidth,
   })
 }
 
-export function testFormat(
+export async function testFormat(
   source: string,
   expected: string = source,
   printWidth?: number,
   trim = true,
-): void {
+): Promise<void> {
   const doTrim = (s: string) => (trim ? s.trim() : s)
-  const formattedOnce = doTrim(fmt(source, printWidth))
+  const formattedOnce = doTrim(await fmt(source, printWidth))
   expect(formattedOnce).toBe(doTrim(expected))
   // Formatting should be stable, i.e. formatting something already formatted
   // should never result in changes.
-  const formattedTwice = doTrim(fmt(formattedOnce, printWidth))
+  const formattedTwice = doTrim(await fmt(formattedOnce, printWidth))
   expect(formattedTwice).toBe(formattedOnce)
 }
 
