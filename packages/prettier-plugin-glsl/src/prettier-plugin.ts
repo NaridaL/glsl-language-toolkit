@@ -1280,7 +1280,7 @@ function printComment(
     const formattedComment = src
     const formattedCommentLines = formattedComment.split("\n")
     // Remove the final newline which markdown formatter always adds.
-    formattedCommentLines.pop()
+    // formattedCommentLines.pop()
 
     return (
       "/**\n" +
