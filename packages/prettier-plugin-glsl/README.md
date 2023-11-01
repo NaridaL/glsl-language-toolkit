@@ -3,7 +3,7 @@
 
 # prettier-plugin-glsl
 
-This is a plugin for [Prettier](https://prettier.io), the opinionated code
+This is a plugin for [Prettier](https://prettier.io) (version 3.x), the opinionated code
 formatter, for GLSL, the shading language used in WebGL and other places. It
 uses a custom parser based on [Chevrotain](https://chevrotain.io/) and does not
 require any external dependencies.

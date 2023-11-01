@@ -147,8 +147,8 @@ function normalizeFloat(image: string) {
     // x.exxx => xexxx
     image = image.replace(".e", "e")
 
-    // x.x000 => x.x
-    image = image.replace(/0+$/, "")
+    // x.x000 => x.x (but not x.xe10 => x.xe1)
+    image = image.replace(/(?<!e.*)0+$/, "")
 
     // x. => x.0
     image = image.replace(/\.$/, ".0")
