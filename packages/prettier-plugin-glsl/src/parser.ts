@@ -1447,7 +1447,24 @@ class GLSLParser extends EmbeddedActionsParser {
   public ppInclude = this.RR("ppInclude", (): PpInclude => {
     this.CONSUME(TOKEN.HASH)
     this.CONSUME(TOKEN.INCLUDE)
-    const str = this.CONSUME(TOKEN.STRING)
+    let str = ""
+    this.OR([
+      {
+        ALT: () => {
+          str = this.CONSUME(TOKEN.STRING).image
+        },
+      },
+      {
+        ALT: () => {
+          // three.js style import
+          //https://github.com/mrdoob/three.js/blob/98616257db739e50513437c6913156c17a6d40e4/src/renderers/webgl/WebGLProgram.js#L239
+          this.CONSUME(TOKEN.LEFT_ANGLE)
+          const t = this.CONSUME(TOKEN.IDENTIFIER)
+          this.CONSUME(TOKEN.RIGHT_ANGLE)
+          str = "<" + t.image + ">"
+        },
+      },
+    ])
     return { kind: "ppInclude", what: str }
   })
 

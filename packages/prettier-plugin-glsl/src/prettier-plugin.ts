@@ -1132,7 +1132,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
             ])
           }
           case "ppInclude":
-            return ["#include ", n.what.image]
+            return ["#include ", n.what]
           case "switchStatement": {
             return [
               "switch (",
