@@ -364,7 +364,8 @@ export interface PpCall extends BaseNode {
 
 export interface PpInclude extends BaseNode {
   kind: "ppInclude"
-  what: Token
+  // eg. '"file.glsl"' or '<common>'
+  what: string
 }
 
 export type PpNode =

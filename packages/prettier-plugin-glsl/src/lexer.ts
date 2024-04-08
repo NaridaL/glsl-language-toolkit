@@ -433,7 +433,7 @@ export namespace TOKEN {
   })
   export const NON_PP_IDENTIFIER = createToken({
     name: "NON_PP_IDENTIFIER",
-    pattern: /\w[\w\d]*/i,
+    pattern: /[a-z]\w*/i,
     categories: IDENTIFIER,
   })
 

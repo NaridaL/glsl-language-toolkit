@@ -20,5 +20,8 @@ MAX3(vec3)
 #include \
    "fakefile.glsl"
 
+#include \
+  <foobar>
+
 // pragma should still be valid identifier
 uniform int include;
