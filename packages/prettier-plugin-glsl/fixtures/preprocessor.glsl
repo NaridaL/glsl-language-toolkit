@@ -23,5 +23,17 @@ MAX3(vec3)
 #include \
   <foobar>
 
+// From https://github.com/NaridaL/glsl-language-toolkit/issues/23
+#  include <$lib>
+#include <../module/sub/file>
+#include <@namespace-a>
+#include <with spaces >
+
+// This shouldn't be consumed as a preprocessor directive.
+int f() {
+    int include = 0;
+    if (include<2&&include>2) { }
+}
+
 // pragma should still be valid identifier
 uniform int include;

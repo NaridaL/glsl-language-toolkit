@@ -465,6 +465,14 @@ export namespace TOKEN {
   export const EXTENSION = createPP("EXTENSION", "extension")
 
   export const INCLUDE = createPP("INCLUDE", "include")
+  // We want to support #include <...>. <...> could be valid in other cases such as in if (a < b && b > c) so we
+  // can't have it as its own identifier. To avoid needing a multi-modal lexer, we just define it as a big token which
+  // gets checked first. (It's a bit of a hack.)
+  export const HASH_INCLUDE_MODULE = createToken({
+    name: "HASH_INCLUDE_MODULE",
+    // Allow-list rather than [^>] to avoid unforeseen bugs, e.g. with newlines:
+    pattern: /#\s*include\s*<[\w\-./\\$@ ]+>/,
+  })
   export const HASH = createToken({ name: "HASH", pattern: "#" })
 
   export const KEYWORD = createToken({ name: "KEYWORD", pattern: Lexer.NA })
