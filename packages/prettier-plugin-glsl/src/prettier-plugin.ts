@@ -1085,7 +1085,11 @@ export const printers: Plugin<Node | IToken>["printers"] = {
               indent([
                 line,
                 n.node
-                  ? paren(p<typeof n>("node"), isExpression(n.node))
+                  ? paren(
+                      p<typeof n>("node"),
+                      // binaryExpression and above
+                      getPrecedence(n.node, n.params) >= 4,
+                    )
                   : fill(join(line, path.map(print, "tokens"))),
               ]),
             ])

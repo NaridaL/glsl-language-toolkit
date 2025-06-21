@@ -2,6 +2,22 @@
 
 #define ADD(A, B) ((A) + (B))
 
+// Single token macro should not be wrapped in parentheses
+#define ONE_TOKEN FOO
+#define ONE_TOKEN2 32
+
+#define ONE_ARG_MACRO(arg) arg
+#define ONE_ARG_MACRO(arg) (arg)
+
+// Braces here need to be kept.
+#define TWO_TOKENS (a + b)
+// Add braces here to avoid precedence issues
+#define TWO_TOKENS2 a + b
+
+#define TERNARY a ? 1 : 2
+
+#define CALL_FUNC_X x(arg1 * (a + b), (arg3))
+
 
 #define MAX3(genType) \
     genType max3(genType a, genType b, genType c) {\
