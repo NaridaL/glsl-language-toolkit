@@ -108,6 +108,9 @@ export const languages: SupportInfo["languages"] = [
       ".vrx",
       ".vsh",
       ".vshader",
+      ".csh",
+      ".cshader",
+      ".comp",
     ],
   },
 ]
