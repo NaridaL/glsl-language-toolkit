@@ -1137,6 +1137,10 @@ export const printers: Plugin<Node | IToken>["printers"] = {
           }
           case "ppInclude":
             return ["#include ", n.what]
+          case "ppExtension":
+            // Specification examples suggests a space before and after the colon, so that's what we're going with.
+            // (As opposed to no space before colon which would match JS.)
+            return ["#extension ", n.extension.image, " : ", n.behavior.image]
           case "switchStatement": {
             return [
               "switch (",
