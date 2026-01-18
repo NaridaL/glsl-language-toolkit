@@ -54,3 +54,17 @@ int f() {
 
 // pragma should still be valid identifier
 uniform int include;
+
+// From https://github.com/NaridaL/glsl-language-toolkit/issues/27
+#extension GL_EXT_frag_depth : enable
+#extension GL_OES_standard_derivatives : enable
+#extension all : warn
+#extension MY_required_ext : require
+#extension MY_very_very_very_very_very_very_very_long_disabled_ext : disable
+
+#ifdef OES_extension_name
+#extension OES_extension_name : enable
+// code that requires the extension
+#else
+// alternative code
+#endif
