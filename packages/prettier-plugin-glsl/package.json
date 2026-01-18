@@ -9,7 +9,7 @@
     "src",
     "lib"
   ],
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Prettier (https://prettier.io) plugin for GLSL (OpenGL Shading Language).",
   "exports": {
     "default": "./lib/prettier-plugin.cjs.js",
