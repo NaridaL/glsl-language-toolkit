@@ -264,8 +264,7 @@ function printBinaryishExpressions(
     )
 
     parts.push(
-      " ",
-      path.call(print, "op"),
+      n.kind === "commaExpression" ? "," : [" ", path.call(print, "op")],
       line,
       paren(
         path.call(print, "rhs"),
