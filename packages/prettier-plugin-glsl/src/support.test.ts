@@ -1,10 +1,11 @@
 import expect from "expect"
+import { describe, test } from "@jest/globals"
 
 import { parseInput, shortDesc2 } from "./parser"
 import { dedent, getMarkerPositions } from "./testutil"
 import { offsetToLineCol } from "./util"
 import { check } from "./checker"
-import { getColors, getHighlights, resolvePositionDefinition } from "./support.js"
+import { getColors, getHighlights, resolvePositionDefinition } from "./support"
 import { preproc } from "./preprocessor"
 
 describe("definition lookup", () => {

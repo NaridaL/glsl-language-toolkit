@@ -1,5 +1,12 @@
 import { readFileSync } from "fs"
-import { VError } from "@netflix/nerror"
+import { describe, test } from "@jest/globals"
+import nerror from "@netflix/nerror"
+const { VError } = nerror
+import expect from "expect"
+
+
+// @ts-expect-error 
+const __dirname = import.meta.dirname
 
 import {
   check,

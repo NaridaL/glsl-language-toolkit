@@ -1,4 +1,5 @@
 import expect from "expect"
+import { describe, test } from "@jest/globals"
 import { dedent } from "./testutil"
 import { lineColToOffset, offsetToLineCol } from "./util"
 

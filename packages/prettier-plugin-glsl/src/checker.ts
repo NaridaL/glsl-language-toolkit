@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import * as path from "path"
-import { readFileSync } from "fs"
+import builtinsSrc from "../builtins.glsl"
 
 import { TokenType } from "chevrotain"
 
@@ -52,6 +51,7 @@ import {
   safeMap,
 } from "./util"
 import { ERRORS } from "./errors"
+import { getMatrixDimensions } from "./node-helpers"
 
 type BasicType = Readonly<{ kind: "basic"; type: TokenType }>
 type ArrayType = Readonly<{
@@ -75,7 +75,7 @@ function isVectorType(n: NormalizedType | undefined): n is BasicType {
   return n?.kind === "basic" && getVectorSize(n.type) !== 0
 }
 
-type NormalizedType = BasicType | ArrayType | StructType
+export type NormalizedType = BasicType | ArrayType | StructType
 
 function BasicType(type?: TokenType): NormalizedType | undefined {
   return type && { kind: "basic", type }
@@ -630,7 +630,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
   }
 })()
 
-interface FunctionBinding {
+export interface FunctionBinding {
   kind: "function"
   overloads: {
     params: NormalizedType[]
@@ -640,12 +640,12 @@ interface FunctionBinding {
   builtIn: boolean
 }
 
-interface StructBinding {
+export interface StructBinding {
   kind: "struct"
   type: StructType
 }
 
-interface VariableBinding {
+export interface VariableBinding {
   kind: "variable"
   declaratorList?: InitDeclaratorListDeclaration
   declarator?: Declarator
@@ -654,33 +654,6 @@ interface VariableBinding {
 }
 
 type Binding = StructBinding | VariableBinding | FunctionBinding
-
-declare module "./nodes" {
-  export interface FunctionCall extends BaseNode {
-    constructorType?: NormalizedType
-    binding?: FunctionBinding
-  }
-
-  export interface VariableExpression extends BaseNode {
-    binding?: VariableBinding
-  }
-
-  export interface FunctionDefinition extends BaseNode {
-    returnTypeResolved?: NormalizedType
-  }
-
-  export interface FunctionPrototype extends BaseNode {
-    returnTypeResolved?: NormalizedType
-  }
-
-  export interface TypeSpecifier extends BaseNode {
-    typeSpecifierNonArrayBinding?: StructBinding
-  }
-
-  export interface BaseExpressionNode {
-    resolvedType?: NormalizedType
-  }
-}
 
 interface Scope {
   parent: Scope | undefined
@@ -1604,7 +1577,6 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
     ) {
       markError(n.initExpression, "S0057")
     }
-    this.visit(n.body)
     return super.switchStatement(n)
   }
 
@@ -2028,10 +2000,6 @@ const BINDER_VISITOR = new BinderVisitor()
 const CHECKER_VISITOR = new CheckerVisitor()
 
 function loadBuiltins() {
-  const builtinsSrc = readFileSync(
-    path.join(__dirname, "..", "builtins.glsl"),
-    { encoding: "utf8" },
-  )
   const u = parseInput(builtinsSrc)
   BINDER_VISITOR.builtins(u)
 }

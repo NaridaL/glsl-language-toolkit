@@ -1,9 +1,22 @@
 /* eslint-disable */
+import { readFileSync } from "fs"
 import typescriptPlugin from "@rollup/plugin-typescript"
 import typescript from "typescript"
 import terser from "@rollup/plugin-terser"
 
 import pkg from "./package.json" with { type: "json" }
+
+function glslPlugin() {
+  return {
+    name: "glsl",
+    transform(code, id) {
+      if (id.endsWith(".glsl")) {
+        const src = readFileSync(id, "utf8")
+        return { code: `export default ${JSON.stringify(src)};`, map: null }
+      }
+    },
+  }
+}
 
 let compress = false
 export default [
@@ -37,10 +50,13 @@ export default [
     },
     external: Object.keys(pkg.dependencies || {}),
     plugins: [
+      glslPlugin(),
       typescriptPlugin({
         typescript,
         tsconfig: "tsconfig.build.json",
         outDir: "lib",
+        outputToFilesystem: false,
+        noForceEmit: true,
       }),
     ].filter((x) => x),
     onwarn: function (warning, warn) {

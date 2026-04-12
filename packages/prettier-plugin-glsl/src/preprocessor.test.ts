@@ -8,7 +8,6 @@ const images = (toks: Token[]) => toks.map((t) => t.image)
 
 function testPreproc(source: string, expected: string): void {
   const img = images(preproc(source))
-  console.log(img.join(" "))
   expect(img).toEqual(images(lex(expected)))
 }
 
