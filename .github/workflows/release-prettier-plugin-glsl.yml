@@ -1,0 +1,59 @@
+name: Release prettier-plugin-glsl
+description: "Release prettier-plugin-glsl to npm and update tags"
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionType:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+defaults:
+  run:
+    working-directory: packages/prettier-plugin-glsl
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci --workspaces
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Bump version
+        run: npm version ${{ inputs.versionType }} --no-git-tag-version
+
+      - name: Commit, tag, and push
+        run: |
+          VERSION=$(jq --raw-output .version package.json)
+          TAG="prettier-plugin-glsl-v${VERSION}"
+          # git config user.name "github-actions[bot]"
+          # git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "${TAG}"
+          git tag "${TAG}"
+          git push --atomic origin HEAD "${TAG}"
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
