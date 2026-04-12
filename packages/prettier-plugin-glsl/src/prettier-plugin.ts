@@ -11,7 +11,7 @@ import {
 } from "prettier"
 import * as doc from "prettier/doc"
 import { IToken, TokenType } from "chevrotain"
-import { findLast } from "lodash"
+import { findLast } from "lodash-es"
 
 import {
   AbstractVisitor,
@@ -19,8 +19,6 @@ import {
   BinaryExpression,
   CommaExpression,
   Declarator,
-  FunctionCall,
-  isExpression,
   isNode,
   isToken,
   Node,
@@ -28,6 +26,7 @@ import {
   Token,
   TypeQualifier,
 } from "./nodes"
+import type { FunctionCall } from "./nodes"
 import { isBitwiseOperator, TOKEN } from "./lexer"
 import { parseInput } from "./parser"
 import { getMatrixDimensions } from "./node-helpers"

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import * as path from "path"
 import { readFileSync } from "fs"
-import { last, pick } from "lodash"
+import { last, pick } from "lodash-es"
 import { TokenType } from "chevrotain"
 
 import {

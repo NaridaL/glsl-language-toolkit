@@ -8,9 +8,7 @@ module.exports = {
     "shadertoy\\.test",
   ],
   testEnvironment: "node",
-  globals: {},
-  transform: {
-    "^.+\\.tsx?$": ["ts-jest", { diagnostics: false }],
-  },
+  extensionsToTreatAsEsm: [".ts"],
+  transformIgnorePatterns: ["node_modules/(?!(chevrotain|@chevrotain)/)"],
   verbose: false,
 }

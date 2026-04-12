@@ -3,7 +3,7 @@
 import { promises as fsp, readdirSync, readFileSync, writeFileSync } from "fs"
 import expect from "expect"
 import fetch from "node-fetch"
-import { fmt } from "./prettier-plugin.test"
+import { fmt } from "./prettier-plugin.test.js"
 
 interface ShaderToyShader {
   Shader: {

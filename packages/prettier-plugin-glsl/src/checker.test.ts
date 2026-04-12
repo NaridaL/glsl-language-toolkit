@@ -1,6 +1,6 @@
 import { readFileSync } from "fs"
 import { VError } from "@netflix/nerror"
-import { last, Many, merge } from "lodash"
+import { last, Many, merge } from "lodash-es"
 
 import {
   check,
@@ -9,7 +9,7 @@ import {
   typeString,
 } from "./checker"
 import { parseInput } from "./parser"
-import { ExpressionStatement, FunctionDefinition } from "./nodes"
+import type { ExpressionStatement, FunctionDefinition } from "./nodes"
 import { substrContext } from "./util"
 import { TOKEN } from "./lexer"
 import { getMarkerPositions } from "./testutil"

@@ -4,7 +4,7 @@ import { parseInput, shortDesc2 } from "./parser"
 import { dedent, getMarkerPositions } from "./testutil"
 import { offsetToLineCol } from "./util"
 import { check } from "./checker"
-import { getColors, getHighlights, resolvePositionDefinition } from "./support"
+import { getColors, getHighlights, resolvePositionDefinition } from "./support.js"
 import { preproc } from "./preprocessor"
 
 describe("definition lookup", () => {

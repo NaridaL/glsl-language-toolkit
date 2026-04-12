@@ -1,11 +1,11 @@
-import { nth } from "lodash"
+import { nth } from "lodash-es"
 import {
   AbstractVisitor,
   findPositionNode,
-  FunctionCall,
   Node,
   Token,
 } from "./nodes"
+import type { FunctionCall } from "./nodes"
 import { shortDesc2 } from "./parser"
 import { TOKEN } from "./lexer"
 import { evaluateConstantExpression } from "./checker"

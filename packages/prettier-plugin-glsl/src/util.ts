@@ -1,4 +1,4 @@
-import { Many } from "lodash"
+import { Many } from "lodash-es"
 import { isToken, Node, Token } from "./nodes"
 
 export const DEV = process.env.NODE_ENV !== "production"
