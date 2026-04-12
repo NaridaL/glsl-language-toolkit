@@ -5,8 +5,8 @@ import expect from "expect"
 import * as prettier from "prettier"
 
 import * as prettierPlugin from "./prettier-plugin"
-import { dedent } from "./testutil"
 
+// @ts-expect-error testing only, will not get published
 const __dirname = import.meta.dirname;
 
 export function fmt(source: string, printWidth = 80): Promise<string> {

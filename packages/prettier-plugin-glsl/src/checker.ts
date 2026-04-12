@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import * as path from "path"
 import { readFileSync } from "fs"
-import { last, pick } from "lodash-es"
+
 import { TokenType } from "chevrotain"
 
 import {
@@ -381,7 +381,7 @@ const CONSTANT_VISITOR = new (class extends AbstractVisitor<
       value = opp(n.op.tokenType, on.value, compType)
     } else {
       value = (on.value as any[]).map((e) => opp(n.op.tokenType, e, compType))
-      Object.assign(value, pick(on.value, "rows"))
+      Object.assign(value, { rows: on.value.rows })
     }
     return { type: on.type, value }
   }
@@ -755,7 +755,7 @@ class BinderVisitor extends AbstractVisitor<any> {
   private doingBuiltIns = false
 
   protected get scope() {
-    const s = last(this.scopes)
+    const s = this.scopes[this.scopes.length - 1]
     if (!s) {
       throw new Error()
     }
@@ -1022,7 +1022,7 @@ class BinderVisitor extends AbstractVisitor<any> {
   }
 
   protected pushScope() {
-    this.scopes.push({ parent: last(this.scopes), defs: {} })
+    this.scopes.push({ parent: this.scopes[this.scopes.length - 1], defs: {} })
   }
 
   protected popScope() {

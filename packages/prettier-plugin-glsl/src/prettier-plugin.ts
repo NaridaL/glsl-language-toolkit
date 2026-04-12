@@ -11,7 +11,7 @@ import {
 } from "prettier"
 import * as doc from "prettier/doc"
 import { IToken, TokenType } from "chevrotain"
-import { findLast } from "lodash-es"
+
 
 import {
   AbstractVisitor,
@@ -836,7 +836,7 @@ export const printers: Plugin<Node | IToken>["printers"] = {
                 n.yes.comments?.some(
                   (c) => c.trailing && c.tokenType === TOKEN.LINE_COMMENT,
                 ) ||
-                findLast(n.yes.comments, (c) => !c.leading && !c.trailing)
+                n.yes.comments?.findLast((c) => !c.leading && !c.trailing)
                   ?.tokenType === TOKEN.LINE_COMMENT
               const elseOnSameLine =
                 n.yes.kind === "compoundStatement" && !commentOnOwnLine
