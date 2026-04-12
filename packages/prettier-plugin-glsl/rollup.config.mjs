@@ -1,7 +1,7 @@
 /* eslint-disable */
 import typescriptPlugin from "@rollup/plugin-typescript"
 import typescript from "typescript"
-import { terser } from "rollup-plugin-terser"
+import terser from "@rollup/plugin-terser"
 
 import pkg from "./package.json" with { type: "json" }
 
