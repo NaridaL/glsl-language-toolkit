@@ -46,8 +46,8 @@ jobs:
         run: |
           VERSION=$(jq --raw-output .version package.json)
           TAG="prettier-plugin-glsl-v${VERSION}"
-          # git config user.name "github-actions[bot]"
-          # git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "${TAG}"
           git tag "${TAG}"
