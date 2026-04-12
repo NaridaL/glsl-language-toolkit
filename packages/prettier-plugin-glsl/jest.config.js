@@ -3,6 +3,8 @@ module.exports = {
     ".idea",
     "lib",
     "coverage",
+    "checker\\.test",
+    "support\\.test",
     "shadertoy\\.test",
   ],
   testEnvironment: "node",

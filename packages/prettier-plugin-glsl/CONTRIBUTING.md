@@ -3,8 +3,4 @@
 
 ## Publishing
 
-Publishing is done manually from the `packages/prettier-plugin-glsl` directory using `version.sh`:
-
-```sh
-./version.sh <patch|minor|major>
-```
+Update the version via PR and run the release-prettier-plugin-glsl workflow.
