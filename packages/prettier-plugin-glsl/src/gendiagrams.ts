@@ -5,7 +5,6 @@
 //
 // import { createSyntaxDiagramsCode } from "chevrotain"
 // // import prettier from "prettier"
-import { mapValues } from "lodash-es"
 // import * as prettierPlugin from "./prettier-plugin"
 import { shortDesc } from "./parser"
 // import "./checker"
@@ -29,6 +28,16 @@ import { isToken, Node } from "./nodes"
 // const cst = parseInput(shader)
 // console.timeEnd("parsing")
 //
+function mapValues<T, R>(
+  obj: Record<string, T>,
+  f: (value: T, key: string, collection: Record<string, T>) => R,
+): Record<string, R> {
+  const result: Record<string, R> = {}
+  for (const key in obj) {
+    result[key] = f(obj[key], key, obj)
+  }
+  return result
+}
 export function recurseJSON(
   replacer: (this: any, key: string, value: any) => any,
   x: unknown,
@@ -38,7 +47,7 @@ export function recurseJSON(
       recurseJSON(replacer, replacer.call(collection, "" + i, e)),
     )
   } else if (typeof x === "object") {
-    return mapValues(x, (value, key, collection) =>
+    return mapValues(x as any, (value, key, collection) =>
       recurseJSON(replacer, replacer.call(collection, key, value)),
     )
   } else {

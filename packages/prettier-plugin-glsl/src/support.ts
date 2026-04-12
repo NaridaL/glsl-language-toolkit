@@ -1,4 +1,4 @@
-import { nth } from "lodash-es"
+
 import {
   AbstractVisitor,
   findPositionNode,
@@ -46,10 +46,10 @@ export function resolvePositionDefinition(
     }
   }
   if (
-    nth(path, -1)?.kind === "typeSpecifier" &&
-    nth(path, -2)?.kind === "functionCall"
+    path.at(-1)?.kind === "typeSpecifier" &&
+    path.at(-2)?.kind === "functionCall"
   ) {
-    return resolveNodeDefinition(nth(path, -2)!)
+    return resolveNodeDefinition(path.at(-2)!)
   }
 }
 

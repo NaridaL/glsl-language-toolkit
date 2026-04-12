@@ -1,5 +1,5 @@
 import { EOF } from "chevrotain"
-import { noop } from "lodash-es"
+
 
 import {
   AbstractVisitor,
@@ -17,7 +17,7 @@ import { CheckError, mapExpandedLocation } from "./util"
 type MarkErrorFunc = (code: string, where: Token, message: string) => void
 type int32 = number
 const PREPROC_EVALUATOR = new (class extends AbstractVisitor<int32> {
-  private markError: MarkErrorFunc = noop
+  private markError: MarkErrorFunc = () => {}
   private isDefined!: (macroName: string) => boolean
 
   public eval(

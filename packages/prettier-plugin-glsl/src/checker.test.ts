@@ -1,6 +1,5 @@
 import { readFileSync } from "fs"
 import { VError } from "@netflix/nerror"
-import { last, Many, merge } from "lodash-es"
 
 import {
   check,
@@ -27,10 +26,10 @@ function glsl(
   shaderType?: ShaderType,
 ) {
   const [p, positions] = getMarkerPositions(pWithMarkers)
-  const expectedErrors = merge(
-    expectedErrorCodes.map((code) => ({ code })),
-    positions,
-  )
+  const expectedErrors = expectedErrorCodes.map((code, i) => ({
+    code,
+    ...positions[i],
+  }))
   const errs = parseAndCheck(p, shaderType)
   try {
     expect(
@@ -246,7 +245,7 @@ function mat(...rowValues: number[][]): Matrix {
 
 describe("/*constant expressions", () => {
   function is(
-    expectedValue: Many<number | boolean | Record<string, unknown>> | Matrix,
+    expectedValue: (number | boolean | Record<string, unknown>)[] | (number | boolean | Record<string, unknown>) | Matrix,
   ): ProvidesCallback {
     if (Array.isArray(expectedValue)) {
       for (let i = 0; i < expectedValue.length; i++) {
@@ -265,10 +264,9 @@ describe("/*constant expressions", () => {
         }
         throw new Error("" + errs.map((e) => e.message).join("\n"))
       }
+      const stmts = (unit.declarations[0] as FunctionDefinition).body.statements
       const expr = (
-        last(
-          (unit.declarations[0] as FunctionDefinition).body.statements,
-        ) as ExpressionStatement
+        stmts[stmts.length - 1] as ExpressionStatement
       ).expression!
       const value = evaluateConstantExpression(expr)?.value
 

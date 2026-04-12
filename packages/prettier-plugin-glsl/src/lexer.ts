@@ -8,7 +8,7 @@ import {
   tokenMatcher,
   TokenType,
 } from "chevrotain"
-import { pull } from "lodash-es"
+
 
 import { DEV, substrContext } from "./util"
 
@@ -622,10 +622,9 @@ export namespace TOKEN {
 }
 // IDENTIFIER needs to go last, but must be declared first
 // so it can be referenced in longerAlt
-export const ALL_TOKENS = pull(
-  Object.values(TOKEN),
-  TOKEN.NON_PP_IDENTIFIER,
-).flatMap((x) => (Array.isArray(x) ? x : [x]))
+export const ALL_TOKENS = Object.values(TOKEN)
+  .filter((x) => x !== TOKEN.NON_PP_IDENTIFIER)
+  .flatMap((x) => (Array.isArray(x) ? x : [x]))
 ALL_TOKENS.push(TOKEN.NON_PP_IDENTIFIER)
 
 export const GLSL_LEXER = new Lexer(ALL_TOKENS, { ensureOptimizations: DEV })

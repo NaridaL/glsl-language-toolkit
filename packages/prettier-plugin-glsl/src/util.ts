@@ -1,4 +1,4 @@
-import { Many } from "lodash-es"
+export type Many<T> = T | T[]
 import { isToken, Node, Token } from "./nodes"
 
 export const DEV = process.env.NODE_ENV !== "production"
@@ -21,10 +21,7 @@ export function safeMap<T, R>(
   f: (x: T, i: number, arr: Many<T>) => R,
 ): Many<R> {
   if (Array.isArray(x)) {
-    for (let i = 0; i < x.length; i++) {
-      x[i] = f(x[i], i, x)
-    }
-    return x
+    return x.map(f)
   } else {
     return f(x as T, 0, x)
   }
