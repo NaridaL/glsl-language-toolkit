@@ -22,7 +22,8 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
 
-      - run: npm ci --workspaces
+      - run: npm ci
+        working-directory: .
 
       - name: Build
         run: npm run build
@@ -41,4 +42,3 @@ jobs:
 
       - name: Publish to npm
         run: npm publish
-
