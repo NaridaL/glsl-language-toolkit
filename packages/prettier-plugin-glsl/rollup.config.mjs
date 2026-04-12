@@ -3,7 +3,7 @@ import typescriptPlugin from "@rollup/plugin-typescript"
 import typescript from "typescript"
 import { terser } from "rollup-plugin-terser"
 
-import pkg from "./package.json" assert { type: "json" }
+import pkg from "./package.json" with { type: "json" }
 
 let compress = false
 export default [

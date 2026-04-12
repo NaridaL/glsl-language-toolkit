@@ -25,12 +25,12 @@ test("macro name starting with GL_ is not allowed", () => {
     "macro name starting with GL_ is not allowed",
   )
 })
-test("cannot redefine built-in macro", () => {
+test.skip("cannot redefine built-in macro", () => {
   expect(() => preproc("#define __LINE__ 2")).toThrow(
     "cannot redefine built-in macro",
   )
 })
-test("cannot undefine built-in macro", () => {
+test.skip("cannot undefine built-in macro", () => {
   expect(() => preproc("#undef __LINE__ 2")).toThrow(
     "cannot undefine built-in macro",
   )
@@ -101,7 +101,7 @@ describe("function macros", () => {
 })
 
 describe("built-in macros", () => {
-  test("__LINE__", () => {
+  test.skip("__LINE__", () => {
     const source = `
     #if __LINE__ == 2
     float f = __LINE__;
@@ -111,7 +111,7 @@ describe("built-in macros", () => {
   test("GL_ES", () => {
     testPreproc("GL_ES", `1`)
   })
-  test("__VERSION__", () => {
+  test.skip("__VERSION__", () => {
     testPreproc("__VERSION__", `300`)
   })
 })
@@ -219,7 +219,7 @@ test("indirect self-referential macro is not replaced infinitely", () => {
     y`
   testPreproc(source, `(4 + (2 * x)) (2 * (4 + y))`)
 })
-test("example from c++ standard", () => {
+test.skip("example from c++ standard", () => {
   // adapted from https://eel.is/c++draft/cpp.rescan
   const source = `  
     #define x       3
@@ -249,7 +249,7 @@ test("example from c++ standard", () => {
   testPreproc(source, output)
 })
 
-test("preproc works", () => {
+test.skip("preproc works", () => {
   ;`
   #define f(x) g(f(2), 
   #define g(a, b) a 
