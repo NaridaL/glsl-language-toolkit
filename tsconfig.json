@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "nodenext",
     "target": "ES2021",
     "lib": ["ES2021"],
     "strict": true,
     "outDir": "",
     "sourceMap": true,
     "declarationMap": true,
-    "composite": true
+    "composite": true,
+    "isolatedModules": true,
   },
   "files": [],
   "references": [

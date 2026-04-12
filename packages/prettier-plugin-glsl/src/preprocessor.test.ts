@@ -1,7 +1,7 @@
-import "./index"
+import { describe, test } from "@jest/globals"
 import expect from "expect"
 import { applyLineContinuations, preproc } from "./preprocessor"
-import { Token } from "./nodes"
+import type { Token } from "./nodes"
 import { lex } from "./lexer"
 
 const images = (toks: Token[]) => toks.map((t) => t.image)

@@ -5,7 +5,7 @@
 //
 // import { createSyntaxDiagramsCode } from "chevrotain"
 // // import prettier from "prettier"
-import { mapValues } from "lodash"
+import { mapValues } from "lodash-es"
 // import * as prettierPlugin from "./prettier-plugin"
 import { shortDesc } from "./parser"
 // import "./checker"

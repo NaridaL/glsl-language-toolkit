@@ -11,6 +11,8 @@ export let editor: vscode.TextEditor
 export let documentEol: string
 export let platformEol: string
 
+const __dirname = import.meta.dirname;
+
 /**
  * Activates the vscode.lsp-sample extension
  */

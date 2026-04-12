@@ -1,11 +1,13 @@
 /* eslint-disable */
-
+import {describe, test} from "@jest/globals"
 import { readdirSync, readFileSync } from "fs"
 import expect from "expect"
 import * as prettier from "prettier"
 
 import * as prettierPlugin from "./prettier-plugin"
 import { dedent } from "./testutil"
+
+const __dirname = import.meta.dirname;
 
 export function fmt(source: string, printWidth = 80): Promise<string> {
   return prettier.format(source, {
@@ -54,28 +56,6 @@ describe("fixtures", () => {
   }
 })
 
-interface X {
-  a: x
-
-  b: y
-}
-
-test.skip("format es", () => {
-  OtherStruct[
-    CONSTANT_VALUE *
-      MsssssssssssssssssssssssssACRO_INVOCATjjjjjjjjjjjjjjjjION(2, 3)
-  ] = 3 + ddddddddddddddddddddddd
-  const x = dedent`
-    function main() {
-      let i = func(sssssssssssssssssssssssssss, sssssssssssssssssssssssssss,ssssssssssssssssss);
-    }`
-  const x2 = prettier.format(x, {
-    // parser: "estree",
-
-    printWidth: 80,
-  })
-  expect(x2).toEqual(" sdasd")
-})
 test("simplifies qualifiers", () => {
   testFormat("flat centroid in float f;", "flat in float f;")
 })

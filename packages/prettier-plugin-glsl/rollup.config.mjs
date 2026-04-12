@@ -17,8 +17,8 @@ export default [
       dir: "lib",
       exports: "named",
       globals: {
-        chevrotain: "chevrotain",
-        lodash: "lodash",
+        "chevrotain": "chevrotain",
+        "lodash-es": "lodash",
       },
       plugins: compress
         ? [

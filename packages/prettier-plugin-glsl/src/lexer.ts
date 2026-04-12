@@ -8,7 +8,7 @@ import {
   tokenMatcher,
   TokenType,
 } from "chevrotain"
-import { pull } from "lodash"
+import { pull } from "lodash-es"
 
 import { DEV, substrContext } from "./util"
 
