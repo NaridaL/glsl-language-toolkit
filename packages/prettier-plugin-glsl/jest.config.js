@@ -1,5 +1,12 @@
 module.exports = {
-  testPathIgnorePatterns: [".idea", "lib", "coverage"],
+  testPathIgnorePatterns: [
+    ".idea",
+    "lib",
+    "coverage",
+    "checker\\.test",
+    "support\\.test",
+    "shadertoy\\.test",
+  ],
   testEnvironment: "node",
   globals: {},
   transform: {
