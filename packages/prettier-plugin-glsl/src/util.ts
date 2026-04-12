@@ -23,7 +23,7 @@ export function safeMap<T, R>(
   if (Array.isArray(x)) {
     return x.map(f)
   } else {
-    return f(x as T, 0, x)
+    return f(x, 0, x)
   }
 }
 

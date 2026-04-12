@@ -748,7 +748,6 @@ class BinderVisitor extends AbstractVisitor<any> {
   protected structSpecifier(n: StructSpecifier): any {
     const fields: StructType["fields"] = {}
     for (const declaration of n.declarations) {
-      declaration.kind
       for (const declarator of declaration.declarators) {
         // Bind array specifier and initializer first.
         this.declarator(declarator)
@@ -1936,7 +1935,7 @@ class CheckerVisitor extends AbstractVisitor<NormalizedType> {
               }
             }
           } else {
-            const needed = getComponentCount(basicType)!
+            const needed = getComponentCount(basicType)
             fillVectorOrMatrixConstructor(needed)
           }
         }

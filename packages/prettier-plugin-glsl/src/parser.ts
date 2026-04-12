@@ -1655,7 +1655,6 @@ class GLSLParser extends EmbeddedActionsParser {
   ): (...implArgs: any[]) => T {
     return (...args: any[]) => {
       const firstToken = this.LA(1)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const result = implementation(...args)
       if (result && isNode(result) && !result.firstToken) {
         this.FINALIZE(result, firstToken)

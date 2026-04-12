@@ -249,11 +249,7 @@ test.skip("example from c++ standard", () => {
 })
 
 test.skip("preproc works", () => {
-  ;`
-  #define f(x) g(f(2), 
-  #define g(a, b) a 
-  f(2) 3)
-  `
+
   testPreproc(
     `#version 300 es
     #define MAX3(genType) genType max3(genType a, genType b, genType c) {\\
