@@ -19,7 +19,7 @@ export interface BaseNode {
 }
 
 // need interface for interface merging
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface BaseExpressionNode extends BaseNode {}
 
 export interface ArraySpecifier extends BaseNode {

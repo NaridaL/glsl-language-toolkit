@@ -1,4 +1,5 @@
 import expect from "expect"
+import { test } from "@jest/globals"
 import { parseInput, shortDesc2 } from "./parser"
 import { simplifyCst } from "./gendiagrams"
 import { dedent } from "./testutil"

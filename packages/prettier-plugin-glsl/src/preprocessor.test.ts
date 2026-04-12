@@ -8,7 +8,6 @@ const images = (toks: Token[]) => toks.map((t) => t.image)
 
 function testPreproc(source: string, expected: string): void {
   const img = images(preproc(source))
-  console.log(img.join(" "))
   expect(img).toEqual(images(lex(expected)))
 }
 
@@ -250,11 +249,7 @@ test.skip("example from c++ standard", () => {
 })
 
 test.skip("preproc works", () => {
-  ;`
-  #define f(x) g(f(2), 
-  #define g(a, b) a 
-  f(2) 3)
-  `
+
   testPreproc(
     `#version 300 es
     #define MAX3(genType) genType max3(genType a, genType b, genType c) {\\

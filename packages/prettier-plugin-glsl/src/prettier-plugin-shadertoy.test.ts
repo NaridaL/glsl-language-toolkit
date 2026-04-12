@@ -1,9 +1,10 @@
 /* eslint-disable */
 
 import { promises as fsp, readdirSync, readFileSync, writeFileSync } from "fs"
+import { describe, test } from "@jest/globals"
 import expect from "expect"
 import fetch from "node-fetch"
-import { fmt } from "./prettier-plugin.test.js"
+import { fmt } from "./prettier-plugin.test"
 
 interface ShaderToyShader {
   Shader: {
