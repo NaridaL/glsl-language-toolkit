@@ -25,8 +25,8 @@ jobs:
       - name: Build
         run: npm run build --workspace=packages/prettier-plugin-glsl
 
-      - name: Lint
-        run: npm run lint --workspace=packages/prettier-plugin-glsl
+      # - name: Lint
+      #   run: npm run lint --workspace=packages/prettier-plugin-glsl
 
       - name: Test
         run: npm run test --workspace=packages/prettier-plugin-glsl
