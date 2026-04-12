@@ -11,6 +11,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
+      id-token: write  # Required for OIDC
       contents: write
     steps:
       - uses: actions/checkout@v6
@@ -40,5 +41,4 @@ jobs:
 
       - name: Publish to npm
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
