@@ -23,12 +23,11 @@ export default [
   {
     input: "src/prettier-plugin.ts",
     output: {
-      format: "commonjs",
+      format: "es",
       entryFileNames: "[name].[format]" + (compress ? ".min" : "") + ".js",
       sourcemap: true,
       sourcemapExcludeSources: true,
       dir: "lib",
-      exports: "named",
       globals: {
         "chevrotain": "chevrotain"
       },
