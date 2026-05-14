@@ -53,7 +53,7 @@ recognized as GLSL files by default.
 
 `.fp` `.frag` `.frg` `.fs` `.fsh` `.fshader` `.geo` `.geom` `.glsl` `.glslf`
 `.glslv` `.gs` `.gshader` `.rchit` `.rmiss` `.shader` `.tesc` `.tese` `.vert`
-`.vrx` `.vsh` `.vshader`
+`.vrx` `.vsh` `.vshader` `.csh` `.cshader` `.comp`
 
 Note that `.frag` files are recognized as JavaScript files by default. Add the
 following to your Prettier configuration to format them as GLSL.
