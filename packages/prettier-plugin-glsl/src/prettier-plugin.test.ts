@@ -77,7 +77,10 @@ test("supports formatWithCursor", async () => {
       sourceOffset: source.indexOf("fragColor ="),
       expectedOffset: formatted.indexOf("fragColor ="),
     },
-    { sourceOffset: source.length, expectedOffset: formatted.length },
+    {
+      sourceOffset: source.lastIndexOf("}"),
+      expectedOffset: formatted.lastIndexOf("}"),
+    },
   ]
 
   for (const { sourceOffset, expectedOffset } of cursorCases) {
