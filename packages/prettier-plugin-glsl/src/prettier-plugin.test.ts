@@ -67,13 +67,28 @@ test("supports formatWithCursor", async () => {
     fragColor = vec4(col, 1.0);
 }`
   const formatted = await fmt(source)
-  const withCursor = await prettier.formatWithCursor(source, {
-    cursorOffset: 0,
-    parser: "glsl-parser",
-    plugins: [prettierPlugin],
-  })
-  expect(withCursor.formatted).toBe(formatted)
-  expect(withCursor.cursorOffset).toBe(0)
+  const cursorCases = [
+    { sourceOffset: 0, expectedOffset: 0 },
+    {
+      sourceOffset: source.indexOf("iResolution"),
+      expectedOffset: formatted.indexOf("iResolution"),
+    },
+    {
+      sourceOffset: source.indexOf("fragColor ="),
+      expectedOffset: formatted.indexOf("fragColor ="),
+    },
+    { sourceOffset: source.length, expectedOffset: formatted.length },
+  ]
+
+  for (const { sourceOffset, expectedOffset } of cursorCases) {
+    const withCursor = await prettier.formatWithCursor(source, {
+      cursorOffset: sourceOffset,
+      parser: "glsl-parser",
+      plugins: [prettierPlugin],
+    })
+    expect(withCursor.formatted).toBe(formatted)
+    expect(withCursor.cursorOffset).toBe(expectedOffset)
+  }
 })
 
 // as own test due to printWidth=80
