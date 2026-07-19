@@ -72,7 +72,7 @@ test("supports formatWithCursor", async () => {
     parser: "glsl-parser",
     plugins: [prettierPlugin],
   })
-  expect(withCursor.formatted.trim()).toBe(formatted.trim())
+  expect(withCursor.formatted).toBe(formatted)
   expect(withCursor.cursorOffset).toBe(0)
 })
 
