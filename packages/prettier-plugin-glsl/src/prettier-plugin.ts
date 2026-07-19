@@ -1239,6 +1239,10 @@ export const printers: Plugin<Node | IToken>["printers"] = {
       return (textToDoc, print, path, options) => {}
     },
 
+    getVisitorKeys(node: Node | IToken, nonTraversableKeys: Set<string>): string[] {
+      if (isToken(node)) return []
+      return Object.keys(node).filter((key) => !nonTraversableKeys.has(key))
+    },
     getCommentChildNodes(node: Node | Token): Node[] {
       return isToken(node) ? [] : CHILDREN_VISITOR.visit(node)!
     },
