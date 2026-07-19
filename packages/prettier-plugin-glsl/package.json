@@ -16,10 +16,10 @@
   },
   "exports": {
     "default": "./lib/prettier-plugin.es.js",
-    "types": "./lib/prettier-plugin.d.ts"
+    "types": "./src/prettier-plugin.d.ts"
   },
   "type": "module",
-  "types": "lib/prettier-plugin.d.ts",
+  "types": "./src/prettier-plugin.d.ts",
   "scripts": {
     "prepublishOnly": "npm run clean && npm run build",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
