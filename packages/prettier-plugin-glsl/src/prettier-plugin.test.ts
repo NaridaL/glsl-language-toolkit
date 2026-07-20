@@ -60,6 +60,40 @@ test("simplifies qualifiers", () => {
   testFormat("flat centroid in float f;", "flat in float f;")
 })
 
+test("supports formatWithCursor", async () => {
+  const source = `void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec2 uv = fragCoord / iResolution.xy;
+    vec3 col = 0.5 + 0.5 * cos(iTime + uv.xyx + vec3(0, 2, 4));
+    fragColor = vec4(col, 1.0);
+}`
+  const formatted = await fmt(source)
+  const cursorCases = [
+    { sourceOffset: 0, expectedOffset: 0 },
+    {
+      sourceOffset: source.indexOf("iResolution"),
+      expectedOffset: formatted.indexOf("iResolution"),
+    },
+    {
+      sourceOffset: source.indexOf("fragColor ="),
+      expectedOffset: formatted.indexOf("fragColor ="),
+    },
+    {
+      sourceOffset: source.lastIndexOf("}"),
+      expectedOffset: formatted.lastIndexOf("}"),
+    },
+  ]
+
+  for (const { sourceOffset, expectedOffset } of cursorCases) {
+    const withCursor = await prettier.formatWithCursor(source, {
+      cursorOffset: sourceOffset,
+      parser: "glsl-parser",
+      plugins: [prettierPlugin],
+    })
+    expect(withCursor.formatted).toBe(formatted)
+    expect(withCursor.cursorOffset).toBe(expectedOffset)
+  }
+})
+
 // as own test due to printWidth=80
 test.skip("format raymarchingPrimitives.glsl", () => {
   testFormat(
