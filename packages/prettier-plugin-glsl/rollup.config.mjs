@@ -56,6 +56,7 @@ export default [
         outDir: "lib",
         outputToFilesystem: false,
         noForceEmit: true,
+        declaration: true,
       }),
     ].filter((x) => x),
     onwarn: function (warning, warn) {
